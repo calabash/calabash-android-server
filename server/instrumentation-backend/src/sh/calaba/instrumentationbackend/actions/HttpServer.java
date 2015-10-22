@@ -38,6 +38,7 @@ import sh.calaba.instrumentationbackend.intenthook.DoNothingHook;
 import sh.calaba.instrumentationbackend.intenthook.InstrumentationHook;
 import sh.calaba.instrumentationbackend.intenthook.IntentHook;
 
+import sh.calaba.instrumentationbackend.intenthook.SelectFileHook;
 import sh.calaba.instrumentationbackend.intenthook.TakePictureHook;
 import sh.calaba.instrumentationbackend.json.JSONUtils;
 import sh.calaba.instrumentationbackend.json.requests.IntentHookRequest;
@@ -238,6 +239,8 @@ public class HttpServer extends NanoHTTPD {
                     File imageFile = new File((String) data.get("imageFile"));
 
                     intentHook = new TakePictureHook(imageFile);
+                } else if (request.getType().equals("pick-picture")) {
+                    intentHook = new SelectFileHook();
                 } else {
                     throw new Exception("Invalid type '" + request.getType() + "'");
                 }

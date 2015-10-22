@@ -42,6 +42,14 @@
         android:noHistory="true"
         android:excludeFromRecents="true"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
+    <activity
+        android:name="sh.calaba.instrumentationbackend.FakePickerActivity"
+        android:label="FakePickerActivity"
+        android:exported="true"
+        android:finishOnTaskLaunch="true"
+        android:stateNotNeeded="true"
+        android:noHistory="true"
+        android:excludeFromRecents="true"/>
     </application>
     <uses-sdk android:minSdkVersion="4"
         android:targetSdkVersion="21"/>

@@ -1,4 +1,8 @@
 language: android
+
+script:
+  - bin/ci/travis/run.sh
+  
 android:
   components:
     # The BuildTools version used by your project
@@ -20,6 +24,3 @@ notifications:
       - tobias.roikjer@xamarin.com
     on_success: change
     on_failure: always
-
-script:
-  - bin/ci/travis/run.sh

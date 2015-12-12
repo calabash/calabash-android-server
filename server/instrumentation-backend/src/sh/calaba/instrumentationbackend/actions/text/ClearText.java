@@ -27,8 +27,7 @@ public class ClearText implements Action {
         InstrumentationBackend.solo.runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                connection.setSelection(0, editable.length());
-                connection.commitText("", 1);
+                editable.clear();
                 latch.countDown();
             }
         });

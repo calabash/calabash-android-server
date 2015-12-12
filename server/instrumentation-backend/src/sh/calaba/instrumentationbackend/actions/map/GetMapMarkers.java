@@ -1,13 +1,12 @@
 package sh.calaba.instrumentationbackend.actions.map;
 
+import android.util.Log;
 
 import java.util.List;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
-
-import com.google.android.maps.ItemizedOverlay;
 
 /**
  * Allows the test script to retreive a list of markers on {@link ItemizedOverlay}s.
@@ -35,7 +34,7 @@ public class GetMapMarkers implements Action {
     	}
         
         for (String markerJson : markers) {
-//        	Log.i("get_map_markers", markerJson);
+        	Log.i("get_map_markers", markerJson);
 			result.addBonusInformation(markerJson);
 		}
         return result;

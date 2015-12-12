@@ -16,7 +16,7 @@ public class Version implements Action {
 	 * DO NOT EDIT
 	 *
 	 */
-	public static final String VERSION="100";
+	public static final String VERSION="0.5.16.pre1";
 
 	@Override
     public Result execute(String... args) {

@@ -1,6 +1,9 @@
 package sh.calaba.instrumentationbackend.query;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -8,184 +11,109 @@ import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 
 public class InvocationOperation implements Operation {
-
 	private final String methodName;
-	@SuppressWarnings("rawtypes")
-	private final List arguments;
-	private final Class<?>[] classes;
-    private final Class<?>[] boxedClasses;
-	private final Class<?>[] classesWithCharseq;
+	private final List<?> arguments;
+	private final Class<?>[] argumentTypes;
 
-	@SuppressWarnings("rawtypes")
-	public InvocationOperation(String methodName, List arguments) {
+	public InvocationOperation(String methodName, List<?> arguments) {
 		this.methodName = methodName;
 		this.arguments = arguments;
-		this.classes = extractArgumentTypes(false, false);
-        this.boxedClasses = extractArgumentTypes(false, true);
-		this.classesWithCharseq = extractArgumentTypes(true, false);
-	}	
+		this.argumentTypes = parseArgumentTypes(arguments);
+	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public Object apply(final Object o) throws Exception {
-		final AtomicReference ref = new AtomicReference();
+		final AtomicReference<Object> ref = new AtomicReference<Object>();
 		final AtomicReference<Exception> refEx = new AtomicReference<Exception>();
 		
 		InstrumentationBackend.instrumentation.runOnMainSync(new Runnable() {
-
-			@SuppressWarnings("unchecked")
 			@Override
 			public void run() {
-				try {
-					Method method = o.getClass().getMethod(InvocationOperation.this.methodName, InvocationOperation.this.classes);
-					method.setAccessible(true);
-					try {
-						Object result;
-						if( method.getReturnType().equals(Void.TYPE)){
-							invokeMethod(o, method);
-							result = "<VOID>";
-			            }
-						else {
-							result = invokeMethod(o, method);							
-						}
-						ref.set(result);
-						return;
-					} catch (Exception e) {
-						refEx.set(e);
-						return;
-					}
-				} catch (NoSuchMethodException e) {
-					try {
-						Method method = o.getClass().getMethod(InvocationOperation.this.methodName, InvocationOperation.this.classesWithCharseq);
-						method.setAccessible(true);
-						try {
-							Object result;
-							if( method.getReturnType().equals(Void.TYPE)){
-								invokeMethod(o, method);
-								result = "<VOID>";
-				            }
-							else {
-								result = invokeMethod(o, method);							
-							}
-							ref.set(result);
-							return;						
-						} catch (Exception ee) {
-							refEx.set(e);
-							return;
-						}
-					} catch (NoSuchMethodException ee) {
-                        try {
-                            Method method = o.getClass().getMethod(InvocationOperation.this.methodName, InvocationOperation.this.boxedClasses);
-                            method.setAccessible(true);
-                            try {
-                                Object result;
-                                if( method.getReturnType().equals(Void.TYPE)){
-                                    invokeMethod(o, method);
-                                    result = "<VOID>";
-                                }
-                                else {
-                                    result = invokeMethod(o, method);
-                                }
-                                ref.set(result);
-                                return;
-                            } catch (Exception eee) {
-                                refEx.set(eee);
-                                return;
-                            }
-                        } catch (NoSuchMethodException eee) {
-                            System.out.println("Method not found with correct argument types. Trying to type convert.");
+                MethodWithArguments method = findCompatibleMethod(o);
+
+                if (method == null) {
+                    StringBuilder stringBuilder = new StringBuilder("No such method found: ");
+                    stringBuilder.append(InvocationOperation.this.methodName);
+                    stringBuilder.append("(");
+                    int length = InvocationOperation.this.arguments.size();
+
+                    for (int i = 0; i < length; i++) {
+                        Object argument = InvocationOperation.this.arguments.get(i);
+
+                        if (i != 0) {
+                            stringBuilder.append(", ");
                         }
-					}
-				}
-				//Warning: Slow path
-				Method[] methods = o.getClass().getMethods();
-				for (Method m : methods) {
-					if (m.getName().equals(InvocationOperation.this.methodName)) {
-						Class<?>[] parameterTypes = m.getParameterTypes();						
-						if (parameterTypes.length == InvocationOperation.this.classes.length && areArgumentsConvertibleTo(parameterTypes)) {							
-							try {
-								Object result;
-								if( m.getReturnType().equals(Void.TYPE)){
-									invokeMethod(o, m);
-									result = "<VOID>";
-					            }
-								else {
-									result = invokeMethod(o, m);							
-								}
-								ref.set(result);
-								return;
-							} catch (Exception e) {
-								e.printStackTrace();
-								refEx.set(e);
-								return;
-							}
-							
-						}							
-					}
-				}
 
-                StringBuilder stringBuilder = new StringBuilder("No such method found: ");
-                stringBuilder.append(InvocationOperation.this.methodName);
-                stringBuilder.append("(");
-                int length = InvocationOperation.this.arguments.size();
+                        String simpleName;
 
-                for (int i = 0; i < length; i++) {
-                    Object argument = InvocationOperation.this.arguments.get(i);
+                        if (argument == null) {
+                            simpleName = "null";
+                        } else {
+                            simpleName = argument.getClass().getSimpleName();
+                        }
 
-                    if (i != 0) {
-                        stringBuilder.append(", ");
+                        stringBuilder.append("[").append(simpleName).append("]");
                     }
 
-                    String simpleName;
+                    stringBuilder.append(")");
 
-                    if (argument == null) {
-                        simpleName = "null";
-                    } else {
-                        simpleName = argument.getClass().getSimpleName();
-                    }
-
-                    stringBuilder.append("[").append(simpleName).append("]");
+                    ref.set(UIQueryResultVoid.instance
+                            .asMap(InvocationOperation.this.methodName, o, stringBuilder.toString()));
+                    return;
                 }
 
-                stringBuilder.append(")");
+                Object result;
 
+                try {
+                    if (method.getMethod().getReturnType().equals(Void.TYPE)) {
+                        method.invoke(o);
+                        result = "<VOID>";
+                    } else {
+                        result = method.invoke(o);
+                    }
 
-                ref.set(UIQueryResultVoid.instance
-                        .asMap(InvocationOperation.this.methodName, o, stringBuilder.toString()));
+                    ref.set(result);
+                    return;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    refEx.set(e);
+                    return;
+                }
 			}
-			 
 		 });
 				
 		 if (refEx.get() != null) {
 			 throw refEx.get();
 		 }
+
 		 return ref.get();				
 	}
-	
-	@SuppressWarnings("rawtypes")
-	private Class[] extractArgumentTypes(boolean convertStringCharSeq, boolean userWrapperClass) {
-		Class[] types = new Class[arguments.size()];
-		for (int i=0;i<arguments.size(); i++) {
-			Object o = arguments.get(i);
-			if (o != null) {
-				Class<?> c = o.getClass();
-				if (convertStringCharSeq && c.equals(String.class)) {
-					c = CharSequence.class;//Android API specific optimization
-				}
 
-                if (userWrapperClass) {
-                    types[i] = c;
-                } else {
-                    types[i] = mapToPrimitiveClass(c);
+	private MethodWithArguments findCompatibleMethod(Object object) {
+		// Fast path
+		try {
+            return new MethodWithArguments(object.getClass().getMethod(methodName, argumentTypes), 
+                    new ArrayList<Object>(arguments));
+		} catch (NoSuchMethodException e) {
+			// No immediate method found
+
+            for (Method method : object.getClass().getMethods()) {
+                if (!method.getName().equals(methodName)) {
+                    continue;
                 }
-			} else {
-				types[i] = null;
-			}			
+
+                try {
+                    return new MethodWithArguments(method, parseToSuitableArguments(method));
+                } catch (IncompatibleArgumentsException e1) {
+                    continue;
+                }
+            }
+
+            return null;
 		}
-		return types;
 	}
-	
-	private Class<?> mapToPrimitiveClass(Class<?> c) {
+
+	private static Class<?> mapToPrimitiveClass(Class<?> c) {
 		if (c.equals(Integer.class)) {
 			return int.class;
 		}
@@ -197,81 +125,270 @@ public class InvocationOperation implements Operation {
 		}
 		else if (c.equals(Boolean.class)) {
 			return boolean.class;
-		}		
+		}
+        else if (c.equals(Long.class)) {
+            return long.class;
+        }
+        else if (c.equals(Byte.class)) {
+            return byte.class;
+        }
+        else if (c.equals(Short.class)) {
+            return short.class;
+        }
+        else if (c.equals(Character.class)) {
+            return char.class;
+        }
+
 		return c;
 	}
-	
-	
-	//parameterType.length == this.classes.length
-	//Note: right now we don't do any clever mapping, we 
-	//only use Java's sub type relation: isAssigableFrom
-	private boolean areArgumentsConvertibleTo(Class<?>[] parameterTypes) {		
-		for (int i=0; i < parameterTypes.length; i++) {
-			Class<?> typei = parameterTypes[i];			
-			if (this.arguments.get(i) == null) {
-				if (typei.isPrimitive()) {
-					//Can't pass null as primitive
-					return false;
-				}
-				continue; //can always pass null (unless primitive)
-			}
-			if (typei.isPrimitive() && typei.equals(mapToPrimitiveClass(this.classes[i]))) {
-				continue;
-			}
-			if (!typei.isAssignableFrom(this.classes[i])) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	private Object invokeMethod(Object o, Method m) throws Exception {
-		List<?> a = this.arguments;
-		int size = a.size();
-		switch(size) {
-			case 0:
-				return m.invoke(o);
-			case 1:
-				return m.invoke(o,a.get(0));
-			case 2:
-				return m.invoke(o,a.get(0),a.get(1));
-			case 3:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2));
-			case 4:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3));
-			case 5:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4));
-			case 6:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5));
-			case 7:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5),a.get(6));
-			case 8:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5),a.get(6),a.get(7));
-			case 9:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5),a.get(6),a.get(7),a.get(8));
-			case 10:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5),a.get(6),a.get(7),a.get(8),a.get(9));
-			case 11:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5),a.get(6),a.get(7),a.get(8),a.get(9),a.get(10));
-			case 12:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5),a.get(6),a.get(7),a.get(8),a.get(9),a.get(10),a.get(11));
-			case 13:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5),a.get(6),a.get(7),a.get(8),a.get(9),a.get(10),a.get(11),a.get(12));
-			case 14:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5),a.get(6),a.get(7),a.get(8),a.get(9),a.get(10),a.get(11),a.get(12),a.get(13));				
-			case 15:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5),a.get(6),a.get(7),a.get(8),a.get(9),a.get(10),a.get(11),a.get(12),a.get(13),a.get(14));				
-			case 16:
-				return m.invoke(o,a.get(0),a.get(1),a.get(2),a.get(3),a.get(4),a.get(5),a.get(6),a.get(7),a.get(8),a.get(9),a.get(10),a.get(11),a.get(12),a.get(13),a.get(14),a.get(15));				
-		}
-		throw new UnsupportedOperationException("Method with more than 16 arguments are not supported");
-		
-	}
 
+    private static Class<?> mapToBoxingClass(Class<?> c) {
+        if (c.equals(int.class)) {
+            return Integer.class;
+        }
+        else if (c.equals(float.class)) {
+            return Float.class;
+        }
+        else if (c.equals(double.class)) {
+            return Double.class;
+        }
+        else if (c.equals(boolean.class)) {
+            return Boolean.class;
+        }
+        else if (c.equals(long.class)) {
+            return Long.class;
+        }
+        else if (c.equals(byte.class)) {
+            return Byte.class;
+        }
+        else if (c.equals(short.class)) {
+            return Short.class;
+        }
+        else if (c.equals(char.class)) {
+            return Character.class;
+        }
+
+        return c;
+    }
+
+    private static Object primitiveValue(Object o) {
+        if (o == null) {
+            return null;
+        }
+
+        Class<?> c = o.getClass();
+
+        if (c.equals(Integer.class)) {
+            return ((Integer) o).intValue();
+        }
+        else if (c.equals(Float.class)) {
+            return ((Float) o).floatValue();
+        }
+        else if (c.equals(Double.class)) {
+            return ((Double) o).doubleValue();
+        }
+        else if (c.equals(Boolean.class)) {
+            return ((Boolean) o).booleanValue();
+        }
+        else if (c.equals(Long.class)) {
+            return ((Long) o).longValue();
+        }
+        else if (c.equals(Byte.class)) {
+            return ((Byte) o).byteValue();
+        }
+        else if (c.equals(Short.class)) {
+            return ((Short) o).shortValue();
+        }
+        else if (c.equals(Character.class)) {
+            return ((Character) o).charValue();
+        }
+
+        return o;
+    }
+
+    private static Object numericValue(Object o, Class<?> c) {
+        if (o == null) {
+            return null;
+        }
+
+        if (c.equals(Integer.class)) {
+            return Integer.parseInt(o.toString());
+        }
+        else if (c.equals(Float.class)) {
+            return Float.parseFloat(o.toString());
+        }
+        else if (c.equals(Double.class)) {
+            return Double.parseDouble(o.toString());
+        }
+        else if (c.equals(Long.class)) {
+            return Long.parseLong(o.toString());
+        }
+        else if (c.equals(Byte.class)) {
+            return Byte.parseByte(o.toString());
+        }
+        else if (c.equals(Short.class)) {
+            return Short.parseShort(o.toString());
+        }
+
+        return o;
+    }
+
+    private List<Object> parseToSuitableArguments(Method method) throws IncompatibleArgumentsException {
+        List<Object> suitableArguments = new ArrayList<Object>(arguments.size());
+
+        if (arguments.size() != method.getParameterTypes().length) {
+            throw new IncompatibleArgumentsException("Unequal arity. '" + arguments.size() + "' - '" + method.getParameterTypes().length + "'");
+        }
+
+        for (int i = 0; i < method.getParameterTypes().length; i++) {
+            Object argument = arguments.get(i);
+            Class<?> parameterType = method.getParameterTypes()[i];
+            suitableArguments.add(parseToSuitableArgument(argument, parameterType));
+        }
+
+        return suitableArguments;
+    }
+
+    private static Object parseToSuitableArgument(Object argument, Class<?> parameterType)
+            throws IncompatibleArgumentsException {
+        if (argument == null) {
+            if (!parameterType.isPrimitive()) {
+                return argument;
+            } else {
+                throw new IncompatibleArgumentsException("Null is incompatible with primitive '" + parameterType + "'");
+            }
+        }
+
+        if (argument.getClass() == parameterType) {
+            return argument;
+        } else if (mapToPrimitiveClass(argument.getClass()) == parameterType) {
+            return primitiveValue(argument);
+        }
+
+        if (parameterType.isAssignableFrom(argument.getClass())) {
+            return parameterType.cast(argument);
+        }
+
+        // Accept any number
+        if (Number.class.isAssignableFrom(mapToBoxingClass(parameterType))) {
+            Object value;
+
+            try {
+                value = numericValue(argument, mapToBoxingClass(parameterType));
+            } catch (NumberFormatException e) {
+                throw new IncompatibleArgumentsException("Cannot convert '" + argument + "' to class '" + parameterType + "'");
+            }
+
+            if (parameterType.isPrimitive()) {
+                return primitiveValue(value);
+            } else {
+                return value;
+            }
+        }
+
+        if (!parameterType.isPrimitive() && !argument.getClass().isPrimitive()
+                && CharSequence.class.isAssignableFrom(parameterType)) {
+            if (argument instanceof CharSequence) {
+                return (CharSequence) argument;
+            }
+        }
+
+        if (argument instanceof String) {
+            if (((String)argument).length() == 1) {
+                if (parameterType.equals(char.class)) {
+                    return ((String) argument).charAt(0);
+                } else if (parameterType.equals(Character.class)) {
+                    return new Character(((String) argument).charAt(0));
+                }
+            }
+        }
+
+        throw new IncompatibleArgumentsException("No suitable type '" + parameterType + "' for '" + argument + "'");
+    }
+
+    private static Class<?>[] parseArgumentTypes(List<?> arguments) {
+        Class<?>[] types = new Class<?>[arguments.size()];
+
+        for (int i = 0; i < arguments.size(); i++) {
+            if (arguments.get(i) == null) {
+                types[i] = Object.class;
+            } else {
+                types[i] = arguments.get(i).getClass();
+            }
+        }
+
+        return types;
+    }
 
 	@Override
 	public String getName() {
 		return "InvocationOp["+this.methodName+", arguments = " + this.arguments + "]";
 	}
 
+    private static class IncompatibleArgumentsException extends Exception {
+        public IncompatibleArgumentsException(String detailMessage) {
+            super(detailMessage);
+        }
+    }
+
+    private static class MethodWithArguments {
+        private Method method;
+        private List<Object> arguments;
+
+        public MethodWithArguments(Method method, List<Object> arguments) {
+            this.method = method;
+            this.arguments = arguments;
+        }
+
+        public Method getMethod() {
+            return method;
+        }
+
+        public List<Object> getArguments() {
+            return arguments;
+        }
+
+        public Object invoke(Object o) throws InvocationTargetException, IllegalAccessException {
+            int size = arguments.size();
+
+            switch(size) {
+                case 0:
+                    return method.invoke(o);
+                case 1:
+                    return method.invoke(o,arguments.get(0));
+                case 2:
+                    return method.invoke(o,arguments.get(0),arguments.get(1));
+                case 3:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2));
+                case 4:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3));
+                case 5:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4));
+                case 6:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5));
+                case 7:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5),arguments.get(6));
+                case 8:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5),arguments.get(6),arguments.get(7));
+                case 9:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5),arguments.get(6),arguments.get(7),arguments.get(8));
+                case 10:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5),arguments.get(6),arguments.get(7),arguments.get(8),arguments.get(9));
+                case 11:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5),arguments.get(6),arguments.get(7),arguments.get(8),arguments.get(9),arguments.get(10));
+                case 12:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5),arguments.get(6),arguments.get(7),arguments.get(8),arguments.get(9),arguments.get(10),arguments.get(11));
+                case 13:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5),arguments.get(6),arguments.get(7),arguments.get(8),arguments.get(9),arguments.get(10),arguments.get(11),arguments.get(12));
+                case 14:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5),arguments.get(6),arguments.get(7),arguments.get(8),arguments.get(9),arguments.get(10),arguments.get(11),arguments.get(12),arguments.get(13));
+                case 15:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5),arguments.get(6),arguments.get(7),arguments.get(8),arguments.get(9),arguments.get(10),arguments.get(11),arguments.get(12),arguments.get(13),arguments.get(14));
+                case 16:
+                    return method.invoke(o,arguments.get(0),arguments.get(1),arguments.get(2),arguments.get(3),arguments.get(4),arguments.get(5),arguments.get(6),arguments.get(7),arguments.get(8),arguments.get(9),arguments.get(10),arguments.get(11),arguments.get(12),arguments.get(13),arguments.get(14),arguments.get(15));
+            }
+
+            throw new UnsupportedOperationException("Method with more than 16 arguments are not supported");
+        }
+    }
 }

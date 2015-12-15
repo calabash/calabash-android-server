@@ -1,3 +1,0 @@
---markup=markdown
---no-private
-lib/**/*.rb - LICENSE ENVIRONMENT_VARIABLES.md lib/**/*.md

@@ -129,22 +129,12 @@ public class Query {
 		String stepType = UIQueryParser.tokenNames[step.getType()];
 		switch (step.getType()) {
 		case UIQueryParser.QUALIFIED_NAME:
-			try {
-				return new UIQueryASTClassName(Class.forName(step.getText()));
-			} catch (ClassNotFoundException e) {
-				return new UIQueryASTClassName((String)null);
-			}
+			return UIQueryASTClassName.fromQualifiedClassName(step.getText());
 		case UIQueryParser.NAME:
-			return new UIQueryASTClassName(step.getText());
-		
+			return UIQueryASTClassName.fromSimpleClassName(step.getText());
 		case UIQueryParser.WILDCARD:
-			try {
-				return new UIQueryASTClassName(Class.forName("android.view.View"));
-			} catch (ClassNotFoundException e) {
-				//Cannot happen
-				throw new IllegalStateException(e);
-			}
-			
+			return UIQueryASTClassName.fromQualifiedClassName("android.view.View");
+
 
 			
 		case UIQueryParser.FILTER_COLON:

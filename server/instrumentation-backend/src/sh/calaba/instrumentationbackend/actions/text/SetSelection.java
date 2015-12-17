@@ -1,19 +1,16 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
 import android.text.Editable;
+import android.text.TextUtils;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputConnection;
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 public class SetSelection implements Action {
 
-    private static final String SELECTION_END   = "SELECTION_END";
-    private static final String USAGE           = "This action takes 2 arguments:\n([int] position, [int] length)";
+    private static final String USAGE = "This action takes 2 arguments:\n([int] start, [int] end)";
 
     @Override
     public Result execute(final String... args) {
@@ -21,40 +18,57 @@ public class SetSelection implements Action {
             return Result.failedResult(USAGE);
         } 
 
-        final BaseInputConnection connection = getConnection();
-        if (connection == null) {
+        final InputConnection inputConnection = InfoMethodUtil.tryGetInputConnection();
+
+        if (inputConnection == null) {
             return Result.failedResult("Unable to set selection, no element has focus");
         }
 
-        final Editable editable = connection.getEditable();
+        if (!(inputConnection instanceof BaseInputConnection)) {
+            return Result.failedResult("Connection is not an instance of 'BaseInputConnection'");
+        }
+
+        final BaseInputConnection baseInputConnection = (BaseInputConnection) inputConnection;
+
+        final Editable editable = baseInputConnection.getEditable();
+
         if (editable == null) {
             return Result.failedResult("Unable to set selection, not editable");
+        }
+
+        final int argFrom, argTo;
+
+        try {
+            argFrom = Integer.parseInt(args[0]);
+            argTo = Integer.parseInt(args[1]);
+        } catch (NumberFormatException e) {
+            return Result.failedResult(USAGE);
         }
 
         InstrumentationBackend.solo.runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                int position, length;
-                if (args[0].equals(SELECTION_END)) { position = editable.length(); }
-                else { position = Integer.parseInt(args[0]); }
+                // Find length of non-formatted text
+                int textLength = InfoMethodUtil.getEditableTextLength(editable);
+                int from, to;
 
-                if (args[1].equals(SELECTION_END)) { length = editable.length(); }
-                else { length = Integer.parseInt(args[1]); }
+                if (argFrom < 0) {
+                    from = textLength + argFrom + 1;
+                } else {
+                    from = argFrom;
+                }
 
-                connection.setSelection(position, length);
+                if (argTo < 0) {
+                    to = textLength + argTo + 1;
+                } else {
+                    to = argTo;
+                }
+
+                baseInputConnection.setSelection(from, to);
             }
         });
-        return Result.successResult();
-    }
 
-    private BaseInputConnection getConnection() {
-        InputConnection inputConnection = InfoMethodUtil.getInputConnection();
-        if (inputConnection instanceof BaseInputConnection) {
-            return (BaseInputConnection) inputConnection;
-        } else {
-            System.out.println("InputConnection is not an instance of BaseInputConnection. (" + (inputConnection == null ? "null" : inputConnection.getClass().toString()) + ")");
-            return null;
-        }
+        return Result.successResult();
     }
 
     @Override

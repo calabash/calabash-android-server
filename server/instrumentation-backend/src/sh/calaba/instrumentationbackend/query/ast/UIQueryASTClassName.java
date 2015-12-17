@@ -1,30 +1,78 @@
 package sh.calaba.instrumentationbackend.query.ast;
 
+import android.content.Context;
 import android.view.View;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+
+import sh.calaba.instrumentationbackend.InstrumentationBackend;
 
 public class UIQueryASTClassName implements UIQueryAST {
 	public final String simpleClassName;	
 	@SuppressWarnings("rawtypes")
 	public final Class qualifiedClassName;
+
+	/*
+		Creates a new instance of UIQueryASTClassName by the given qualified class name.
+		If the class has not been loaded, the qualifiedClass set will be null
+	 */
+	public static UIQueryASTClassName fromQualifiedClassName(String qualifiedClassName) {
+		ClassLoader classLoader;
+		Context context = InstrumentationBackend.instrumentation.getTargetContext();
+
+		if (context == null) {
+			System.out.println("targetContext is null, loading this ClassLoader");
+			classLoader = UIQueryASTClassName.class.getClassLoader();
+		} else {
+			classLoader = context.getClassLoader();
+		}
+
+		if (classLoader == null) {
+			return new UIQueryASTClassName((Class<?>)null);
+		}
+
+		return new UIQueryASTClassName(findLoadedClass(classLoader, qualifiedClassName));
+	}
+
+	public static UIQueryASTClassName fromSimpleClassName(String simpleClassName) {
+		return new UIQueryASTClassName(simpleClassName);
+	}
+
+	private static Class<?> findLoadedClass(ClassLoader classLoader, String qualifiedClassName) {
+		try {
+			Method findLoadedClassMethod =
+                    ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+			findLoadedClassMethod.setAccessible(true);
+
+			return (Class<?>) findLoadedClassMethod.invoke(classLoader, qualifiedClassName);
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+	}
 	
-	public UIQueryASTClassName(String simpleClassName) 
+	private UIQueryASTClassName(String simpleClassName)
 	{		
 		this.simpleClassName = simpleClassName;
 		this.qualifiedClassName = null;
 	}
 	
 	@SuppressWarnings("rawtypes")
-	public UIQueryASTClassName(Class qualifiedClassName)
+	private UIQueryASTClassName(Class qualifiedClassName)
 	{
-		if (qualifiedClassName == null) {throw new IllegalArgumentException("Cannot instantiate with null class");}
 		this.qualifiedClassName = qualifiedClassName;
 		this.simpleClassName = null;		
 	}

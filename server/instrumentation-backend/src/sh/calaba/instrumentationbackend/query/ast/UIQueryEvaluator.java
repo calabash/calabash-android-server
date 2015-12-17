@@ -10,6 +10,11 @@ import sh.calaba.instrumentationbackend.query.Operation;
 import sh.calaba.instrumentationbackend.query.QueryResult;
 import sh.calaba.instrumentationbackend.query.UIQueryResultVoid;
 import sh.calaba.instrumentationbackend.query.ViewMapper;
+import sh.calaba.instrumentationbackend.query.ast.UIQueryAST;
+import sh.calaba.instrumentationbackend.query.ast.UIQueryDirection;
+import sh.calaba.instrumentationbackend.query.ast.UIQueryVisibility;
+import sh.calaba.instrumentationbackend.query.ast.evaluation.QueryEvaluator;
+import sh.calaba.instrumentationbackend.query.ast.evaluation.UIQueryEvaluationStep;
 
 public class UIQueryEvaluator {
 	
@@ -57,32 +62,8 @@ public class UIQueryEvaluator {
 	}
 
 
-	@SuppressWarnings("rawtypes")
 	private static List evaluateQueryForPath(List<UIQueryAST> queryPath,
 			List<View> inputViews) {
-
-		List currentResult = inputViews;
-		UIQueryDirection currentDirection = UIQueryDirection.DESCENDANT;
-		UIQueryVisibility currentVisibility = UIQueryVisibility.VISIBLE;
-		
-		for (UIQueryAST step : queryPath) {			
-			if (step instanceof UIQueryDirection) {
-				currentDirection = (UIQueryDirection) step;
-			}
-			else if (step instanceof UIQueryVisibility) {
-				currentVisibility = (UIQueryVisibility) step;
-			}
-			else {
-				currentResult = step.evaluateWithViews(currentResult, currentDirection,currentVisibility);
-			}
-
-		}
-		return currentResult;
+		return QueryEvaluator.evaluateQueryForPath(queryPath, new UIQueryEvaluationStep(inputViews));
 	}
-		
-
-	public static boolean isDirection(UIQueryAST step) {
-		return step instanceof UIQueryDirection;
-	}
-			
 }

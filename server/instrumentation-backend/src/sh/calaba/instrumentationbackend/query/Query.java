@@ -24,6 +24,10 @@ import sh.calaba.instrumentationbackend.query.ast.UIQueryASTWith;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryDirection;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryEvaluator;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryVisibility;
+import sh.calaba.instrumentationbackend.query.ast.optimization.GeneralUIQueryOptimizer;
+import sh.calaba.instrumentationbackend.query.ast.optimization.QueryOptimizationCache;
+import sh.calaba.instrumentationbackend.query.ast.optimization.QueryOptimizer;
+
 import android.view.View;
 
 public class Query {
@@ -48,7 +52,16 @@ public class Query {
 	}
 
 	public QueryResult executeQuery() {
-		return UIQueryEvaluator.evaluateQueryWithOptions(parseQuery(this.queryString), rootViews(), parseOperations(this.operations));		
+		List<UIQueryAST> queryPath = parseQuery(this.queryString);
+		List<UIQueryAST> optimizedQuery = QueryOptimizationCache.getCacheFor(this.queryString);
+
+		if (optimizedQuery == null) {
+			QueryOptimizer queryOptimizer = new GeneralUIQueryOptimizer();
+			optimizedQuery = queryOptimizer.optimize(queryPath);
+			QueryOptimizationCache.cache(this.queryString, optimizedQuery);
+		}
+
+		return UIQueryEvaluator.evaluateQueryWithOptions(optimizedQuery, rootViews(), parseOperations(this.operations));
 	}
 
 	@SuppressWarnings("rawtypes")

@@ -2,7 +2,11 @@ package sh.calaba.instrumentationbackend.actions.text;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
+import android.text.Editable;
+import android.text.Selection;
 import android.view.View;
+import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 
@@ -26,12 +30,37 @@ public class KeyboardEnterText implements Action {
             return Result.failedResult("Could not enter text. No element has focus.");
         }
 
+        if (!(inputConnection instanceof BaseInputConnection)) {
+            return Result.failedResult("Connection is not an instance of 'BaseInputConnection'");
+        }
+
+        final BaseInputConnection baseInputConnection = (BaseInputConnection) inputConnection;
+
+
+        final Editable editable = baseInputConnection.getEditable();
+
+        if (editable == null) {
+            return Result.failedResult("Unable to set selection, not editable");
+        }
+
         final String textToEnter = args[0];
         InstrumentationBackend.solo.runOnMainSync(new Runnable() {
             @Override
             public void run() {
+                if (Build.VERSION.SDK_INT >= 9) {
+                    int start = Selection.getSelectionStart(editable);
+                    int end = Selection.getSelectionEnd(editable);
+                    baseInputConnection.setComposingRegion(start, end);
+                }
+
                 for (char c : textToEnter.toCharArray()) {
-                    inputConnection.commitText(Character.toString(c), 1);
+                    baseInputConnection.commitText(Character.toString(c), 1);
+                }
+
+                if (Build.VERSION.SDK_INT >= 9) {
+                    int start = Selection.getSelectionStart(editable);
+                    int end = Selection.getSelectionEnd(editable);
+                    baseInputConnection.setComposingRegion(start, end);
                 }
             }
         });

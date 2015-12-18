@@ -1,6 +1,8 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
 import android.content.Context;
+import android.text.Editable;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
@@ -51,5 +53,12 @@ public class InfoMethodUtil {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /*
+     Find length of non-formatted text
+    */
+    static int getEditableTextLength(Editable editable) {
+        return TextUtils.substring(editable, 0, editable.length()).length();
     }
 }

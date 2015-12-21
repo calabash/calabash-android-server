@@ -17,12 +17,12 @@ public class PressKey implements Action {
         }
 
         String keyString = args[0];
-        Integer keyCode = null;
+        Integer keyCode;
 
-        if (isNumber(keyString)) {
+        if (KeyUtil.isNumber(keyString)) {
             keyCode = Integer.parseInt(keyString);
         } else {
-            keyCode = getKey(keyString);
+            keyCode = KeyUtil.getKey(keyString);
         }
         
         if (keyCode == null || keyCode < 0) {
@@ -56,30 +56,5 @@ public class PressKey implements Action {
     @Override
     public String key() {
         return "press_key";
-    }
-
-    public static Integer getKey(String keyName) {
-        keyName = keyName.toUpperCase();
-
-        Class<?> keyEventClass = KeyEvent.class;
-        try {
-            Field field = keyEventClass.getField(keyName);
-            
-            return field.getInt(null);
-        } catch (NoSuchFieldException e) {
-            return null;
-        } catch (IllegalAccessException e) {
-            return null;
-        }
-    }
-
-    private static boolean isNumber(String string) {
-        try {
-            Integer.parseInt(string);
-
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
     }
 }

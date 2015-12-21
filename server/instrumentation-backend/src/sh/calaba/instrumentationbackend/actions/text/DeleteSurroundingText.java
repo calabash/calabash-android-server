@@ -38,11 +38,11 @@ public class DeleteSurroundingText implements Action {
             return Result.failedResult("Unable to set selection, not editable");
         }
 
-        final int argBeforeLength, argAfterLenght;
+        final int argBeforeLength, argAfterLength;
 
         try {
             argBeforeLength = Integer.parseInt(args[0]);
-            argAfterLenght = Integer.parseInt(args[1]);
+            argAfterLength = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
             return Result.failedResult(USAGE);
         }
@@ -60,10 +60,10 @@ public class DeleteSurroundingText implements Action {
                     beforeLength = argBeforeLength;
                 }
 
-                if (argAfterLenght < 0) {
-                    afterLength = textLength + argAfterLenght + 1;
+                if (argAfterLength < 0) {
+                    afterLength = textLength + argAfterLength + 1;
                 } else {
-                    afterLength = argAfterLenght;
+                    afterLength = argAfterLength;
                 }
 
                 if (Build.VERSION.SDK_INT >= 9) {

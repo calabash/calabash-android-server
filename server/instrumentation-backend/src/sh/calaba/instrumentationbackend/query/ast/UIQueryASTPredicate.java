@@ -13,9 +13,9 @@ import android.view.View;
 
 public class UIQueryASTPredicate implements UIQueryAST {
 
-	private final String propertyName;
-	private final UIQueryASTPredicateRelation relation;
-	private final Object valueToMatch;
+	public final String propertyName;
+	public final UIQueryASTPredicateRelation relation;
+	public final Object valueToMatch;
 
 	public UIQueryASTPredicate(String text,
 			UIQueryASTPredicateRelation parsedRelation, Object parsedValue) {

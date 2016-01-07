@@ -13,6 +13,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
+import sh.calaba.instrumentationbackend.query.ast.optimization.UIQueryASTClassNameCache;
 
 public class UIQueryASTClassName implements UIQueryAST {
 	public final String simpleClassName;	
@@ -46,6 +47,12 @@ public class UIQueryASTClassName implements UIQueryAST {
 	}
 
 	private static Class<?> findLoadedClass(ClassLoader classLoader, String qualifiedClassName) {
+		Class<?> classFromCache = UIQueryASTClassNameCache.loadedClass(qualifiedClassName);
+
+		if (classFromCache != null) {
+			return classFromCache;
+		}
+
 		try {
 			Method findLoadedClassMethod =
                     ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
@@ -55,8 +62,12 @@ public class UIQueryASTClassName implements UIQueryAST {
 
 			if (foundClass == null) {
 				if (classLoader.getParent() != null) {
-					return (Class<?>) findLoadedClassMethod.invoke(classLoader.getParent(), qualifiedClassName);
+					return findLoadedClass(classLoader.getParent(), qualifiedClassName);
 				}
+			}
+
+			if (foundClass != null) {
+				UIQueryASTClassNameCache.markAsLoaded(qualifiedClassName, foundClass);
 			}
 
 			return foundClass;

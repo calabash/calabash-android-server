@@ -51,7 +51,15 @@ public class UIQueryASTClassName implements UIQueryAST {
                     ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
 			findLoadedClassMethod.setAccessible(true);
 
-			return (Class<?>) findLoadedClassMethod.invoke(classLoader, qualifiedClassName);
+			Class<?> foundClass = (Class<?>) findLoadedClassMethod.invoke(classLoader, qualifiedClassName);
+
+			if (foundClass == null) {
+				if (classLoader.getParent() != null) {
+					return (Class<?>) findLoadedClassMethod.invoke(classLoader.getParent(), qualifiedClassName);
+				}
+			}
+
+			return foundClass;
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);

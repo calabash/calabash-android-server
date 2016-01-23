@@ -10,11 +10,9 @@ import java.lang.Integer;
 import java.util.Map;
 import java.util.HashMap;
 
-import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
-import sh.calaba.instrumentationbackend.actions.Action;
 
-public class PressUserActionButton implements Action {
+public class PressUserActionButton extends TextAction {
     private static Map<String,Integer> actionCodeMap;
 
     static {
@@ -30,40 +28,41 @@ public class PressUserActionButton implements Action {
         actionCodeMap.put("previous", EditorInfo.IME_ACTION_PREVIOUS);
     }
 
+    private Integer imeActionCodeArgument;
+
     @Override
-    public Result execute(String... args) {
+    protected void parseArguments(String... args) throws IllegalArgumentException {
         if (args.length > 1) {
-            return Result.failedResult("This action takes zero arguments or one argument ([String] action name)");
+            throw new IllegalArgumentException( "This action takes zero arguments or one argument ([String] action name)");
         }
 
-        final View view = InfoMethodUtil.getServedView();
-        final InputConnection inputConnection = InfoMethodUtil.tryGetInputConnection();
+        if (args.length == 1) {
+            imeActionCodeArgument = findActionCode(args[0]);
+        }
+    }
+
+    @Override
+    protected String getNoFocusedViewMessage() {
+        return null;
+    }
+
+    @Override
+    protected Result executeOnUIThread(final View servedView, final InputConnection inputConnection) {
         final Integer imeActionCode;
 
-        if (inputConnection == null) {
-            return Result.failedResult("Could not press user action button. No element has focus.");
-        }
-
-        if (args.length >= 1) {
-            try {
-                imeActionCode = findActionCode(args[0]);
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException(e);
-            }
+        if (imeActionCodeArgument != null) {
+            imeActionCode = imeActionCodeArgument;
         } else {
-            imeActionCode = findActionCode(view);
+            imeActionCode = findActionCode(servedView);
         }
-
 
         if (imeActionCode == null) {
-            return (new KeyboardEnterText()).execute("\n");
+            KeyboardEnterText keyboardEnterTextAction = new KeyboardEnterText();
+            keyboardEnterTextAction.parseArguments("\n");
+
+            return keyboardEnterTextAction.executeOnUIThread(servedView, inputConnection);
         } else {
-            InstrumentationBackend.solo.runOnMainSync(new Runnable() {
-                @Override
-                public void run() {
-                    inputConnection.performEditorAction(imeActionCode);
-                }
-            });
+            inputConnection.performEditorAction(imeActionCode);
 
             return Result.successResult();
         }
@@ -102,11 +101,18 @@ public class PressUserActionButton implements Action {
 
     private int findActionCode(String actionName) throws IllegalArgumentException {
         actionName = actionName.toLowerCase();
+        Integer actionCode;
 
         try {
-            return actionCodeMap.get(actionName);
+            actionCode = actionCodeMap.get(actionName);
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("Action name '" + actionName + "' invalid");
+        }
+
+        if (actionCode == null) {
+            throw new IllegalArgumentException("Action name '" + actionName + "' invalid");
+        } else {
+            return actionCode;
         }
     }
 }

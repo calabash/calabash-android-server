@@ -5,8 +5,6 @@ import android.content.Context;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
-import java.lang.reflect.Field;
-
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
@@ -18,9 +16,13 @@ public class HideSoftKeyboard implements Action {
         InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 
         Activity activity = InstrumentationBackend.solo.getCurrentActivity();
-        View view;
+        View view = null;
 
-        view = InfoMethodUtil.tryGetServedView();
+        try {
+            view = InfoMethodUtil.getServedView();
+        } catch (InfoMethodUtil.UnexpectedInputMethodManagerStructureException e) {
+            // Ignored
+        }
 
         if (view == null) {
             view = activity.getCurrentFocus();

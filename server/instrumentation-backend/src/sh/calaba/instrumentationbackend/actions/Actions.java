@@ -2,6 +2,7 @@ package sh.calaba.instrumentationbackend.actions;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,7 +55,7 @@ public class Actions {
 
     @SuppressWarnings("rawtypes")
     private boolean isAction(Class actionCandidate) {
-        boolean isImplementation = !actionCandidate.isInterface();
+        boolean isImplementation = !actionCandidate.isInterface() && !Modifier.isAbstract(actionCandidate.getModifiers());
         return isImplementation && Action.class.isAssignableFrom(actionCandidate);
     }
 

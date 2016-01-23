@@ -29,7 +29,7 @@ public class DeleteSurroundingText extends TextAction {
 
     @Override
     protected String getNoFocusedViewMessage() {
-        return "Unable to set selection, no element has focus";
+        return "Unable to delete surrounding text, no element has focus";
     }
 
     @Override

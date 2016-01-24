@@ -7,6 +7,7 @@ import android.webkit.ValueCallback;
 import android.webkit.WebView;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -91,14 +92,25 @@ public class WebContainer {
                 return webFuture;
             }
         } else if (isCrossWalk()) {
-            Class<?> webContainerClass = getView().getClass();
             final CalabashChromeClient.WebFuture webFuture =
                     new CalabashChromeClient.WebFuture(this);
 
-            View xWalkContent = getView();
+            Object xWalkContent = getView();
 
-            while (!superClassEquals(xWalkContent.getClass(), "org.xwalk.core.internal.XWalkContent")) {
-                xWalkContent = getChildOf(xWalkContent);
+            while (!isCrossWalkContentClass(xWalkContent.getClass())) {
+                xWalkContent = getChildOf((View)xWalkContent);
+            }
+
+            if (superClassEquals(xWalkContent.getClass(), "org.xwalk.core.internal.XWalkContent$1")) {
+                try {
+                    Field outer = xWalkContent.getClass().getDeclaredField("this$0");
+                    outer.setAccessible(true);
+                    xWalkContent = outer.get(xWalkContent);
+                } catch (NoSuchFieldException e) {
+                    throw new RuntimeException(e);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             // Enable javascript
@@ -120,10 +132,10 @@ public class WebContainer {
 
             try {
                 Method methodEvaluateJavascript =
-                        webContainerClass.getMethod("evaluateJavascript",
-                        String.class, android.webkit.ValueCallback.class);
+                        xWalkContent.getClass().getMethod("evaluateJavascript",
+                                String.class, android.webkit.ValueCallback.class);
 
-                methodEvaluateJavascript.invoke(getView(), javaScript, new ValueCallback<String>() {
+                methodEvaluateJavascript.invoke(xWalkContent, javaScript, new ValueCallback<String>() {
                     public void onReceiveValue(String response) {
                         ObjectMapper mapper = new ObjectMapper();
 
@@ -230,13 +242,18 @@ public class WebContainer {
     }
 
     private boolean isCrossWalk() {
-        return superClassEquals(getView().getClass(), "org.xwalk.core.internal.XWalkContent") ||
+        return isCrossWalkContentClass(getView().getClass()) ||
                 superClassEquals(getView().getClass(), "org.xwalk.core.XWalkView");
+    }
+
+    private boolean isCrossWalkContentClass(Class<?> clz) {
+        return superClassEquals(clz, "org.xwalk.core.internal.XWalkContent") ||
+                superClassEquals(clz, "org.xwalk.core.internal.XWalkContent$1");
     }
 
     private boolean superClassEquals(Class clazz, String className) {
         do {
-            if (className.equals(clazz.getCanonicalName())) {
+            if (className.equals(clazz.getName())) {
                 return true;
             }
         } while((clazz = clazz.getSuperclass()) != Object.class);

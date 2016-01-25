@@ -1,69 +1,51 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
-import android.app.Activity;
-import android.content.Context;
 import android.os.Build;
 import android.text.Editable;
 import android.text.Selection;
 import android.view.View;
-import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputConnection;
-import android.view.inputmethod.InputMethodManager;
 
 import java.lang.Character;
-import java.lang.reflect.Field;
 
-import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
-import sh.calaba.instrumentationbackend.actions.Action;
 
-public class KeyboardEnterText implements Action {
+public class KeyboardEnterText extends TextAction {
+    private String textToEnter;
+
     @Override
-    public Result execute(String... args) {
+    protected void parseArguments(String... args) throws IllegalArgumentException {
         if (args.length != 1) {
-            return Result.failedResult("This action takes one argument ([String] text).");
+            throw new IllegalArgumentException("This action takes one argument ([String] text).");
         }
 
-        final InputConnection inputConnection = InfoMethodUtil.tryGetInputConnection();
+        textToEnter = args[0];
+    }
 
-        if (inputConnection == null) {
-            return Result.failedResult("Could not enter text. No element has focus.");
+    @Override
+    protected String getNoFocusedViewMessage() {
+        return "Could not enter text. No element has focus.";
+    }
+
+    @Override
+    protected Result executeOnUIThread(final View servedView, final InputConnection inputConnection) {
+        final Editable editable = InfoMethodUtil.getEditable(servedView);
+
+        if (Build.VERSION.SDK_INT >= 9) {
+            int start = Selection.getSelectionStart(editable);
+            int end = Selection.getSelectionEnd(editable);
+            inputConnection.setComposingRegion(start, end);
         }
 
-        if (!(inputConnection instanceof BaseInputConnection)) {
-            return Result.failedResult("Connection is not an instance of 'BaseInputConnection'");
+        for (char c : textToEnter.toCharArray()) {
+            inputConnection.commitText(Character.toString(c), 1);
         }
 
-        final BaseInputConnection baseInputConnection = (BaseInputConnection) inputConnection;
-
-
-        final Editable editable = baseInputConnection.getEditable();
-
-        if (editable == null) {
-            return Result.failedResult("Unable to set selection, not editable");
+        if (Build.VERSION.SDK_INT >= 9) {
+            int start = Selection.getSelectionStart(editable);
+            int end = Selection.getSelectionEnd(editable);
+            inputConnection.setComposingRegion(start, end);
         }
-
-        final String textToEnter = args[0];
-        InstrumentationBackend.solo.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                if (Build.VERSION.SDK_INT >= 9) {
-                    int start = Selection.getSelectionStart(editable);
-                    int end = Selection.getSelectionEnd(editable);
-                    baseInputConnection.setComposingRegion(start, end);
-                }
-
-                for (char c : textToEnter.toCharArray()) {
-                    baseInputConnection.commitText(Character.toString(c), 1);
-                }
-
-                if (Build.VERSION.SDK_INT >= 9) {
-                    int start = Selection.getSelectionStart(editable);
-                    int end = Selection.getSelectionEnd(editable);
-                    baseInputConnection.setComposingRegion(start, end);
-                }
-            }
-        });
 
         return Result.successResult();
     }

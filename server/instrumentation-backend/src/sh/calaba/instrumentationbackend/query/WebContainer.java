@@ -95,67 +95,23 @@ public class WebContainer {
             final CalabashChromeClient.WebFuture webFuture =
                     new CalabashChromeClient.WebFuture(this);
 
-            Object xWalkContent = getView();
+            XWalkContent xWalkContent = XWalkContent.getXWalkContentForView(getView());
+            xWalkContent.enableJavaScript();
+            xWalkContent.evaluateJavascript(javaScript, new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String response) {
+                    ObjectMapper mapper = new ObjectMapper();
 
-            while (!isCrossWalkContentClass(xWalkContent.getClass())) {
-                xWalkContent = getChildOf((View)xWalkContent);
-            }
-
-            if (superClassEquals(xWalkContent.getClass(), "org.xwalk.core.internal.XWalkContent$1")) {
-                try {
-                    Field outer = xWalkContent.getClass().getDeclaredField("this$0");
-                    outer.setAccessible(true);
-                    xWalkContent = outer.get(xWalkContent);
-                } catch (NoSuchFieldException e) {
-                    throw new RuntimeException(e);
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            // Enable javascript
-            try {
-                Method methodGetSettings = xWalkContent.getClass().getMethod("getSettings");
-                Object xWalkSettings = methodGetSettings.invoke(xWalkContent);
-
-                Method methodSetJavaScriptEnabled = xWalkSettings.getClass().
-                        getMethod("setJavaScriptEnabled", boolean.class);
-
-                methodSetJavaScriptEnabled.invoke(xWalkSettings, true);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-
-            try {
-                Method methodEvaluateJavascript =
-                        xWalkContent.getClass().getMethod("evaluateJavascript",
-                                String.class, android.webkit.ValueCallback.class);
-
-                methodEvaluateJavascript.invoke(xWalkContent, javaScript, new ValueCallback<String>() {
-                    public void onReceiveValue(String response) {
-                        ObjectMapper mapper = new ObjectMapper();
-
-                        try {
-                            Object value = mapper.readValue(response, Object.class);
-                            webFuture.setResult("" + value);
-                        } catch (IOException e) {
-                            webFuture.completeExceptionally(e);
-                        }
+                    try {
+                        Object value = mapper.readValue(response, Object.class);
+                        webFuture.setResult("" + value);
+                    } catch (IOException e) {
+                        webFuture.completeExceptionally(e);
                     }
-                });
+                }
+            });
 
-                return webFuture;
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
+            return webFuture;
         } else {
             throw new RuntimeException(getView().getClass().getCanonicalName() + " is not recognized a valid web view.");
         }
@@ -246,12 +202,12 @@ public class WebContainer {
                 superClassEquals(getView().getClass(), "org.xwalk.core.XWalkView");
     }
 
-    private boolean isCrossWalkContentClass(Class<?> clz) {
+    private static boolean isCrossWalkContentClass(Class<?> clz) {
         return superClassEquals(clz, "org.xwalk.core.internal.XWalkContent") ||
                 superClassEquals(clz, "org.xwalk.core.internal.XWalkContent$1");
     }
 
-    private boolean superClassEquals(Class clazz, String className) {
+    private static boolean superClassEquals(Class clazz, String className) {
         do {
             if (className.equals(clazz.getName())) {
                 return true;
@@ -261,7 +217,7 @@ public class WebContainer {
         return false;
     }
 
-    private View getChildOf(View view) {
+    private static View getChildOf(View view) {
         if (view instanceof ViewGroup) {
             ViewGroup viewGroup = (ViewGroup) view;
 
@@ -273,5 +229,67 @@ public class WebContainer {
 
     private float translateCoordToScreen(int offset, float scale, Object point) {
         return offset + ((Number)point).floatValue() *scale;
+    }
+
+    private static class XWalkContent {
+        private Object xWalkContent;
+        
+        public static XWalkContent getXWalkContentForView(View view) {
+            return new XWalkContent(view);
+        }
+
+        private XWalkContent(View view) {
+            xWalkContent = view;
+
+            while (!isCrossWalkContentClass(xWalkContent.getClass())) {
+                xWalkContent = getChildOf((View)xWalkContent);
+            }
+
+            if (superClassEquals(xWalkContent.getClass(), "org.xwalk.core.internal.XWalkContent$1")) {
+                try {
+                    Field outer = xWalkContent.getClass().getDeclaredField("this$0");
+                    outer.setAccessible(true);
+                    xWalkContent = outer.get(xWalkContent);
+                } catch (NoSuchFieldException e) {
+                    throw new RuntimeException(e);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        public void enableJavaScript() {
+            try {
+                Method methodGetSettings = xWalkContent.getClass().getMethod("getSettings");
+                Object xWalkSettings = methodGetSettings.invoke(xWalkContent);
+
+                Method methodSetJavaScriptEnabled = xWalkSettings.getClass().
+                        getMethod("setJavaScriptEnabled", boolean.class);
+
+                methodSetJavaScriptEnabled.invoke(xWalkSettings, true);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public<T> void evaluateJavascript(String javaScript, ValueCallback<T> callback) {
+            try {
+                Method methodEvaluateJavascript =
+                        xWalkContent.getClass().getMethod("evaluateJavascript",
+                                String.class, android.webkit.ValueCallback.class);
+
+                methodEvaluateJavascript.invoke(xWalkContent, javaScript, callback);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

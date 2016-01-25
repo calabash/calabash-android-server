@@ -312,7 +312,7 @@ public class UIQueryUtils {
                         new TypeReference<List<HashMap<String, Object>>>() {
                         });
                 for (Map<String, Object> data : parsedResult) {
-                    Map<String, Integer> rect = (Map<String, Integer>) data.get("rect");
+                    Map<String, Number> rect = (Map<String, Number>) data.get("rect");
                     Map<String, Integer> updatedRect = webContainer.translateRectToScreenCoordinates(rect);
                     data.put("rect", updatedRect);
 

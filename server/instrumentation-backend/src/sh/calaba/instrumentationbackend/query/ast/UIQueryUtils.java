@@ -26,6 +26,7 @@ import sh.calaba.instrumentationbackend.query.WebContainer;
 import sh.calaba.instrumentationbackend.query.antlr.UIQueryParser;
 import sh.calaba.instrumentationbackend.utils.ViewWrapper;
 import sh.calaba.org.codehaus.jackson.JsonParseException;
+import sh.calaba.org.codehaus.jackson.JsonProcessingException;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import sh.calaba.org.codehaus.jackson.type.TypeReference;
 
@@ -324,8 +325,8 @@ public class UIQueryUtils {
                 }
 
                 return parsedResult;
-            } catch (Exception ignored) {
-                System.out.println("Exception in call");
+            } catch (JsonProcessingException ignored) {
+                System.out.println("Exception in call " + ignored);
 
                 System.out.println("json response: " + jsonResponse);
 

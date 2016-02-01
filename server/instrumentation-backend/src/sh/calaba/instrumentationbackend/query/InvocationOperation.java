@@ -270,7 +270,7 @@ public class InvocationOperation implements Operation {
         }
 
         // Accept any number
-        if (Number.class.isAssignableFrom(mapToBoxingClass(parameterType))) {
+        if (Number.class.isAssignableFrom(mapToBoxingClass(parameterType)) && !(argument instanceof CharSequence)) {
             Object value;
 
             try {

@@ -34,7 +34,7 @@ public class DeleteSurroundingText extends TextAction {
 
     @Override
     protected Result executeOnUIThread(final View servedView, final InputConnection inputConnection) {
-        final Editable editable = InfoMethodUtil.getEditable(servedView);
+        final Editable editable = InfoMethodUtil.getEditable(servedView, inputConnection);
 
         // Find length of non-formatted text
         int textLength = InfoMethodUtil.getEditableTextLength(editable);

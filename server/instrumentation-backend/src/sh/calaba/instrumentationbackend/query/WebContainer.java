@@ -7,6 +7,7 @@ import android.webkit.ValueCallback;
 import android.webkit.WebView;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -91,59 +92,26 @@ public class WebContainer {
                 return webFuture;
             }
         } else if (isCrossWalk()) {
-            Class<?> webContainerClass = getView().getClass();
             final CalabashChromeClient.WebFuture webFuture =
                     new CalabashChromeClient.WebFuture(this);
 
-            View xWalkContent = getView();
+            XWalkContent xWalkContent = XWalkContent.getXWalkContentForView(getView());
+            xWalkContent.enableJavaScript();
+            xWalkContent.evaluateJavascript(javaScript, new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String response) {
+                    ObjectMapper mapper = new ObjectMapper();
 
-            while (!superClassEquals(xWalkContent.getClass(), "org.xwalk.core.internal.XWalkContent")) {
-                xWalkContent = getChildOf(xWalkContent);
-            }
-
-            // Enable javascript
-            try {
-                Method methodGetSettings = xWalkContent.getClass().getMethod("getSettings");
-                Object xWalkSettings = methodGetSettings.invoke(xWalkContent);
-
-                Method methodSetJavaScriptEnabled = xWalkSettings.getClass().
-                        getMethod("setJavaScriptEnabled", boolean.class);
-
-                methodSetJavaScriptEnabled.invoke(xWalkSettings, true);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-
-            try {
-                Method methodEvaluateJavascript =
-                        webContainerClass.getMethod("evaluateJavascript",
-                        String.class, android.webkit.ValueCallback.class);
-
-                methodEvaluateJavascript.invoke(getView(), javaScript, new ValueCallback<String>() {
-                    public void onReceiveValue(String response) {
-                        ObjectMapper mapper = new ObjectMapper();
-
-                        try {
-                            Object value = mapper.readValue(response, Object.class);
-                            webFuture.setResult("" + value);
-                        } catch (IOException e) {
-                            webFuture.completeExceptionally(e);
-                        }
+                    try {
+                        Object value = mapper.readValue(response, Object.class);
+                        webFuture.setResult("" + value);
+                    } catch (IOException e) {
+                        webFuture.completeExceptionally(e);
                     }
-                });
+                }
+            });
 
-                return webFuture;
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
+            return webFuture;
         } else {
             throw new RuntimeException(getView().getClass().getCanonicalName() + " is not recognized a valid web view.");
         }
@@ -183,29 +151,57 @@ public class WebContainer {
 
             return webView.getScale();
         } else if (isCrossWalk()) {
-            return getView().getContext().getResources().getDisplayMetrics().density;
+            XWalkContent xWalkContent = XWalkContent.getXWalkContentForView(getView());
+            return getView().getContext().getResources().getDisplayMetrics().density * xWalkContent.getScale();
         } else {
             throw new RuntimeException(getView().getClass().getCanonicalName() + " is not recognized a valid web view.");
         }
     }
 
-    public Map<String, Integer> translateRectToScreenCoordinates(Map<String, Integer> rectangle) {
+    public int[] getRenderOffset() {
+        if (isAndroidWebView()) {
+            return new int[] {0,0};
+        } else if (isCrossWalk()) {
+            XWalkContent xWalkContent = XWalkContent.getXWalkContentForView(getView());
+
+            // The vertical scroll offset is added when using getBoundingClientRect, but only
+            // sometimes the horizontal. Is this a bug in the Chromeium browser? We won't support it
+            // for now.
+            return new int[] {0, 0};
+        } else {
+            throw new RuntimeException(getView().getClass().getCanonicalName() + " is not recognized a valid web view.");
+        }
+    }
+
+
+    public Map<String, Integer> translateRectToScreenCoordinates(Map<String, Number> rectangle) {
         try {
             float scale = getScale();
-
             int[] webviewLocation = UIQueryUtils.getViewLocationOnScreen(getView());
+            int[] renderOffset = getRenderOffset();
+            int renderOffsetX = renderOffset[0];
+            int renderOffsetY = renderOffset[1];
+
             //center_x, center_y
             //left, top, width, height
-            int center_x = (int)translateCoordToScreen(webviewLocation[0], scale, rectangle.get("center_x"));
-            int center_y = (int)translateCoordToScreen(webviewLocation[1], scale, rectangle.get("center_y"));
+            int center_x = (int)translateCoordToScreen(webviewLocation[0] - renderOffsetX, scale,
+                    rectangle.get("center_x"));
+            int center_y = (int)translateCoordToScreen(webviewLocation[1] - renderOffsetY, scale,
+                    rectangle.get("center_y"));
 
-            int x = (int)translateCoordToScreen(webviewLocation[0], scale, rectangle.get("left"));
-            int y = (int)translateCoordToScreen(webviewLocation[1], scale, rectangle.get("top"));
+            int x = (int)translateCoordToScreen(webviewLocation[0] - renderOffsetX, scale,
+                    rectangle.get("left").doubleValue());
+            int y = (int)translateCoordToScreen(webviewLocation[1] - renderOffsetY, scale,
+                    rectangle.get("top").doubleValue());
 
             int width = (int)translateCoordToScreen(0, scale, rectangle.get("width"));
             int height = (int)translateCoordToScreen(0, scale, rectangle.get("height"));
 
-            Map<String,Integer> result = new HashMap<String, Integer>(rectangle);
+            Map<String,Integer> result = new HashMap<String, Integer>();
+
+            for (String key : rectangle.keySet()) {
+                result.put(key, rectangle.get(key).intValue());
+            }
 
             result.put("x", x);
             result.put("y", y);
@@ -230,13 +226,18 @@ public class WebContainer {
     }
 
     private boolean isCrossWalk() {
-        return superClassEquals(getView().getClass(), "org.xwalk.core.internal.XWalkContent") ||
+        return isCrossWalkContentClass(getView().getClass()) ||
                 superClassEquals(getView().getClass(), "org.xwalk.core.XWalkView");
     }
 
-    private boolean superClassEquals(Class clazz, String className) {
+    private static boolean isCrossWalkContentClass(Class<?> clz) {
+        return superClassEquals(clz, "org.xwalk.core.internal.XWalkContent") ||
+                superClassEquals(clz, "org.xwalk.core.internal.XWalkContent$1");
+    }
+
+    private static boolean superClassEquals(Class clazz, String className) {
         do {
-            if (className.equals(clazz.getCanonicalName())) {
+            if (className.equals(clazz.getName())) {
                 return true;
             }
         } while((clazz = clazz.getSuperclass()) != Object.class);
@@ -244,7 +245,7 @@ public class WebContainer {
         return false;
     }
 
-    private View getChildOf(View view) {
+    private static View getChildOf(View view) {
         if (view instanceof ViewGroup) {
             ViewGroup viewGroup = (ViewGroup) view;
 
@@ -256,5 +257,128 @@ public class WebContainer {
 
     private float translateCoordToScreen(int offset, float scale, Object point) {
         return offset + ((Number)point).floatValue() *scale;
+    }
+
+    private static class XWalkContent {
+        private Object xWalkContent;
+        
+        public static XWalkContent getXWalkContentForView(View view) {
+            return new XWalkContent(view);
+        }
+
+        private XWalkContent(View view) {
+            xWalkContent = view;
+
+            while (!isCrossWalkContentClass(xWalkContent.getClass())) {
+                xWalkContent = getChildOf((View)xWalkContent);
+            }
+
+            if (superClassEquals(xWalkContent.getClass(), "org.xwalk.core.internal.XWalkContent$1")) {
+                try {
+                    Field outer = xWalkContent.getClass().getDeclaredField("this$0");
+                    outer.setAccessible(true);
+                    xWalkContent = outer.get(xWalkContent);
+                } catch (NoSuchFieldException e) {
+                    throw new RuntimeException(e);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        public void enableJavaScript() {
+            try {
+                Method methodGetSettings = xWalkContent.getClass().getMethod("getSettings");
+                Object xWalkSettings = methodGetSettings.invoke(xWalkContent);
+
+                Method methodSetJavaScriptEnabled = xWalkSettings.getClass().
+                        getMethod("setJavaScriptEnabled", boolean.class);
+
+                methodSetJavaScriptEnabled.invoke(xWalkSettings, true);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public<T> void evaluateJavascript(String javaScript, ValueCallback<T> callback) {
+            try {
+                Method methodEvaluateJavascript =
+                        xWalkContent.getClass().getMethod("evaluateJavascript",
+                                String.class, android.webkit.ValueCallback.class);
+
+                methodEvaluateJavascript.invoke(xWalkContent, javaScript, callback);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public float getScale() {
+            try {
+                Object contentViewCore = getContentViewCore();
+                Method getScaleMethod = contentViewCore.getClass().getMethod("getScale");
+
+                return (Float) getScaleMethod.invoke(contentViewCore);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public int getHorizontalScrollOffset() {
+            try {
+                Object contentViewCore = getContentViewCore();
+                Method getScaleMethod = contentViewCore.getClass().getMethod("computeHorizontalScrollOffset");
+
+                return (Integer) getScaleMethod.invoke(contentViewCore);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+
+
+        public int getVerticalScrollOffset() {
+            try {
+                Object contentViewCore = getContentViewCore();
+                Method getScaleMethod = contentViewCore.getClass().getMethod("computeVerticalScrollOffset");
+
+                return (Integer) getScaleMethod.invoke(contentViewCore);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private Object getContentViewCore() {
+            try {
+                Method getContentViewCoreForTestMethod = xWalkContent.getClass().getMethod("getContentViewCoreForTest");
+
+                return getContentViewCoreForTestMethod.invoke(xWalkContent);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

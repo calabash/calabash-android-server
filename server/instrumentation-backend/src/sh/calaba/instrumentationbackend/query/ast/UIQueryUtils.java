@@ -83,7 +83,7 @@ public class UIQueryUtils {
 
 
 		WebFuture controls = QueryHelper.executeAsyncJavascriptInWebContainer(webContainer,
-				"calabash.js", "input,button","css");
+				"calabash.js", "input,button","css", null);
 
 		return controls;
 

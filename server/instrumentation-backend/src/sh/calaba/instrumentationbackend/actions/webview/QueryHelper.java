@@ -59,12 +59,31 @@ public class QueryHelper {
     }
 
 	public static WebFuture executeAsyncJavascriptInWebContainer(WebContainer webContainer,
-		String scriptPath, String selector, String type) {
+		String scriptPath, String selector, String type, int[] javaScriptElementIds) {
 
 		String script = readJavascriptFromAsset(scriptPath);
 
-		script = script.replaceFirst("%@", selector);
-		script = script.replaceFirst("%@", type);
+		script = script.replaceFirst("exp = '%@'", "exp = '" + selector + "'");
+		script = script.replaceFirst("queryType = '%@'", "queryType = '" + type + "'");
+
+		if (javaScriptElementIds != null) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("[");
+
+			for (int i = 0; i < javaScriptElementIds.length; i++) {
+				sb.append(javaScriptElementIds[i]);
+
+				if (i != javaScriptElementIds.length - 1) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+
+			script = script.replaceFirst("inElement = '%@'", "inElement = " + sb.toString());
+		}
+
+		System.out.println(script);
 
         return webContainer.evaluateAsyncJavaScript(script);
 	}

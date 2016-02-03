@@ -117,14 +117,26 @@ public class UIQueryASTWith implements UIQueryAST {
         }
 
         public Future call() throws Exception {
-            if (o instanceof View && isDomQuery()) {
-                View view = (View) o;
+            if (isDomQuery()) {
+				if (o instanceof View) {
+					View view = (View) o;
+					Future webResult = evaluateForWebContainer(new WebContainer(view), null);
 
-                Future webResult = evaluateForWebContainer(new WebContainer(view));
+					if (webResult != null) {
+						return webResult;
+					}
+				} else if (o instanceof Map) {
+					Map map = (Map) o;
+					Integer index = (Integer) map.get("calSavedIndex");
 
-                if (webResult != null) {
-                    return webResult;
-                }
+					if (index != null) {
+						Future webResult = evaluateForWebContainer((WebContainer) map.get("calabashWebContainer"), new int[]{index});
+
+						if (webResult != null) {
+							return webResult;
+						}
+					}
+				}
             } else if (o instanceof Map) {
                 Map result = evaluateForMap((Map) o, index);
                 if (result != null) {
@@ -190,14 +202,13 @@ public class UIQueryASTWith implements UIQueryAST {
 
 	}
 
-	@SuppressWarnings({ "rawtypes" })
-	private Future evaluateForWebContainer(WebContainer webContainer) {
+	private Future evaluateForWebContainer(WebContainer webContainer, int[] javaScriptElementIds) {
 		if (!(this.value instanceof String)) {
 			return null;
 		}
 		try {
 			return QueryHelper.executeAsyncJavascriptInWebContainer(webContainer,
-					"calabash.js", (String) this.value,this.propertyName);
+					"calabash.js", (String) this.value,this.propertyName, javaScriptElementIds);
 				
 		} catch (UnableToFindChromeClientException e) {
 			Log.w("Calabash","Unable to find UnableToFindChromeClientException");

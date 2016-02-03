@@ -1,14 +1,14 @@
-(function () {
+(function() {
     /** David Mark's isHostMethod function,
-      * http://peter.michaux.ca/articles/feature-detection-state-of-the-art-browser-scripting
-      * Modified to use strict equality
-      */
+     * http://peter.michaux.ca/articles/feature-detection-state-of-the-art-browser-scripting
+     * Modified to use strict equality
+     */
     function isHostMethod (object, property)
     {
-      var t = typeof object[property];
-      return t==='function' ||
-             (!!(t==='object' && object[property])) ||
-             t==='unknown';
+        var t = typeof object[property];
+        return t==='function' ||
+            (!!(t==='object' && object[property])) ||
+            t==='unknown';
     }
     /*http://www.w3.org/TR/DOM-Level-2-Core/core.html*/
     var NODE_TYPES = {

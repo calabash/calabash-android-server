@@ -159,15 +159,15 @@ public class WebContainer {
     }
 
     public int[] getRenderOffset() {
+        // These methods are equivalent.
+        // getScroll is the public method in webviews for the same chromium function.
+
         if (isAndroidWebView()) {
-            return new int[] {0,0};
+            return new int[] {getView().getScrollX(), getView().getScrollY()};
         } else if (isCrossWalk()) {
             XWalkContent xWalkContent = XWalkContent.getXWalkContentForView(getView());
 
-            // The vertical scroll offset is added when using getBoundingClientRect, but only
-            // sometimes the horizontal. Is this a bug in the Chromeium browser? We won't support it
-            // for now.
-            return new int[] {0, 0};
+            return new int[] {xWalkContent.getHorizontalScrollOffset(), xWalkContent.getVerticalScrollOffset()};
         } else {
             throw new RuntimeException(getView().getClass().getCanonicalName() + " is not recognized a valid web view.");
         }

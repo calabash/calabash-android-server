@@ -18,6 +18,27 @@
         /*DOCUMENT_NODE                  : */ 9 : 'DOCUMENT_NODE'
     };
 
+    var COMPARISON_NODE_ID = "calabash_comparison_node";
+
+    function isComparisonNodeCreated(contentWindow) {
+        return getComparisonNode(contentWindow) != null;
+    }
+
+    function addComparisonNode(contentWindow) {
+        var comparisonNode = contentWindow.document.createElement('div');
+        comparisonNode.setAttribute('id', COMPARISON_NODE_ID);
+        comparisonNode.style.cssText = 'position: absolute; left:0; top:0;';
+        contentWindow.document.body.appendChild(comparisonNode);
+    }
+
+    function removeComparisonNode(contentWindow) {
+        contentWindow.document.body.removeChild(getComparisonNode(contentWindow));
+    }
+
+    function getComparisonNode(contentWindow) {
+        return contentWindow.document.getElementById(COMPARISON_NODE_ID);
+    }
+
     function computeRectForNode(object, contentWindow, parent)
     {
         var res = {}, boundingBox;
@@ -42,6 +63,14 @@
             res.rect = rect;
             res.rect.center_x = rect.left + Math.floor(rect.width/2);
             res.rect.center_y = rect.top + Math.floor(rect.height/2);
+
+            if (object.id != COMPARISON_NODE_ID) {
+                var comparisonNodeRect = getComparisonNode(contentWindow).getBoundingClientRect();
+                res.rect.left -= comparisonNodeRect.left;
+                res.rect.center_x -= comparisonNodeRect.left;
+                res.rect.top -= comparisonNodeRect.top;
+                res.rect.center_y -= comparisonNodeRect.top;
+            }
         }
         res.nodeType = NODE_TYPES[object.nodeType] || res.nodeType + ' (Unexpected)';
         res.nodeName = object.nodeName;
@@ -207,7 +236,7 @@
     }
 
     function log(message) {
-        //document.getElementById('input').innerHTML += message + "\n";
+        /*document.getElementById('input').innerHTML += message + "\n";*/
     }
 
     try {
@@ -254,10 +283,22 @@
         json = [];
 
         for (var i = 0; i < res.length; i++) {
+            if (!isComparisonNodeCreated(res[i].window)) {
+                addComparisonNode(res[i].window);
+            }
+
             json = json.concat(toJSON(res[i].object, res[i].window, res[i].parent));
         }
+
+        for (var i = 0; i < res.length; i++) {
+            if (isComparisonNodeCreated(res[i].window)) {
+                removeComparisonNode(res[i].window);
+            }
+        }
     } else {
+        addComparisonNode(res.window);
         json = toJSON(res.object, res.window, res.parent);
+        removeComparisonNode(res.window);
     }
 
     return JSON.stringify(json);

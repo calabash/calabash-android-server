@@ -13,10 +13,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.test.InstrumentationTestRunner;
 
+import sh.calaba.instrumentationbackend.utils.MonoUtils;
+
 
 public class ClearAppData2 extends InstrumentationTestRunner {
     @Override
     public void onCreate(Bundle arguments) {
+        MonoUtils.loadMono(getTargetContext());
+
         StatusReporter statusReporter = new StatusReporter(getContext());
 
         try {

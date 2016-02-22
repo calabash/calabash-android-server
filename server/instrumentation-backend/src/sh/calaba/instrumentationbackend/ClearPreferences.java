@@ -1,6 +1,8 @@
 package sh.calaba.instrumentationbackend;
 
 import sh.calaba.instrumentationbackend.actions.preferences.PreferencesUtils;
+import sh.calaba.instrumentationbackend.utils.MonoUtils;
+
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.test.InstrumentationTestRunner;
@@ -18,6 +20,7 @@ public class ClearPreferences extends InstrumentationTestRunner {
 
 	@Override
     public void onCreate(Bundle arguments) {
+		MonoUtils.loadMono(getTargetContext());
 		
 		SharedPreferences preferences = null;
 

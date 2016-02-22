@@ -8,10 +8,14 @@ import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.test.InstrumentationTestRunner;
 
+import sh.calaba.instrumentationbackend.utils.MonoUtils;
+
 
 public class ClearAppData extends InstrumentationTestRunner {
 	@Override
     public void onCreate(Bundle arguments) {
+        MonoUtils.loadMono(getTargetContext());
+
         if (externalCacheDir() != null) {
             delete(externalCacheDir().getParentFile());
         }

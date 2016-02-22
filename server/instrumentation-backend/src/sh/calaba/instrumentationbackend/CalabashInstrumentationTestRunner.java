@@ -5,6 +5,8 @@ import java.lang.reflect.Method;
 import android.Manifest;
 import android.app.Activity;
 import sh.calaba.instrumentationbackend.actions.HttpServer;
+import sh.calaba.instrumentationbackend.utils.MonoUtils;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -62,22 +64,13 @@ public class CalabashInstrumentationTestRunner extends InstrumentationTestRunner
                 }
             }
 
-            try {
-                Context context = getTargetContext();
-                Class<?> c = Class.forName("mono.MonoPackageManager");
-                String[] strings = {context.getApplicationInfo().sourceDir};
+            if (MonoUtils.loadMono(getTargetContext())) {
                 try {
-                    // 64bit support
-                    Method loadApplication = c.getDeclaredMethod("LoadApplication", Context.class, ApplicationInfo.class, String[].class);
-                    loadApplication.invoke(null, context, context.getApplicationInfo(), strings);
-                } catch (NoSuchMethodException e) {
-                    Method loadApplication = c.getDeclaredMethod("LoadApplication", Context.class, String.class, String[].class);
-                    loadApplication.invoke(null, context, null, strings);
+                    InstrumentationBackend.mainActivity = Class.forName(mainActivity).asSubclass(Activity.class);
+                } catch (ClassNotFoundException e) {
+                    // Added this catch to avoid breaking old stuff. Do we really need that method call?
+                    System.out.println("Could not load class '" + mainActivity + "'");
                 }
-                System.out.println("Calabash loaded Mono");
-                InstrumentationBackend.mainActivity = Class.forName(mainActivity).asSubclass(Activity.class);
-            } catch (Exception e) {
-                System.out.println("Calabash did not load Mono. This is only a problem if you are trying to test a Mono application");
             }
 
             try {
@@ -119,5 +112,5 @@ public class CalabashInstrumentationTestRunner extends InstrumentationTestRunner
 
             throw e;
         }
-	}	
+	}
 }

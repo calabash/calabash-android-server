@@ -198,7 +198,7 @@ public class MultiTouchGesture {
             for (String queryString : distinctQueryStrings) {
                 QueryResult queryResult = new Query(queryString, java.util.Collections.emptyList()).executeQuery();
                 // For now we calculate the views location and save it. In an implementation in the future, we should save the actual views and use their coordinates later on.
-                List<Object> results = queryResult.asList();
+                List<?> results = queryResult.asMappedList();
 
                 if (results.size() == 0) {
                     break;

@@ -2,21 +2,12 @@ package sh.calaba.instrumentationbackend.actions.view;
 
 import android.graphics.Rect;
 import android.view.View;
-import android.webkit.WebView;
 
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
-import sh.calaba.instrumentationbackend.actions.webview.QueryHelper;
-import sh.calaba.instrumentationbackend.query.Operation;
-import sh.calaba.instrumentationbackend.query.Query;
-import sh.calaba.instrumentationbackend.query.QueryResult;
 import sh.calaba.instrumentationbackend.query.WebContainer;
-import sh.calaba.instrumentationbackend.query.ast.InvalidUIQueryException;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 /**

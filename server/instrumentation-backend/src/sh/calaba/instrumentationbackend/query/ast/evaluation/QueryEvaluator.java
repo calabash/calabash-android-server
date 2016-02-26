@@ -6,9 +6,9 @@ import java.util.List;
 import sh.calaba.instrumentationbackend.query.ast.*;
 
 public class QueryEvaluator {
-    public static List<?> evaluateQueryForPath(List<UIQueryAST> queryPath,
-                                                    QueryEvaluationStep stepHandler) {
-        List<?> result = new ArrayList<Object>();
+    public static<T> List<T> evaluateQueryForPath(List<UIQueryAST> queryPath,
+                                                    QueryEvaluationStep<T> stepHandler) {
+        List<T> result = new ArrayList<T>();
 
         for (UIQueryAST step : queryPath) {
             if (step instanceof UIQueryDirection) {
@@ -22,5 +22,4 @@ public class QueryEvaluator {
 
         return result;
     }
-
 }

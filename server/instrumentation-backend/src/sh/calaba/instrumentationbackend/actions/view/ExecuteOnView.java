@@ -3,14 +3,13 @@ package sh.calaba.instrumentationbackend.actions.view;
 import android.view.View;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import sh.calaba.instrumentationbackend.Result;
-import sh.calaba.instrumentationbackend.actions.Action;
 import sh.calaba.instrumentationbackend.query.Operation;
 import sh.calaba.instrumentationbackend.query.Query;
 import sh.calaba.instrumentationbackend.query.QueryResult;
-import sh.calaba.instrumentationbackend.query.ast.InvalidUIQueryException;
 
 /**
  * Created by john7doe on 06/01/15.
@@ -25,9 +24,9 @@ public class ExecuteOnView {
         String message = "";
         try {
             Query query = new Query(args[0], Arrays.asList(rememberFirst));
-            QueryResult queryResult = query.executeQuery();
+            List<?> queryResultList = query.executeQuery().asList();
 
-            if (queryResult.isEmpty()) {
+            if (queryResultList.isEmpty()) {
                 return Result.failedResult("Query found no view(s).");
             }
 

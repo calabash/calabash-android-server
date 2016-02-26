@@ -1,6 +1,7 @@
 package sh.calaba.instrumentationbackend.actions.webview;
 
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,10 +74,13 @@ public class ScrollTo implements Action {
     @SuppressWarnings({ "rawtypes", "unchecked" })
 	private int getCenterY(String uiQuery, WebView webView) {
         QueryResult queryResult = new sh.calaba.instrumentationbackend.query.Query(uiQuery).executeQuery();
-        if (queryResult.isEmpty()) {
+
+        if (queryResult.asList().isEmpty()) {
             throw new RuntimeException("Query found no elements");
         }
-        final Map<String, Object> firstVisibleRectangle = QueryHelper.findFirstVisibleRectangle(queryResult.asList());
+
+        final Map<String, Object> firstVisibleRectangle =
+                QueryHelper.findFirstVisibleRectangle((List<HashMap<String, Object>>) queryResult.asMappedList());
 
         return Math.round((Float)firstVisibleRectangle.get("center_y"));
     }

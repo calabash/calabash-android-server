@@ -2,7 +2,9 @@ package sh.calaba.instrumentationbackend.query.ast;
 
 import java.util.List;
 
+import sh.calaba.instrumentationbackend.query.ui.UIObject;
+
 public interface UIQueryAST {
-	@SuppressWarnings("rawtypes")
-	public List evaluateWithViews(List inputViews, UIQueryDirection direction, UIQueryVisibility visibility);
+	public List<UIObject> evaluateWithViews(List<? extends UIObject> inputUIObjects,
+											UIQueryDirection direction, UIQueryVisibility visibility);
 }

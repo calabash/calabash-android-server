@@ -8,17 +8,21 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.query.ast.optimization.UIQueryASTClassNameCache;
+import sh.calaba.instrumentationbackend.query.ui.UIObject;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectWebResult;
 
 public class UIQueryASTClassName implements UIQueryAST {
 	public final String simpleClassName;	
-	@SuppressWarnings("rawtypes")
-	public final Class qualifiedClassName;
+	public final Class<?> qualifiedClassName;
 
 	/*
 		Creates a new instance of UIQueryASTClassName by the given qualified class name.
@@ -83,136 +87,141 @@ public class UIQueryASTClassName implements UIQueryAST {
 		}
 	}
 	
-	private UIQueryASTClassName(String simpleClassName)
-	{		
+	private UIQueryASTClassName(String simpleClassName) {
 		this.simpleClassName = simpleClassName;
 		this.qualifiedClassName = null;
 	}
 	
-	@SuppressWarnings("rawtypes")
-	private UIQueryASTClassName(Class qualifiedClassName)
-	{
+	private UIQueryASTClassName(Class<?> qualifiedClassName) {
 		this.qualifiedClassName = qualifiedClassName;
 		this.simpleClassName = null;		
 	}
 
-	@SuppressWarnings({ "rawtypes"})
 	@Override
-	public List evaluateWithViews(final List inputViews,
-			final UIQueryDirection direction, final UIQueryVisibility visibility) {
+	public List<UIObject> evaluateWithViews(List<? extends UIObject> inputUIObjects,
+														 UIQueryDirection direction,
+														 UIQueryVisibility visibility) {
+        final List<Future<List<? extends UIObject>>> futureResults;
 
-        List oldProcessing = new ArrayList();
-        List result = new ArrayList();
-        for (Object o : UIQueryUtils.uniq(inputViews)) {
-            if (o instanceof View) {
-                View view = (View) o;
-                FutureTask<List> march = new FutureTask<List>(new MatchForViews(Arrays.asList(view), direction, visibility));
-                UIQueryUtils.runOnViewThread(view, march);
-                try {
-                    result.addAll(march.get(10, TimeUnit.SECONDS));
-                } catch (RuntimeException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                oldProcessing.add(o);
+        try {
+            futureResults = new ArrayList<Future<List<? extends UIObject>>>();
+
+            for (UIObject uiObject : UIQueryUtils.uniq(inputUIObjects)) {
+                Matcher callable = new Matcher(uiObject, direction);
+                Future<List<? extends UIObject>> result = uiObject.evaluateAsyncInMainThread(callable);
+
+                futureResults.add(result);
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
-        if (oldProcessing.size() > 0) {
-            result.addAll((List) UIQueryUtils.evaluateSyncInMainThread(new MatchForViews(oldProcessing, direction, visibility)));
+        final List<UIObject> processedResult;
+
+        try {
+            processedResult = new ArrayList<UIObject>();
+
+            for (Future<List<? extends UIObject>> future : futureResults) {
+                List<? extends UIObject> uiObjects = future.get(10, TimeUnit.SECONDS);
+                processedResult.addAll(uiObjects);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            throw new RuntimeException(e);
         }
-        return result;
+
+        return visibility.evaluateWithViews(processedResult, direction, visibility);
     }
 
-    private class MatchForViews implements Callable<List> {
-        private final List views;
+	private class Matcher extends UIQueryMatcher<List<? extends UIObject>> {
         private final UIQueryDirection direction;
-        private final UIQueryVisibility visibility;
 
-        MatchForViews(List views, final UIQueryDirection direction, final UIQueryVisibility visibility) {
-            this.views = views;
+        Matcher(UIObject uiObject, final UIQueryDirection direction) {
+            super(uiObject);
             this.direction = direction;
-            this.visibility = visibility;
         }
 
-        public List call() throws Exception {
-            List result = new ArrayList(8);
-            for (Object o : views)
-            {
-                switch(direction) {
-                    case DESCENDANT:
-                        addDecendantMatchesToResult(o,result);
-                        break;
-                    case CHILD:
-                        addChildMatchesToResult(o,result);
-                        break;
-                    case PARENT:
-                        addParentMatchesToResult(o,result);
-                        break;
-                    case SIBLING:
-                        addSiblingMatchesToResult(o,result);
-                        break;
-                }
+        @Override
+        protected List<? extends UIObject> matchForUIObject(UIObjectView uiObjectView) {
+            switch(direction) {
+                case DESCENDANT:
+                    return descendantMatches(uiObjectView);
+                case CHILD:
+                    return childMatches(uiObjectView);
+                case PARENT:
+                    return parentMatches(uiObjectView);
+                case SIBLING:
+                    return siblingMatches(uiObjectView);
+                default:
+                    throw new InvalidUIQueryException("Invalid direction '" + direction + "'");
             }
+        }
 
-            List filteredResult = visibility.evaluateWithViews(result, direction, visibility);
-            return filteredResult;
+        @Override
+        protected List<? extends UIObject> matchForUIObject(UIObjectWebResult uiObjectWebResult) {
+            throw new InvalidUIQueryException("Cannot query by class name for web-results");
         }
     }
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected void addSiblingMatchesToResult(Object o, List result) {
-		List parents = UIQueryUtils.parents(o);
+	protected List<UIObjectView> siblingMatches(UIObjectView uiObjectView) {
+        List<UIObjectView> result = new ArrayList<UIObjectView>();
+		List<View> parents = UIQueryUtils.parents(uiObjectView.getObject());
+
 		if (parents != null && !parents.isEmpty()) {
-			Object immediateParent = parents.get(0);
-			for (Object v : UIQueryUtils.subviews(immediateParent)) {
-				if (v != o && match(v)) {
-					result.add(v);
+			View immediateParent = parents.get(0);
+
+			for (View v : UIQueryUtils.subviews(immediateParent)) {
+				if (v != uiObjectView.getObject() && match(v)) {
+					result.add(new UIObjectView(v));
 				}
 			}									
-		}		
+		}
+
+        return result;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void addParentMatchesToResult(Object o, List result) {
-		for (Object parent : UIQueryUtils.parents(o))
-		{
-			if (match(parent))
-			{
-				result.add(parent);
-			}
-		}		
-	}
+	private List<UIObjectView> parentMatches(UIObjectView uiObjectView) {
+        List<UIObjectView> result = new ArrayList<UIObjectView>();
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void addChildMatchesToResult(Object o, List result) {
-		for (Object child : UIQueryUtils.subviews(o))
-		{
-			if (match(child))
-			{
-				result.add(child);
+		for (View parent : UIQueryUtils.parents(uiObjectView.getObject())) {
+			if (match(parent)) {
+				result.add(new UIObjectView(parent));
 			}
 		}
+
+        return result;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void addDecendantMatchesToResult(Object o, List result) {
-		if (match(o)) 
-		{
-			result.add(o);
+	private List<UIObjectView> childMatches(UIObjectView uiObjectView) {
+        List<UIObjectView> result = new ArrayList<UIObjectView>();
+
+		for (View child : UIQueryUtils.subviews(uiObjectView.getObject())) {
+			if (match(child)) {
+				result.add(new UIObjectView(child));
+			}
+		}
+
+        return result;
+	}
+
+	private List<UIObjectView> descendantMatches(UIObjectView uiObjectView) {
+        List<UIObjectView> result = new ArrayList<UIObjectView>();
+
+		if (match(uiObjectView.getObject())) {
+			result.add(uiObjectView);
 		}
 				
-		for (Object child : UIQueryUtils.subviews(o))
-		{		
-			addDecendantMatchesToResult(child, result);
+		for (View child : UIQueryUtils.subviews(uiObjectView.getObject())) {
+			result.addAll(descendantMatches(new UIObjectView(child)));
 		}
-		
+
+        return result;
 	}
 	
-	private boolean match(Object o)
-	{
+	private boolean match(Object o) {
 		if (this.simpleClassName == null && this.qualifiedClassName == null) {
 			return false;
 		}
@@ -220,8 +229,7 @@ public class UIQueryASTClassName implements UIQueryAST {
 				matchQualifiedClassName(o,this.qualifiedClassName);
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static boolean matchQualifiedClassName(Object o, Class qualifiedClassName) {
+	public static boolean matchQualifiedClassName(Object o, Class<?> qualifiedClassName) {
 		return qualifiedClassName != null && qualifiedClassName.isAssignableFrom(o.getClass());
 	}
 
@@ -244,6 +252,4 @@ public class UIQueryASTClassName implements UIQueryAST {
 		}
 		
 	}
-	
-	
 }

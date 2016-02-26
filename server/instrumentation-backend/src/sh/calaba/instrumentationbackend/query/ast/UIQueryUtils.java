@@ -1,6 +1,5 @@
 package sh.calaba.instrumentationbackend.query.ast;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -12,30 +11,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.antlr.runtime.tree.CommonTree;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.actions.webview.CalabashChromeClient.WebFuture;
 import sh.calaba.instrumentationbackend.actions.webview.QueryHelper;
-import sh.calaba.instrumentationbackend.query.CompletedFuture;
 import sh.calaba.instrumentationbackend.query.Query;
 import sh.calaba.instrumentationbackend.query.ViewMapper;
 import sh.calaba.instrumentationbackend.query.WebContainer;
 import sh.calaba.instrumentationbackend.query.antlr.UIQueryParser;
+import sh.calaba.instrumentationbackend.query.ui.UIObject;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
 import sh.calaba.instrumentationbackend.utils.ViewWrapper;
-import sh.calaba.org.codehaus.jackson.JsonParseException;
 import sh.calaba.org.codehaus.jackson.JsonProcessingException;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import sh.calaba.org.codehaus.jackson.type.TypeReference;
 
-import android.content.res.Resources;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewParent;
-import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -50,29 +46,32 @@ public class UIQueryUtils {
 		DOM_TEXT_TYPES.add("");
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static List subviews(Object o) {
-
+	public static List<View> subviews(Object o) {
 		try {
 			Method getChild = o.getClass().getMethod("getChildAt", int.class);
 			getChild.setAccessible(true);
 			Method getChildCount = o.getClass().getMethod("getChildCount");
 			getChildCount.setAccessible(true);
-			List result = new ArrayList(8);
+			List<View> result = new ArrayList<View>();
 			int childCount = (Integer) getChildCount.invoke(o);
-			for (int i = 0; i < childCount; i++) {
-				result.add(getChild.invoke(o, i));
-			}
-			return result;
 
+			for (int i = 0; i < childCount; i++) {
+                Object child = getChild.invoke(o, i);
+
+                if (child instanceof View) {
+                    result.add((View)getChild.invoke(o, i));
+                }
+			}
+
+			return result;
 		} catch (NoSuchMethodException e) {
-			return Collections.EMPTY_LIST;
+			return new ArrayList<View>(0);
 		} catch (IllegalArgumentException e) {
-			return Collections.EMPTY_LIST;
+            return new ArrayList<View>(0);
 		} catch (IllegalAccessException e) {
-			return Collections.EMPTY_LIST;
+            return new ArrayList<View>(0);
 		} catch (InvocationTargetException e) {
-			return Collections.EMPTY_LIST;
+            return new ArrayList<View>(0);
 		}
 
 	}
@@ -90,27 +89,27 @@ public class UIQueryUtils {
 
 	}
 
-    public static List uniq(List list) {
-        return new ArrayList(new LinkedHashSet(list));
+    public static<T> List<T> uniq(List<T> list) {
+        return new ArrayList<T>(new LinkedHashSet<T>(list));
     }
 
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static List parents(Object o) {
+	public static List<View> parents(Object o) {
 		try {
-
 			Method getParent = o.getClass().getMethod("getParent");
 			getParent.setAccessible(true);
 
-			List result = new ArrayList(8);
+			List<View> result = new ArrayList<View>(8);
+
 			try {
 				while (true) {
 					Object parent = getParent.invoke(o);
+
 					if (parent == null) {
 						return result;
-					} else {
-						result.add(parent);
+					} else if (parent instanceof View) {
+						result.add((View)parent);
 					}
+
 					o = parent;
 				}
 			} catch (IllegalArgumentException e) {
@@ -120,11 +119,9 @@ public class UIQueryUtils {
 			} catch (InvocationTargetException e) {
 				return result;
 			}
-
 		} catch (NoSuchMethodException e) {
-			return Collections.EMPTY_LIST;
+			return new ArrayList<View>(0);
 		}
-
 	}
 
 	@SuppressWarnings({ "rawtypes" })
@@ -177,24 +174,11 @@ public class UIQueryUtils {
 		}
 	}
 
-	public static boolean isVisible(Object v) {
-        if (v instanceof Map) {
-            Map map = (Map)v;
-            Map<String,Integer> viewRect = (Map<String,Integer>)map.get("rect");
-            WebContainer webContainer = (WebContainer)map.get("calabashWebContainer");
-            Map<String,Integer> parentViewRec = ViewMapper.getRectForView(webContainer.getView());
-
-            return isViewSufficientlyShown(viewRect, parentViewRec);
-        } else if (v instanceof View) {
-            View view = (View) v;
-
-            if (view.getHeight() == 0 || view.getWidth() == 0) {
-                return false;
-            }
-
-            return view.isShown() && isViewSufficientlyShown(view);
-        } else {
-            return true;
+	public static boolean isVisible(UIObject uiObject) {
+        try {
+            return new UIQueryVisibilityMatcher(uiObject).call();
+        } catch (Exception e) {
+            throw new RuntimeException("Could not detect visibility of " + uiObject);
         }
 	}
 
@@ -234,30 +218,11 @@ public class UIQueryUtils {
 		return ViewMapper.getTagForView(view);
 	}
 
-	public static Future evaluateAsyncInMainThread(final Callable callable) throws Exception {
+	public static<T> Future<T> evaluateAsyncInMainThread(final Callable<T> callable) throws Exception {
+		final FutureTask<T> futureTask = new FutureTask<T>(callable);
+		InstrumentationBackend.instrumentation.runOnMainSync(futureTask);
 
-		final AtomicReference<Future> result = new AtomicReference<Future>();
-		final AtomicReference<Exception> errorResult = new AtomicReference<Exception>();
-
-		InstrumentationBackend.instrumentation.runOnMainSync(new Runnable() {
-			@SuppressWarnings("unchecked")
-			public void run() {
-				try {
-					Object res = callable.call();
-					if (res instanceof Future) {
-						result.set((Future) res);
-					} else {
-						result.set(new CompletedFuture(res));
-					}
-				} catch (Exception e) {
-					errorResult.set(e);
-				}
-			}
-		});
-		if (result.get() == null) {
-			throw errorResult.get();
-		}
-		return result.get();
+		return futureTask;
 	}
 
 	public static int[] getViewLocationOnScreen(View view) {
@@ -295,7 +260,7 @@ public class UIQueryUtils {
         return future;
     }
 
-    private static class MapWebContainer implements Callable<List<Map<String, Object>>> {
+    public static class MapWebContainer implements Callable<List<Map<String, Object>>> {
 
         private final String jsonResponse;
         private final WebContainer webContainer;
@@ -578,7 +543,7 @@ public class UIQueryUtils {
 			m.put("hit-point", hitPoint);
 			m.put("action", actionForView(view));
 			m.put("enabled", view.isEnabled());
-			m.put("visible", isVisible(view));
+			m.put("visible", isVisible(new UIObjectView(view)));
 			m.put("entry_types", elementEntryTypes(view));
 			m.put("value", extractValueFromView(view));
 			m.put("type", ViewMapper.getClassNameForView(view));
@@ -757,7 +722,7 @@ public class UIQueryUtils {
 				put("visible", true);
 				put("value", null);
 				put("path", new ArrayList<Integer>());
-				put("type", "[object CalabashRootView]");
+                    put("type", "[object CalabashRootView]");
 				put("name", null);
 				put("label", null);
 			}

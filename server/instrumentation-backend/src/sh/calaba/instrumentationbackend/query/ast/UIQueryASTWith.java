@@ -100,7 +100,7 @@ public class UIQueryASTWith implements UIQueryAST {
 				}
 			}
 
-			return null;
+			return new ArrayList<UIObject>();
 		}
 
 		@Override
@@ -123,7 +123,7 @@ public class UIQueryASTWith implements UIQueryAST {
 				}
 			}
 
-			return null;
+			return new ArrayList<UIObject>();
         }
 
     }

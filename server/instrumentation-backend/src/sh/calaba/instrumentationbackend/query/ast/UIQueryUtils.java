@@ -286,7 +286,6 @@ public class UIQueryUtils {
                     String id = ViewMapper.getIdForView(view);
 
                     data.put("webView", id);
-                    data.put("calabashWebContainer", webContainer);
                 }
 
                 return parsedResult;

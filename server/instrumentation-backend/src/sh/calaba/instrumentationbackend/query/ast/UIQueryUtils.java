@@ -178,7 +178,7 @@ public class UIQueryUtils {
         try {
             return new UIQueryVisibilityMatcher(uiObject).call();
         } catch (Exception e) {
-            throw new RuntimeException("Could not detect visibility of " + uiObject);
+            throw new RuntimeException("Could not detect visibility of " + uiObject, e);
         }
 	}
 

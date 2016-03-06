@@ -12,6 +12,14 @@ public class UIObjectWebResult implements UIObject {
     private final WebContainer webContainer;
 
     public UIObjectWebResult(Map<?,?> map, WebContainer webContainer) {
+        if (map == null) {
+            throw new IllegalArgumentException("Result map cannot be null");
+        }
+
+        if (webContainer == null) {
+            throw new IllegalArgumentException("WebContainer cannot be null");
+        }
+
         this.map = map;
         this.webContainer = webContainer;
     }

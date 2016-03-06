@@ -9,7 +9,7 @@ import sh.calaba.instrumentationbackend.query.ui.UIObjectWebResult;
 public abstract class UIQueryMatcher<T> implements Callable<T> {
     private final UIObject uiObject;
 
-    UIQueryMatcher(UIObject uiObject) {
+    public UIQueryMatcher(UIObject uiObject) {
         this.uiObject = uiObject;
     }
 

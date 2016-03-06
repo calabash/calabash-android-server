@@ -9,6 +9,10 @@ import java.util.Map;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
 import sh.calaba.instrumentationbackend.query.WebContainer;
+import sh.calaba.instrumentationbackend.query.ast.UIQueryMatcher;
+import sh.calaba.instrumentationbackend.query.ui.UIObject;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectWebResult;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 
 public class ViewConfiguration implements Action, IOnViewAction {
@@ -20,9 +24,9 @@ public class ViewConfiguration implements Action, IOnViewAction {
         return executeOnView.execute(this, args);
     }
 
-    @Override
     public String doOnView(View view) {
         android.view.ViewConfiguration result = android.view.ViewConfiguration.get(view.getContext());
+
         try {
             return mapper.writeValueAsString(result);
         } catch (IOException e) {
@@ -31,13 +35,28 @@ public class ViewConfiguration implements Action, IOnViewAction {
     }
 
     @Override
-    public String doOnView(Map viewMap) {
-        final WebContainer webContainer = (WebContainer) viewMap.get("calabashWebContainer");
-        return doOnView(webContainer.getView());
+    public String key() {
+        return "view_configuration";
     }
 
     @Override
-    public String key() {
-        return "view_configuration";
+    public UIQueryMatcher<String> getUIQueryMatcher(UIObject uiObject) {
+        return new Mapper(uiObject);
+    }
+
+    private class Mapper extends UIQueryMatcher<String> {
+        public Mapper(UIObject uiObject) {
+            super(uiObject);
+        }
+
+        @Override
+        protected String matchForUIObject(UIObjectView uiObjectView) {
+            return ViewConfiguration.this.doOnView(uiObjectView.getObject());
+        }
+
+        @Override
+        protected String matchForUIObject(UIObjectWebResult uiObjectWebResult) {
+            return ViewConfiguration.this.doOnView(uiObjectWebResult.getWebContainer().getView());
+        }
     }
 }

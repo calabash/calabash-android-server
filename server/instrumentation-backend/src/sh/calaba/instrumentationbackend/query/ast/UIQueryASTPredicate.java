@@ -73,18 +73,26 @@ public class UIQueryASTPredicate implements UIQueryAST {
 
 		@Override
 		protected List<? extends UIObject> matchForUIObject(UIObjectView uiObjectView) {
-            UIObjectView result = new UIObjectView(evaluateForView(uiObjectView.getObject()));
+			View view = evaluateForView(uiObjectView.getObject());
 
-            return Collections.singletonList(result);
+            if (view != null) {
+                return Collections.singletonList(new UIObjectView(view));
+            } else {
+                return Collections.emptyList();
+            }
 		}
 
 		@Override
 		protected List<? extends UIObject> matchForUIObject(UIObjectWebResult uiObjectWebResult) {
-            UIObjectWebResult result =
-                    new UIObjectWebResult(evaluateForMap(uiObjectWebResult.getObject()),
-                            uiObjectWebResult.getWebContainer());
+            Map<?,?> map = evaluateForMap(uiObjectWebResult.getObject());
 
-			return Collections.singletonList(result);
+            if (map != null) {
+                return Collections.singletonList(
+                        new UIObjectWebResult(map,
+                        uiObjectWebResult.getWebContainer()));
+            } else {
+                return Collections.emptyList();
+            }
 		}
 	}
 

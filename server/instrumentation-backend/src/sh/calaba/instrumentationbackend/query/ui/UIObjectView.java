@@ -14,6 +14,10 @@ public class UIObjectView implements UIObject {
     private View view;
 
     public UIObjectView(View view) {
+        if (view == null) {
+            throw new IllegalArgumentException("View cannot be null");
+        }
+
         this.view = view;
     }
 

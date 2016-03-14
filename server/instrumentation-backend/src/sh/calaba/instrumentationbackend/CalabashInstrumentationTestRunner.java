@@ -24,7 +24,9 @@ public class CalabashInstrumentationTestRunner extends InstrumentationTestRunner
         try {
             final String mainActivity;
 
-            if (arguments.containsKey("main_activity")) {
+            if (arguments.containsKey("main_activity")
+                    && arguments.getString("main_activity") != null
+                    && !"null".equals(arguments.getString("main_activity"))) {
                 mainActivity = arguments.getString("main_activity");
             } else {
                 PackageManager packageManager = getTargetContext().getPackageManager();

@@ -3,6 +3,7 @@ package sh.calaba.instrumentationbackend.query.ast;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -11,8 +12,11 @@ import org.antlr.runtime.tree.CommonTree;
 
 import android.view.View;
 
-public class UIQueryASTPredicate implements UIQueryAST {
+import sh.calaba.instrumentationbackend.query.ui.UIObject;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectWebResult;
 
+public class UIQueryASTPredicate implements UIQueryAST {
 	public final String propertyName;
 	public final UIQueryASTPredicateRelation relation;
 	public final Object valueToMatch;
@@ -24,91 +28,91 @@ public class UIQueryASTPredicate implements UIQueryAST {
 		this.valueToMatch = parsedValue;
 	}
 
-	@SuppressWarnings("rawtypes")
-	@Override
-    public List evaluateWithViews(final List inputViews,
-                                  final UIQueryDirection direction, final UIQueryVisibility visibility) {
+	public List<UIObject> evaluateWithViews(List<? extends UIObject> inputUIObjects,
+													  UIQueryDirection direction,
+													  UIQueryVisibility visibility) {
+		final List<Future<List<? extends UIObject>>> futureResults;
 
-        List oldProcessing = new ArrayList();
-        List result = new ArrayList();
-        for (Object o : UIQueryUtils.uniq(inputViews)) {
-            if (o instanceof View) {
-                View view = (View) o;
-                FutureTask<List> march = new FutureTask<List>(new MatchForViews(Arrays.asList(view), direction, visibility));
-                UIQueryUtils.runOnViewThread(view, march);
-                try {
-                    result.addAll(march.get(10, TimeUnit.SECONDS));
-                } catch (RuntimeException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+		try {
+			futureResults = new ArrayList<Future<List<? extends UIObject>>>();
+
+			for (UIObject uiObject : UIQueryUtils.uniq(inputUIObjects)) {
+				Matcher callable = new Matcher(uiObject);
+				Future<List<? extends UIObject>> result = uiObject.evaluateAsyncInMainThread(callable);
+
+				futureResults.add(result);
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		final List<UIObject> processedResult;
+
+		try {
+			processedResult = new ArrayList<UIObject>();
+
+			for (Future<List<? extends UIObject>> future : futureResults) {
+				List<? extends UIObject> uiObjects = future.get(10, TimeUnit.SECONDS);
+				processedResult.addAll(uiObjects);
+			}
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e);
+		} catch (TimeoutException e) {
+			throw new RuntimeException(e);
+		}
+
+		return visibility.evaluateWithViews(processedResult, direction, visibility);
+    }
+
+    private class Matcher extends UIQueryMatcher<List<? extends UIObject>> {
+        Matcher(UIObject uiObject) {
+			super(uiObject);
+        }
+
+		@Override
+		protected List<? extends UIObject> matchForUIObject(UIObjectView uiObjectView) {
+			View view = evaluateForView(uiObjectView.getObject());
+
+            if (view != null) {
+                return Collections.singletonList(new UIObjectView(view));
             } else {
-                oldProcessing.add(o);
+                return Collections.emptyList();
             }
-        }
+		}
 
-        if (oldProcessing.size() > 0) {
-            result.addAll((List) UIQueryUtils.evaluateSyncInMainThread(new MatchForViews(oldProcessing, direction, visibility)));
-        }
-        return result;
-    }
+		@Override
+		protected List<? extends UIObject> matchForUIObject(UIObjectWebResult uiObjectWebResult) {
+            Map<?,?> map = evaluateForMap(uiObjectWebResult.getObject());
 
-    private class MatchForViews implements Callable<List> {
-
-        private final List views;
-        private final UIQueryDirection direction;
-        private final UIQueryVisibility visibility;
-
-        MatchForViews(List views, final UIQueryDirection direction, final UIQueryVisibility visibility) {
-            this.views = views;
-            this.direction = direction;
-            this.visibility = visibility;
-        }
-
-        @Override
-        public List call() throws Exception {
-            List filteredResult = new ArrayList(16);
-            for (int i = 0; i < views.size(); i++) {
-                Object o = views.get(i);
-
-                if (o instanceof Map) {
-                    Map result = evaluateForMap((Map) o);
-                    if (result != null) {
-                        filteredResult.add(result);
-                    }
-
-                } else {
-                    Object result = evaluateForObject(o, i);
-                    if (result != null) {
-                        filteredResult.add(result);
-                    }
-                }
-
+            if (map != null) {
+                return Collections.singletonList(
+                        new UIObjectWebResult(map,
+                        uiObjectWebResult.getWebContainer()));
+            } else {
+                return Collections.emptyList();
             }
+		}
+	}
 
-            return visibility.evaluateWithViews(filteredResult, direction, visibility);
-        }
-    }
-
-
-        @SuppressWarnings("rawtypes")
-	private Map evaluateForMap(Map map) {
+	private Map<?,?> evaluateForMap(Map<?,?> map) {
 		if (map.containsKey(this.propertyName)) {
 			Object value = map.get(this.propertyName);
 			if (this.relation.areRelated(value, this.valueToMatch)) {
 				return map;
 			}
 		}
+
 		return null;
 	}
 
-	private Object evaluateForObject(Object o, int index) {
-		if (o instanceof View && this.propertyName.equals("id")) {
-			View view = (View) o;
+	private View evaluateForView(View view) {
+		if (this.propertyName.equals("id")) {
 			String id = UIQueryUtils.getId(view);
+
 			if (this.relation.areRelated(id, this.valueToMatch)) {
-				return o;
+				return view;
 			} else {
 				// let it fall through and check via general property access
 				// in case the user actually wants to compre the real value of
@@ -118,27 +122,29 @@ public class UIQueryASTPredicate implements UIQueryAST {
 
 		// there's no tag property for non Views, handle them all here
 		if (this.propertyName.equals("tag")) {
-			String tag = (o instanceof View ? UIQueryUtils.getTag((View) o) : null);
+			String tag = UIQueryUtils.getTag(view);
+
 			if (this.relation.areRelated(tag, this.valueToMatch)) {
-				return o;
+				return view;
 			} else {
 				return null;
 			}
 		}
 
 		Method propertyAccessor = UIQueryUtils
-				.hasProperty(o, this.propertyName);
+				.hasProperty(view, this.propertyName);
+
 		if (propertyAccessor == null) {
 			return null;
 		}
-		Object value = UIQueryUtils.getProperty(o, propertyAccessor);
+		Object value = UIQueryUtils.getProperty(view, propertyAccessor);
 
 		if (this.relation.areRelated(value, this.valueToMatch)) {
-			return o;
+			return view;
 		} else if (this.valueToMatch instanceof String
                     && value != null
                     && this.relation.areRelated(value.toString(), this.valueToMatch)) {
-			return o;
+			return view;
 		} else {
 			return null;
 		}

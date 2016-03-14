@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -13,7 +12,6 @@ import java.lang.InterruptedException;
 import java.lang.Override;
 import java.lang.Runnable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
@@ -226,21 +224,23 @@ public class HttpServer extends NanoHTTPD {
 
                 if (methodName.equals("flash")) {
                     QueryResult queryResult = new Query(uiQuery, java.util.Collections.emptyList()).executeQuery();
-                    List<View> views = queryResult.getResult();
+                    List<?> queryResultList = queryResult.asList();
 
-                    if (views.isEmpty()) {
+                    if (queryResultList.isEmpty()) {
                         return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8",
                                 FranklyResult.failedResult("Could not find view to flash", "").asJson());
                     }
 
-                    final Object firstItem = views.get(0);
-
-                    if (!(firstItem instanceof View)) {
-                        return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8",
-                                FranklyResult.failedResult("Only views can be flashed", "").asJson());
+                    for (Object o : queryResultList) {
+                        if (!(o instanceof View)) {
+                            return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8",
+                                    FranklyResult.failedResult("Only views can be flashed", "").asJson());
+                        }
                     }
 
-                    for (final View view : views) {
+                    for (final Object o : queryResultList) {
+                        final View view = (View) o;
+
                         InstrumentationBackend.solo.runOnMainSync(new Runnable() {
                             @Override
                             public void run() {
@@ -265,14 +265,14 @@ public class HttpServer extends NanoHTTPD {
                 }
                 else if (methodName.equals("execute-javascript")) {
                     String javascript = (String) command.get("javascript");
-                    List queryResult = new Query(uiQuery).executeQuery().getResult();
+                    QueryResult queryResult = new Query(uiQuery).executeQuery();
                     List<CalabashChromeClient.WebFuture> webFutures = new ArrayList<CalabashChromeClient.WebFuture>();
 
                     List<String> webFutureResults = new ArrayList<String>(webFutures.size());
                     boolean catchAllJavaScriptExceptions = true;
                     boolean success = true;
 
-                    for (Object object : queryResult) {
+                    for (Object object : queryResult.asList()) {
                         String result;
 
                         if (object instanceof View) {
@@ -298,8 +298,8 @@ public class HttpServer extends NanoHTTPD {
                         webFutureResults.add(result);
                     }
 
-                    QueryResult jsQueryResults = new QueryResult(webFutureResults);
-                    FranklyResult result = new FranklyResult(success, jsQueryResults, "", "");
+                    QueryResult jsQueryResultsList = new QueryResult(webFutureResults);
+                    FranklyResult result = new FranklyResult(success, jsQueryResultsList, "", "");
 
                     return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8",
                             result.asJson());

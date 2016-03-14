@@ -1,11 +1,14 @@
 package sh.calaba.instrumentationbackend.query;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
 import sh.calaba.instrumentationbackend.utils.ViewWrapper;
 
 import android.content.res.Resources;
@@ -27,7 +30,7 @@ public class ViewMapper {
 
 		data.put("id", getIdForView(v));
 		data.put("tag", getTagForView(v));
-		data.put("visible", UIQueryUtils.isVisible(v));
+		data.put("visible", UIQueryUtils.isVisible(new UIObjectView(v)));
 
 		Map<String,Integer> rect = getRectForView(v);
 
@@ -99,7 +102,7 @@ public class ViewMapper {
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes" })
-	public static Object mapView(Object o) {
+	public static Object mapResult(Object o) {
 		if (o instanceof View) {
 			return extractDataFromView((View) o);
 		}
@@ -124,4 +127,13 @@ public class ViewMapper {
 		return o;
 	}
 
+	public static List<?> mapList(List<?> list) {
+        List<Object> result = new ArrayList<Object>(list.size());
+
+        for (Object object : list) {
+            result.add(mapResult(object));
+        }
+
+        return result;
+    }
 }

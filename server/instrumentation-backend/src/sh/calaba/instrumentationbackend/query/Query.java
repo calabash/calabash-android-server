@@ -24,9 +24,13 @@ import sh.calaba.instrumentationbackend.query.ast.UIQueryASTWith;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryDirection;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryEvaluator;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryVisibility;
+import sh.calaba.instrumentationbackend.query.ast.evaluation.QueryEvaluator;
+import sh.calaba.instrumentationbackend.query.ast.evaluation.UIQueryEvaluationStep;
 import sh.calaba.instrumentationbackend.query.ast.optimization.GeneralUIQueryOptimizer;
 import sh.calaba.instrumentationbackend.query.ast.optimization.QueryOptimizationCache;
 import sh.calaba.instrumentationbackend.query.ast.optimization.QueryOptimizer;
+import sh.calaba.instrumentationbackend.query.ui.UIObject;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
 
 import android.view.View;
 
@@ -61,8 +65,25 @@ public class Query {
 			QueryOptimizationCache.cache(this.queryString, optimizedQuery);
 		}
 
-		return UIQueryEvaluator.evaluateQueryWithOptions(optimizedQuery, rootViews(), parseOperations(this.operations));
+		return UIQueryEvaluator.evaluateQueryWithOptions(optimizedQuery,
+                UIObjectView.listOfUIObjects(rootViews()), parseOperations(this.operations));
 	}
+
+    // @todo: Remove this when we make next iteration on types. `executeQuery` should return
+    // results that include the original UIObject.
+	public List<UIObject> uiObjectsForQuery() {
+        List<UIQueryAST> queryPath = parseQuery(this.queryString);
+        List<UIQueryAST> optimizedQuery = QueryOptimizationCache.getCacheFor(this.queryString);
+
+        if (optimizedQuery == null) {
+            QueryOptimizer queryOptimizer = new GeneralUIQueryOptimizer();
+            optimizedQuery = queryOptimizer.optimize(queryPath);
+            QueryOptimizationCache.cache(this.queryString, optimizedQuery);
+        }
+
+        return QueryEvaluator.evaluateQueryForPath(queryPath,
+                new UIQueryEvaluationStep(UIObjectView.listOfUIObjects(rootViews())));
+    }
 
 	@SuppressWarnings("rawtypes")
 	public static List<Operation> parseOperations(List ops) {

@@ -60,7 +60,7 @@ public class CalabashInstrumentationTestRunner extends InstrumentationTestRunner
 
                 System.out.println("Main activity name automatically set to: " + mainActivity);
 
-                if (mainActivity == null || mainActivity.isEmpty()) {
+                if (mainActivity == null || "".equals(mainActivity)) {
                     statusReporter.reportFailure("E_COULD_NOT_DETECT_MAIN_ACTIVITY");
                     throw new RuntimeException("Could not detect main activity");
                 }

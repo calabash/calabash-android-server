@@ -2,21 +2,23 @@ package sh.calaba.instrumentationbackend.query.ast;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
+
 import org.antlr.runtime.tree.CommonTree;
 
+import sh.calaba.instrumentationbackend.actions.webview.CalabashChromeClient;
 import sh.calaba.instrumentationbackend.actions.webview.QueryHelper;
-import sh.calaba.instrumentationbackend.actions.webview.UnableToFindChromeClientException;
-import android.util.Log;
+
 import android.view.View;
-import android.webkit.WebView;
-import sh.calaba.instrumentationbackend.query.CompletedFuture;
+
 import sh.calaba.instrumentationbackend.query.WebContainer;
+import sh.calaba.instrumentationbackend.query.ui.UIObject;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectWebResult;
 
 public class UIQueryASTWith implements UIQueryAST {
 	public final String propertyName;
@@ -31,125 +33,107 @@ public class UIQueryASTWith implements UIQueryAST {
 		this.value = value;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-
-    public List evaluateWithViews(final List inputViews,
-                                  final UIQueryDirection direction, final UIQueryVisibility visibility) {
+	public List<UIObject> evaluateWithViews(List<? extends UIObject> inputUIObjects,
+											UIQueryDirection direction, UIQueryVisibility visibility) {
+		final List<Future<Callable<List<? extends UIObject>>>> futureResults;
 
         try {
-            List<Future<?>> futureResults = new ArrayList<Future<?>>();
-            int index = 0;
-            for (Object o : UIQueryUtils.uniq(inputViews)) {
-                if (o instanceof View) {
-                    View view = (View) o;
-                    FutureTask<Future> march = new FutureTask<Future>(new MatchForViews(view, index));
-                    UIQueryUtils.runOnViewThread(view, march);
-                    futureResults.add(march);
-                } else {
-                    Future future = UIQueryUtils.evaluateAsyncInMainThread(new MatchForViews(o, index));
-                    futureResults.add(future);
-                }
-                index++;
+			futureResults = new ArrayList<Future<Callable<List<? extends UIObject>>>>();
+			int index = 0;
+
+			for (UIObject uiObject : UIQueryUtils.uniq(inputUIObjects)) {
+				Matcher callable = new Matcher(uiObject, index);
+				Future<Callable<List<? extends UIObject>>> result = uiObject.evaluateAsyncInMainThread(callable);
+
+				futureResults.add(result);
+				index += 1;
+			}
+		} catch (Exception e) {
+			// Thrown from UIQueryUtils.evaluateAsyncInMainThread
+			throw new RuntimeException(e);
+		}
+
+		final List<UIObject> processedResult;
+
+		try {
+            processedResult = new ArrayList<UIObject>();
+
+            for (Future<Callable<List<? extends UIObject>>> future : futureResults) {
+                Callable<List<? extends UIObject>> uiObjects = future.get(10, TimeUnit.SECONDS);
+                processedResult.addAll(uiObjects.call());
             }
-
-
-            final List processedResult = new ArrayList(futureResults.size());
-
-            for (Future<?> f : futureResults) {
-                Object o;
-                Object rawResult = f.get(10, TimeUnit.SECONDS);
-
-                // The result will either be the actual result or another future
-                if (rawResult instanceof Future) {
-                    Future futureResult = (Future) rawResult;
-                    o = futureResult.get(10, TimeUnit.SECONDS);
-                } else {
-                    o = rawResult;
-                }
-
-                if(o == null) {
-                    continue;
-                } else if (o instanceof Map) {
-                    Map m = (Map) o;
-                    if (m.containsKey("result")) {
-                        List<Map<String, Object>> results =
-                                UIQueryUtils.mapWebContainerJsonResponseOnViewThread((String) m.get("result"),
-                                        (WebContainer) m.get("calabashWebContainer")).get(10, TimeUnit.SECONDS);
-
-                        for (Map<String, Object> result : results) {
-                            if (result.containsKey("error")) {
-                                if (result.containsKey("details")) {
-                                    throw new InvalidUIQueryException(result.get("error") + ". " + result.get("details"));
-                                } else {
-                                    throw new InvalidUIQueryException(result.get("error").toString());
-                                }
-                            }
-                        }
-
-                        processedResult.addAll(results);
-                    }
-                    else {
-                        processedResult.add(m);
-                    }
-                }
-                else {
-                    processedResult.add(o);
-                }
-            }
-
-            List visibilityFilteredResults = visibility.evaluateWithViews(processedResult, direction, visibility);
-            return visibilityFilteredResults;
-        } catch (RuntimeException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        return visibility.evaluateWithViews(processedResult, direction, visibility);
     }
 
-    private class MatchForViews implements Callable<Future> {
-        private final Object o;
-        private final int index;
+	private class Matcher extends UIQueryMatcher<Callable<List<? extends UIObject>>> {
+		private final int index;
 
-        MatchForViews(Object o, int index) {
-            this.o = o;
-            this.index = index;
+		Matcher(UIObject uiObject, int index) {
+			super(uiObject);
+			this.index = index;
+		}
+
+		@Override
+		protected Callable<List<? extends UIObject>> matchForUIObject(UIObjectView uiObjectView) {
+			if (isDomQuery()) {
+				View view = uiObjectView.getObject();
+
+				try {
+					return evaluateForWebContainer(new WebContainer(view), null);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			} else {
+				View result = evaluateForView(uiObjectView.getObject(), index);
+
+				if (result != null) {
+					return new ResultCallable<List<? extends UIObject>>(
+							Collections.singletonList(new UIObjectView(result)));
+				}
+			}
+
+			return new ResultCallable<List<? extends UIObject>>(new ArrayList<UIObject>());
+		}
+
+		@Override
+		protected Callable<List<? extends UIObject>> matchForUIObject(UIObjectWebResult uiObjectWebResult) {
+			if (isDomQuery()) {
+				Map<?,?> map = uiObjectWebResult.getObject();
+				Integer index = (Integer) map.get("calSavedIndex");
+
+				try {
+					return evaluateForWebContainer(uiObjectWebResult.getWebContainer(), new int[] {index});
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			} else {
+				Map<?,?> result = evaluateForMap(uiObjectWebResult.getObject(), index);
+
+				if (result != null) {
+					return new ResultCallable<List<? extends UIObject>>(Collections.singletonList(
+							new UIObjectWebResult(result, uiObjectWebResult.getWebContainer())));
+				}
+			}
+
+			return new ResultCallable<List<? extends UIObject>>(new ArrayList<UIObject>());
+        }
+    }
+
+    private static class ResultCallable<T> implements Callable<T> {
+        private T value;
+
+        public ResultCallable(T value) {
+            this.value = value;
         }
 
-        public Future call() throws Exception {
-            if (isDomQuery()) {
-				if (o instanceof View) {
-					View view = (View) o;
-					Future webResult = evaluateForWebContainer(new WebContainer(view), null);
-
-					if (webResult != null) {
-						return webResult;
-					}
-				} else if (o instanceof Map) {
-					Map map = (Map) o;
-					Integer index = (Integer) map.get("calSavedIndex");
-
-					if (index != null) {
-						Future webResult = evaluateForWebContainer((WebContainer) map.get("calabashWebContainer"), new int[]{index});
-
-						if (webResult != null) {
-							return webResult;
-						}
-					}
-				}
-            } else if (o instanceof Map) {
-                Map result = evaluateForMap((Map) o, index);
-                if (result != null) {
-                    return new CompletedFuture(result);
-                }
-
-            } else {
-                Object result = evaluateForObject(o, index);
-                if (result != null) {
-                    return new CompletedFuture(result);
-                }
-            }
-            return new CompletedFuture(null);
+        @Override
+        public T call() throws Exception {
+            return value;
         }
     }
 
@@ -158,8 +142,7 @@ public class UIQueryASTWith implements UIQueryAST {
     }
 
 
-    @SuppressWarnings("rawtypes")
-	private Map evaluateForMap(Map map, int index) {
+	private Map<?,?> evaluateForMap(Map<?,?> map, int index) {
         if (this.propertyName.equals("index") && this.value.equals(index)) {
             return map;
         }
@@ -173,48 +156,74 @@ public class UIQueryASTWith implements UIQueryAST {
 		return null;
 	}
 
-	private Object evaluateForObject(Object o, int index) {
-		if (this.propertyName.equals("id") && hasId(o, this.value)) {
-			return o;
+	private View evaluateForView(View view, int index) {
+		if (this.propertyName.equals("id") && hasId(view, this.value)) {
+			return view;
 		} else if (this.propertyName.equals("marked")
-				&& isMarked(o, this.value)) {
-			return o;
+				&& isMarked(view, this.value)) {
+			return view;
 		} else if (this.propertyName.equals("index")
 				&& this.value.equals(index)) {
-			return o;
+			return view;
 		} else {
-
-			Method propertyAccessor = UIQueryUtils.hasProperty(o,
+			Method propertyAccessor = UIQueryUtils.hasProperty(view,
 					this.propertyName);
 			if (propertyAccessor != null) {
-				Object value = UIQueryUtils.getProperty(o, propertyAccessor);
+				Object value = UIQueryUtils.getProperty(view, propertyAccessor);
 
 				if (value == this.value
 						|| (value != null && value.equals(this.value))) {
-					return o;
+					return view;
 				} else if (this.value instanceof String
 						&& value != null && this.value.equals(value.toString())) {
-					return o;
+					return view;
 				}
 			}
 		}
-		return null;
 
+		return null;
 	}
 
-	private Future evaluateForWebContainer(WebContainer webContainer, int[] javaScriptElementIds) {
+	private Callable<List<? extends UIObject>> evaluateForWebContainer(final WebContainer webContainer,
+															  final int[] javaScriptElementIds)
+			throws Exception {
 		if (!(this.value instanceof String)) {
 			return null;
 		}
-		try {
-			return QueryHelper.executeAsyncJavascriptInWebContainer(webContainer,
-					"calabash.js", (String) this.value,this.propertyName, javaScriptElementIds);
-				
-		} catch (UnableToFindChromeClientException e) {
-			Log.w("Calabash","Unable to find UnableToFindChromeClientException");
-			return null;
-		}
-				
+
+		final CalabashChromeClient.WebFuture webFuture = QueryHelper.executeAsyncJavascriptInWebContainer(webContainer,
+				"calabash.js", (String) this.value,this.propertyName, javaScriptElementIds);
+
+        return new Callable<List<? extends UIObject>>() {
+            @Override
+            public List<UIObjectWebResult> call() throws Exception {
+                Map<?,?> m = webFuture.get(10, TimeUnit.SECONDS);
+                List<UIObjectWebResult> results = new ArrayList<UIObjectWebResult>();
+
+                if (m.containsKey("result")) {
+                    UIQueryUtils.MapWebContainer mapper =
+                            new UIQueryUtils.MapWebContainer((String) m.get("result"), webContainer);
+
+                    FutureTask<List<Map<String,Object>>> futureTask =
+                            new FutureTask<List<Map<String,Object>>>(mapper);
+                    UIQueryUtils.runOnViewThread(webContainer.getView(), futureTask);
+
+                    for (Map<String, Object> result : futureTask.get()) {
+                        if (result.containsKey("error")) {
+                            if (result.containsKey("details")) {
+                                throw new InvalidUIQueryException(result.get("error") + ". " + result.get("details"));
+                            } else {
+                                throw new InvalidUIQueryException(result.get("error").toString());
+                            }
+                        }
+
+                        results.add(new UIObjectWebResult(result, webContainer));
+                    }
+                }
+
+                return results;
+            }
+        };
 	}
 
 	private boolean hasId(Object o, Object expectedValue) {

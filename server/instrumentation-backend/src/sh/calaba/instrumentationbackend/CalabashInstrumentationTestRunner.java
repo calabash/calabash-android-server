@@ -35,7 +35,7 @@ public class CalabashInstrumentationTestRunner extends InstrumentationTestRunner
 
                 if (launchIntent == null) {
                     statusReporter.reportFailure("E_NO_LAUNCH_INTENT_FOR_PACKAGE");
-                    throw new RuntimeException("Not launch intent set for package '" + arguments.getString("target_package") + "'");
+                    throw new RuntimeException("No launch intent set for package '" + arguments.getString("target_package") + "'");
                 }
 
                 String mainActivityTmpName = launchIntent.getComponent().getClassName();

@@ -21,8 +21,12 @@ import java.util.Map;
  */
 
 public class ScrollToView implements Action, IOnViewAction {
+    private String[] args;
+    private boolean firstTime = true;
+
     @Override
     public Result execute(String... args) {
+        this.args = args;
         ExecuteOnView executeOnView = new ExecuteOnView();
         return executeOnView.execute(this, args);
     }
@@ -122,6 +126,7 @@ public class ScrollToView implements Action, IOnViewAction {
     }
 
     private class Mapper extends UIQueryMatcher<String> {
+
         Mapper(UIObject uiObject) {
             super(uiObject);
         }
@@ -137,6 +142,13 @@ public class ScrollToView implements Action, IOnViewAction {
         protected String matchForUIObject(UIObjectWebResult uiObjectWebResult) {
             ScrollToView.this.scrollTo(uiObjectWebResult.getObject(),
                     uiObjectWebResult.getWebContainer());
+            // Android 6 emulators sometimes fail to scroll webviews correctly the first time
+            if (ScrollToView.this.firstTime) {
+                ScrollToView.this.firstTime = false;
+                ScrollToView.this.execute(ScrollToView.this.args);
+            } else {
+                ScrollToView.this.firstTime = true;
+            }
 
             return "success";
         }

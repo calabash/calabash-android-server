@@ -29,7 +29,7 @@ public class ScrollTo implements Action {
         scrollToTop(webView);
 
         while (keepScrolling(uiQuery, webView)) {
-            TouchUtils.dragQuarterScreenUp(Actions.parentTestCase, InstrumentationBackend.solo.getCurrentActivity());
+            TouchUtils.dragQuarterScreenUp(Actions.parentTestCase, InstrumentationBackend.getCurrentActivity());
         }
 
 		return new Result(isVisible(uiQuery, webView), "");

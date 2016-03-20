@@ -3,7 +3,6 @@ package sh.calaba.instrumentationbackend;
 import android.app.Activity;
 import android.content.Intent;
 
-import com.jayway.android.robotium.solo.PublicViewFetcher;
 import com.jayway.android.robotium.solo.SoloEnhanced;
 
 import sh.calaba.instrumentationbackend.actions.HttpServer;
@@ -27,8 +26,6 @@ public class HttpTestServerLifeCycle implements TestServerLifeCycle {
 
                 InstrumentationBackend.solo =
                         new SoloEnhanced(InstrumentationBackend.instrumentation, activity);
-                InstrumentationBackend.viewFetcher =
-                        new PublicViewFetcher(InstrumentationBackend.solo.getActivityUtils());
             }
         });
 

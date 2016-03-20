@@ -23,6 +23,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import dalvik.system.DexClassLoader;
+import sh.calaba.instrumentationbackend.ApplicationLifeCycle;
 import sh.calaba.instrumentationbackend.Command;
 import sh.calaba.instrumentationbackend.FranklyResult;
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
@@ -34,14 +35,19 @@ import sh.calaba.instrumentationbackend.query.Operation;
 import sh.calaba.instrumentationbackend.query.Query;
 import sh.calaba.instrumentationbackend.query.QueryResult;
 import sh.calaba.instrumentationbackend.query.WebContainer;
+import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
@@ -56,11 +62,12 @@ public class HttpServer extends NanoHTTPD {
 	private final Condition shutdownCondition = lock.newCondition();
 
 	private static HttpServer instance;
-	
+    private ApplicationStarter applicationStarter;
 
-	/**
+
+    /**
 	 * Creates and returns the singleton instance for HttpServer.
-	 * 
+	 *
 	 * Can only be called once. Otherwise, you'll get an IllegalStateException.
 	 */
 	public synchronized static HttpServer instantiate(int testServerPort) {
@@ -96,42 +103,92 @@ public class HttpServer extends NanoHTTPD {
 			return new NanoHTTPD.Response(HTTP_OK, MIME_HTML, "pong");
 
 		}
+        else if (uri.endsWith("/start-application")) {
+            try {
+                String json = params.getProperty("json");
+
+                Map map;
+
+                if (json != null) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    map = mapper.readValue(json, Map.class);
+                } else {
+                    map = null;
+                }
+
+                //ComponentName componentName = startIntent.getComponent();
+
+                Intent startIntent = null;
+
+                if (map != null && map.containsKey("intent")) {
+                    String intentString = (String) map.get("intent");
+                    System.out.println("INTENT: " + intentString);
+
+                    if (intentString != null) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        Map intentMap = mapper.readValue(intentString, Map.class);
+
+                        if (intentMap != null) {
+                            startIntent = new Intent();
+                            startIntent.setAction((String) intentMap.get("action"));
+                            String data = (String) intentMap.get("data");
+
+                            if (data != null) {
+                                startIntent.setData(Uri.parse(data));
+                            }
+
+                            startIntent.setPackage((String) intentMap.get("package"));
+                            startIntent.setFlags((Integer) intentMap.get("flags"));
+                        }
+                    }
+                }
+
+                this.applicationStarter.startApplication(startIntent);
+
+                return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8",
+                        FranklyResult.emptyResult().asJson());
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new NanoHTTPD.Response(HTTP_INTERNALERROR, "application/json;charset=utf-8",
+                        FranklyResult.fromThrowable(e).asJson());
+            }
+        }
 		else if (uri.endsWith("/dump")) {
 			FranklyResult errorResult = null;
 			try {
-				
-				
+
+
 				String json = params.getProperty("json");
-				
-				
+
+
 				if (json == null)
-				{					
+				{
 					Map<?,?> dumpTree = new ViewDump().dumpWithoutElements();
 					return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", JSONUtils.asJson(dumpTree));
 				}
-				else 
+				else
 				{
 					ObjectMapper mapper = new ObjectMapper();
 					Map dumpSpec = mapper.readValue(json, Map.class);
-														
+
 					List<Integer> path = (List<Integer>) dumpSpec.get("path");
 					if (path == null)
 					{
 						Map<?,?> dumpTree = new ViewDump().dumpWithoutElements();
-						return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", JSONUtils.asJson(dumpTree));					
+						return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", JSONUtils.asJson(dumpTree));
 					}
 					Map<?,?> dumpTree = new ViewDump().dumpPathWithoutElements(path);
 					if (dumpTree == null) {
-						return new NanoHTTPD.Response(HTTP_NOTFOUND, "application/json;charset=utf-8", "{}");	
+						return new NanoHTTPD.Response(HTTP_NOTFOUND, "application/json;charset=utf-8", "{}");
 					}
 					else {
-						return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", JSONUtils.asJson(dumpTree));	
+						return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", JSONUtils.asJson(dumpTree));
 					}
-					
-					
+
+
 				}
 
-				
+
 			} catch (Exception e ) {
 				e.printStackTrace();
                 errorResult = FranklyResult.fromThrowable(e);
@@ -150,7 +207,7 @@ public class HttpServer extends NanoHTTPD {
                     intent.setAction((String) data.get("action"));
                 }
 
-                Activity activity = InstrumentationBackend.solo.getCurrentActivity();
+                Activity activity = InstrumentationBackend.getCurrentActivity();
 
                 Log.d(TAG, "Broadcasting intent " + intent);
                 activity.sendBroadcast(intent);
@@ -184,7 +241,7 @@ public class HttpServer extends NanoHTTPD {
                 }
 
                 if (invocationResult instanceof Map && ((Map) invocationResult).containsKey("error")) {
-                    Context context = getRootView().getContext();
+                    Context context = InstrumentationBackend.getCurrentActivity();
                     invocationResult = operation.apply(context);
                 }
 
@@ -215,7 +272,7 @@ public class HttpServer extends NanoHTTPD {
 				String commandString = params.getProperty("json");
 				ObjectMapper mapper = new ObjectMapper();
 				Map command = mapper.readValue(commandString, Map.class);
-				
+
 				String uiQuery = (String) command.get("query");
 				uiQuery = uiQuery.trim();
 				Map op = (Map) command.get("operation");
@@ -345,9 +402,9 @@ public class HttpServer extends NanoHTTPD {
         } else if (uri.endsWith("/kill")) {
 			lock.lock();
 			try {
-				running = false;
 				System.out.println("Stopping test server");
 				stop();
+				running = false;
 
 				shutdownCondition.signal();
 				return new NanoHTTPD.Response(HTTP_OK, MIME_HTML,
@@ -362,7 +419,7 @@ public class HttpServer extends NanoHTTPD {
 		} else if (uri.endsWith("/screenshot")) {
 			try {
 				Bitmap bitmap;
-				View rootView = getRootView();
+				View rootView = (View) UIQueryUtils.getRootViews().toArray()[0];
 				rootView.setDrawingCacheEnabled(true);
 				rootView.buildDrawingCache(true);
 				bitmap = Bitmap.createBitmap(rootView.getDrawingCache());
@@ -490,29 +547,6 @@ public class HttpServer extends NanoHTTPD {
 		return new NanoHTTPD.Response(HTTP_OK, MIME_HTML, result);
 	}
 
-	private View getRootView() {
-		for (int i = 0; i < 25; i++) {
-			try {
-				View decorView = InstrumentationBackend.solo
-						.getCurrentActivity().getWindow().getDecorView();
-				if (decorView != null) {
-					View rootView = decorView
-							.findViewById(android.R.id.content);
-					if (rootView != null) {
-						return rootView;
-					}
-				}
-				System.out.println("Retry: " + i);
-
-				Thread.sleep(200);
-			} catch (Exception e) {
-			}
-		}
-
-		throw new RuntimeException("Could not find any views");
-	}
-
-
 	private String toJson(Result result) {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
@@ -539,11 +573,15 @@ public class HttpServer extends NanoHTTPD {
 		try {
 			while (running) {
 				shutdownCondition.await();
-			}
+            }
 		} finally {
 			lock.unlock();
 		}
 	}
+
+    public boolean isRunning() {
+        return running;
+    }
 
 	public static void log(String message) {
 		Log.i(TAG, message);
@@ -552,4 +590,12 @@ public class HttpServer extends NanoHTTPD {
 	public void setReady() {
 		ready = true;
 	}
+
+    public void setApplicationStarter(ApplicationStarter applicationStarter) {
+        this.applicationStarter = applicationStarter;
+    }
+
+    public static abstract class ApplicationStarter {
+        public abstract void startApplication(Intent startIntent);
+    }
 }

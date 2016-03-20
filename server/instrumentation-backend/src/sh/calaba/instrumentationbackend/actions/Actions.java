@@ -22,9 +22,9 @@ public class Actions {
     public static InstrumentationTestCase parentTestCase;
     private Context context;
 
-    public Actions(Instrumentation parentInstrumentation, InstrumentationTestCase parentTestCase) {
+    public Actions(Instrumentation parentInstrumentation) {
         Actions.parentInstrumentation = parentInstrumentation;
-        Actions.parentTestCase = parentTestCase;
+        Actions.parentTestCase = null;
         this.context = parentInstrumentation.getContext();
         loadActions();
     }

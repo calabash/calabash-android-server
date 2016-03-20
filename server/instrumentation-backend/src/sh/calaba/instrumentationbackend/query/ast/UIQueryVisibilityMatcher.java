@@ -31,7 +31,6 @@ public class UIQueryVisibilityMatcher extends UIQueryMatcher<Boolean> {
         Map<String,Integer> viewRect = uiObjectWebResult.getRect();
         WebContainer webContainer = uiObjectWebResult.getWebContainer();
         Map<String,Integer> parentViewRec = ViewMapper.getRectForView(webContainer.getView());
-
         return UIQueryUtils.isViewSufficientlyShown(viewRect, parentViewRec);
     }
 }

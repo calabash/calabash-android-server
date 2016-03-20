@@ -335,8 +335,9 @@ public class MultiTouchGesture {
     }
 
     public static void tryWaitForKeyguard(int timeoutSeconds) {
-        Activity activity = InstrumentationBackend.solo.getCurrentActivity();
-        KeyguardManager keyguardManager = (KeyguardManager) activity.getSystemService(Context.KEYGUARD_SERVICE);
+        KeyguardManager keyguardManager = (KeyguardManager)
+                InstrumentationBackend.instrumentation.getContext().getSystemService(Context.KEYGUARD_SERVICE);
+
 
         if (!keyguardManager.inKeyguardRestrictedInputMode()) {
             return;

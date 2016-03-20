@@ -1,7 +1,5 @@
 package sh.calaba.instrumentationbackend.query;
 
-import static sh.calaba.instrumentationbackend.InstrumentationBackend.viewFetcher;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;

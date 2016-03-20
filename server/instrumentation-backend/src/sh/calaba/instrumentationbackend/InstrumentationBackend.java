@@ -24,7 +24,6 @@ public class InstrumentationBackend {
     public static Instrumentation instrumentation;
 
     public static SoloEnhanced solo;
-    public static PublicViewFetcher viewFetcher;
     public static Actions actions;
     public static Instrumentation.ActivityMonitor activityMonitor;
 

@@ -16,14 +16,7 @@ import org.antlr.runtime.tree.CommonTree;
 
 import sh.calaba.instrumentationbackend.query.antlr.UIQueryLexer;
 import sh.calaba.instrumentationbackend.query.antlr.UIQueryParser;
-import sh.calaba.instrumentationbackend.query.ast.InvalidUIQueryException;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryAST;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryASTClassName;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryASTPredicate;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryASTWith;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryDirection;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryEvaluator;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryVisibility;
+import sh.calaba.instrumentationbackend.query.ast.*;
 import sh.calaba.instrumentationbackend.query.ast.evaluation.QueryEvaluator;
 import sh.calaba.instrumentationbackend.query.ast.evaluation.UIQueryEvaluationStep;
 import sh.calaba.instrumentationbackend.query.ast.optimization.GeneralUIQueryOptimizer;
@@ -56,7 +49,7 @@ public class Query {
 	}
 
 	public QueryResult executeQuery() {
-		List<UIQueryAST> queryPath = parseQuery(this.queryString);
+        List<UIQueryAST> queryPath = parseQuery(this.queryString);
 		List<UIQueryAST> optimizedQuery = QueryOptimizationCache.getCacheFor(this.queryString);
 
 		if (optimizedQuery == null) {
@@ -65,7 +58,7 @@ public class Query {
 			QueryOptimizationCache.cache(this.queryString, optimizedQuery);
 		}
 
-		return UIQueryEvaluator.evaluateQueryWithOptions(optimizedQuery,
+				return UIQueryEvaluator.evaluateQueryWithOptions(optimizedQuery,
                 UIObjectView.listOfUIObjects(rootViews()), parseOperations(this.operations));
 	}
 
@@ -181,18 +174,6 @@ public class Query {
 	}
 
     public List<View> rootViews() {
-        Set<View> parents = new HashSet<View>();
-
-        if (viewFetcher != null) {
-            for (View v : viewFetcher.getAllViews(false)) {
-                View parent = viewFetcher.getTopParent(v);
-                parents.add(parent);
-            }
-        }
-
-        List<View> results = new ArrayList<View>(parents);
-        return results;
+        return new ArrayList<View>(UIQueryUtils.getRootViews());
     }
-
-
 }

@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 
+import android.app.Activity;
+import android.view.Window;
 import org.antlr.runtime.tree.CommonTree;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
@@ -174,7 +176,52 @@ public class UIQueryUtils {
 		}
 	}
 
-	public static boolean isVisible(UIObject uiObject) {
+    public static View getRootParent(View view) {
+        ViewParent parent = view.getParent();
+
+        if (parent != null && parent instanceof View) {
+            return getRootParent((View) parent);
+        }
+
+        return view;
+    }
+
+    public static Set<View> getRootViews() {
+        Activity activity = InstrumentationBackend.getCurrentActivity();
+
+        if (activity == null) {
+            System.out.println("Calabash: Activity is null");
+
+            return Collections.emptySet();
+        }
+
+        Set<View> parents = new HashSet<View>();
+        Window window = activity.getWindow();
+
+        if (window != null) {
+            View decorView = window.peekDecorView();
+
+            if (decorView != null) {
+                parents.add(getRootParent(decorView));
+            } else {
+                System.out.println("Calabash: DecorView is null");
+            }
+        } else {
+            System.out.println("Calabash: activity window is null");
+        }
+
+        return parents;
+    }
+
+
+    public static boolean isVisible(UIObject uiObject) {
+
+        try {
+            throw new Exception("yo");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         try {
             return new UIQueryVisibilityMatcher(uiObject).call();
         } catch (Exception e) {
@@ -248,6 +295,7 @@ public class UIQueryUtils {
         if(view.getHandler() == null || view.getHandler().getLooper() == null || view.getHandler().getLooper().getThread() == Thread.currentThread()) {
             runnable.run();
         } else {
+
             view.post(runnable);
         }
     }

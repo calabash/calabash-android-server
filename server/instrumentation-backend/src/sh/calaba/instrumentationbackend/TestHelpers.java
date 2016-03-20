@@ -86,18 +86,19 @@ public class TestHelpers {
             // Assume this is an "R.id.<name>" string.
         }
 
-        final Activity activity = InstrumentationBackend.solo.getCurrentActivity();
+        final Activity activity = InstrumentationBackend.getCurrentActivity();
         return activity.getResources().getIdentifier(resName, "id", activity.getPackageName());
     }
 
     public static Drawable getDrawableById(String resName) {
         int id;
         try {
-    	    id = InstrumentationBackend.solo.getCurrentActivity().getResources().getIdentifier(resName, "drawable", InstrumentationBackend.solo.getCurrentActivity().getPackageName());
+    	    id = InstrumentationBackend.instrumentation.getTargetContext().getResources().getIdentifier(
+                    resName, "drawable", InstrumentationBackend.instrumentation.getTargetContext().getPackageName());
     	} catch( NotFoundException e ) {
     		throw new RuntimeException("getDrawableById: Looking for drawable " + resName + " but was not found");
     	}
-        Drawable drawable = InstrumentationBackend.solo.getCurrentActivity().getResources().getDrawable(id);
+        Drawable drawable = InstrumentationBackend.instrumentation.getTargetContext().getResources().getDrawable(id);
         if (drawable != null) {
             System.out.println("Did find drawable " + resName + ": " + drawable);
         } else {

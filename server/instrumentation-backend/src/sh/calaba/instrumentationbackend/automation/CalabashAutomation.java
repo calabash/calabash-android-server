@@ -7,6 +7,6 @@ import java.lang.ref.WeakReference;
 import java.util.Collection;
 
 public interface CalabashAutomation {
-    public WeakReference<Activity> getCurrentActivity();
+    public Activity getCurrentActivity();
     public Collection<? extends UIObject> getRootViews();
 }

@@ -18,7 +18,7 @@ public class CalabashAutomationEmbedded implements CalabashAutomation {
     }
 
     @Override
-    public WeakReference<Activity> getCurrentActivity() {
+    public Activity getCurrentActivity() {
         return applicationUnderTest.getCurrentActivity();
     }
 

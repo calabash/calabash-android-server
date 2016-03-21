@@ -396,7 +396,16 @@ public class UIQueryUtils {
 	 */
 	public static Map<?, ?> dump() {
 		Query dummyQuery = new Query("not_used");
-		return dumpRecursively(emptyRootView(), dummyQuery.rootViews());
+
+		List<View> views = new ArrayList<View>();
+
+        for (UIObject uiObject : dummyQuery.rootViews()) {
+            if (uiObject.getObject() instanceof View) {
+                views.add((View) uiObject.getObject());
+            }
+        }
+
+		return dumpRecursively(emptyRootView(), views);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -480,7 +489,13 @@ public class UIQueryUtils {
 		Query dummyQuery = new Query("not_used");
 
 		Map currentView = emptyRootView();
-		List<View> currentChildren = dummyQuery.rootViews();
+		List<View> currentChildren = new ArrayList<View>();
+
+        for (UIObject uiObject : dummyQuery.rootViews()) {
+            if (uiObject.getObject() instanceof View) {
+                currentChildren.add((View) uiObject.getObject());
+            }
+        }
 
 		for (Integer i : path) {
 			if (i < currentChildren.size()) {

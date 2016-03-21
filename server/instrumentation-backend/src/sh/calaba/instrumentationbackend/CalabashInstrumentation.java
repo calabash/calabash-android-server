@@ -1,6 +1,8 @@
 package sh.calaba.instrumentationbackend;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -9,13 +11,20 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
-import com.jayway.android.robotium.solo.SoloEnhanced;
-
 import sh.calaba.instrumentationbackend.actions.Actions;
 import sh.calaba.instrumentationbackend.actions.HttpServer;
+import sh.calaba.instrumentationbackend.automation.ApplicationUnderTest;
+import sh.calaba.instrumentationbackend.automation.CalabashAutomationEmbedded;
 import sh.calaba.instrumentationbackend.utils.MonoUtils;
 
+/*
+    Entry point for Calabash based on Android instrumentation
+ */
 public class CalabashInstrumentation extends Instrumentation {
+    private String testPackage;
+    private String mainActivityName;
+    private Bundle extras;
+
     @Override
     public void onCreate(Bundle arguments) {
         StatusReporter statusReporter = new StatusReporter(getContext());
@@ -51,8 +60,6 @@ public class CalabashInstrumentation extends Instrumentation {
                 throw e;
             }
 
-            InstrumentationBackend.testPackage = arguments.getString("target_package");
-
             Bundle extras = (Bundle) arguments.clone();
             extras.remove("target_package");
             extras.remove("main_activity");
@@ -63,11 +70,16 @@ public class CalabashInstrumentation extends Instrumentation {
                 extras = null;
             }
 
-            InstrumentationBackend.extras = extras;
-            InstrumentationBackend.mainActivityName = mainActivity;
+            this.testPackage = arguments.getString("target_package");
+            this.mainActivityName = mainActivity;
+            this.extras = extras;
+
+            InstrumentationBackend.setDefaultCalabashAutomation(
+                    new CalabashAutomationEmbedded(
+                            new ApplicationUnderTestInstrumentation(addMonitor((IntentFilter) null, null, false))));
+
             InstrumentationBackend.instrumentation = this;
             InstrumentationBackend.actions = new Actions(this);
-            InstrumentationBackend.activityMonitor = addMonitor((IntentFilter) null, null, false);
 
             super.onCreate(arguments);
 
@@ -82,8 +94,15 @@ public class CalabashInstrumentation extends Instrumentation {
     }
 
     private void startTestServer() {
+        Intent defaultStartIntent = new Intent(Intent.ACTION_MAIN);
+        defaultStartIntent.setClassName(this.testPackage,
+                this.mainActivityName);
+        defaultStartIntent.addCategory("android.intent.category.LAUNCHER");
+        defaultStartIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        defaultStartIntent.replaceExtras(this.extras);
+
         final InstrumentationApplicationLifeCycle applicationLifeCycle =
-                new InstrumentationApplicationLifeCycle(this);
+                new InstrumentationApplicationLifeCycle(this, defaultStartIntent);
 
         final HttpTestServerLifeCycle testServerLifeCycle =
                 new HttpTestServerLifeCycle(HttpServer.getInstance(), applicationLifeCycle);
@@ -106,8 +125,8 @@ public class CalabashInstrumentation extends Instrumentation {
                 runOnMainSync(new Runnable() {
                     @Override
                     public void run() {
-                                                testServerLifeCycle.stop();
-                                                InstrumentationBackend.tearDown();
+                        testServerLifeCycle.stop();
+                        InstrumentationBackend.tearDown();
                     }
                 });
             }
@@ -142,6 +161,24 @@ public class CalabashInstrumentation extends Instrumentation {
             return mainActivityTmpName;
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private final class ApplicationUnderTestInstrumentation implements ApplicationUnderTest {
+        private Instrumentation.ActivityMonitor activityMonitor;
+
+        public ApplicationUnderTestInstrumentation(Instrumentation.ActivityMonitor activityMonitor) {
+            this.activityMonitor = activityMonitor;
+        }
+
+        @Override
+        public Application getApplication() {
+            return activityMonitor.getLastActivity().getApplication();
+        }
+
+        @Override
+        public Activity getCurrentActivity() {
+            return activityMonitor.getLastActivity();
         }
     }
 }

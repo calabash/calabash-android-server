@@ -36,6 +36,7 @@ import sh.calaba.instrumentationbackend.query.Query;
 import sh.calaba.instrumentationbackend.query.QueryResult;
 import sh.calaba.instrumentationbackend.query.WebContainer;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
+import sh.calaba.instrumentationbackend.query.ui.UIObject;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 
 import android.app.Activity;
@@ -419,16 +420,23 @@ public class HttpServer extends NanoHTTPD {
 		} else if (uri.endsWith("/screenshot")) {
 			try {
 				Bitmap bitmap;
-				View rootView = (View) UIQueryUtils.getRootViews().toArray()[0];
-				rootView.setDrawingCacheEnabled(true);
-				rootView.buildDrawingCache(true);
-				bitmap = Bitmap.createBitmap(rootView.getDrawingCache());
-				rootView.setDrawingCacheEnabled(false);
 
-				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
-				return new NanoHTTPD.Response(HTTP_OK, "image/png",
-						new ByteArrayInputStream(out.toByteArray()));
+                UIObject uiObject = InstrumentationBackend.getRootViews().iterator().next();
+
+                if (uiObject.getObject() instanceof View) {
+                    View rootView = (View) uiObject.getObject();
+                    rootView.setDrawingCacheEnabled(true);
+                    rootView.buildDrawingCache(true);
+                    bitmap = Bitmap.createBitmap(rootView.getDrawingCache());
+                    rootView.setDrawingCacheEnabled(false);
+
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+                    return new NanoHTTPD.Response(HTTP_OK, "image/png",
+                            new ByteArrayInputStream(out.toByteArray()));
+                } else {
+                    throw new RuntimeException("Invalid rootView '" + uiObject.getObject() + "'");
+                }
 			} catch (Exception e) {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);

@@ -1,6 +1,7 @@
 package sh.calaba.instrumentationbackend.actions.location;
 
 
+import android.os.Build;
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
@@ -13,8 +14,10 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.provider.Settings;
+import sh.calaba.org.codehaus.jackson.map.util.Provider;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 
 public class FakeGPSLocation implements Action {
@@ -23,26 +26,25 @@ public class FakeGPSLocation implements Action {
 
     @Override
     public Result execute(String... args) {
-        
-        if(!doesDeviceProvideGPS()) {
-            return new Result(false, "This devices does not support GPS");
-        }
-        
         final double latitude = Double.parseDouble(args[0]);
         final double longitude = Double.parseDouble(args[1]);
 
         Context context = InstrumentationBackend.instrumentation.getTargetContext();
 
         try {
-            if (Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION) != 1) {
-                return Result.failedResult("Allow mock location is not enabled.");
+            if (Build.VERSION.SDK_INT <= 22) {
+                if (Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION) != 1) {
+                    return Result.failedResult("Allow mock location is not enabled.");
+                }
             }
         } catch (Settings.SettingNotFoundException e) {
             return Result.failedResult(e.getMessage());
         }
 
-        if (context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_MOCK_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return Result.failedResult("The application does not have access mock location permission. Add the permission '" + Manifest.permission.ACCESS_MOCK_LOCATION + "' to your manifest");
+        if (Build.VERSION.SDK_INT <= 22) {
+            if (context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_MOCK_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return Result.failedResult("The application does not have access mock location permission. Add the permission '" + Manifest.permission.ACCESS_MOCK_LOCATION + "' to your manifest");
+            }
         }
 
         if (t != null) {
@@ -58,7 +60,6 @@ public class FakeGPSLocation implements Action {
     
    
     private class LocationProviderThread extends Thread {
-    	
     	private final double latitude;
 		private final double longitude;
 		
@@ -71,7 +72,7 @@ public class FakeGPSLocation implements Action {
     	
     	@Override
 		public void run() {
-    		LocationManager locationManager = (LocationManager) InstrumentationBackend.solo.getCurrentActivity().getSystemService(Context.LOCATION_SERVICE);
+    		LocationManager locationManager = (LocationManager) InstrumentationBackend.instrumentation.getTargetContext().getSystemService(Context.LOCATION_SERVICE);
     		locationManager.addTestProvider(LocationManager.NETWORK_PROVIDER, false, false, false, false, false, false, false, Criteria.POWER_LOW, Criteria.ACCURACY_FINE);
     		locationManager.addTestProvider(LocationManager.GPS_PROVIDER, false, false, false, false, false, false, false, Criteria.POWER_LOW, Criteria.ACCURACY_FINE);
 
@@ -80,8 +81,14 @@ public class FakeGPSLocation implements Action {
 
     		while(!finish) {
 				System.out.println("Mocking location to: (" + latitude + ", " + longitude + ")");
-				setLocation(locationManager, LocationManager.NETWORK_PROVIDER, latitude, longitude);
-				setLocation(locationManager, LocationManager.GPS_PROVIDER, latitude, longitude);
+
+                List<String> providerNames = locationManager.getProviders(true);
+
+                for (String providerName : providerNames) {
+                    System.out.println("Active provider: " + providerName);
+                    setLocation(locationManager, providerName, latitude, longitude);
+                }
+
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
@@ -120,16 +127,6 @@ public class FakeGPSLocation implements Action {
         return "set_gps_coordinates";
     }
 
-    private boolean doesDeviceProvideGPS() {
-    LocationManager locationManager = (LocationManager) InstrumentationBackend.solo.getCurrentActivity().getSystemService(Context.LOCATION_SERVICE);
-    if (locationManager.getProvider(LocationManager.GPS_PROVIDER) == null) {
-        return false;
-    } else {
-        return true;
-    }
-    
-    }
-    
     /**
      * Adds new LocationTestProvider matching actual provider on device.
      * 
@@ -137,7 +134,7 @@ public class FakeGPSLocation implements Action {
      * @param providerType
      */
     private void addTestProvider(LocationProvider currentProvider, String providerType) {
-    LocationManager locationManager = (LocationManager) InstrumentationBackend.solo.getCurrentActivity().getSystemService(Context.LOCATION_SERVICE);
+    LocationManager locationManager = (LocationManager) InstrumentationBackend.instrumentation.getTargetContext().getSystemService(Context.LOCATION_SERVICE);
     
     locationManager.addTestProvider(providerType, 
                     currentProvider.requiresNetwork(), 

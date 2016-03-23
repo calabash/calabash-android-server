@@ -14,8 +14,10 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.provider.Settings;
+import sh.calaba.org.codehaus.jackson.map.util.Provider;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 
 public class FakeGPSLocation implements Action {
@@ -85,8 +87,14 @@ public class FakeGPSLocation implements Action {
 
     		while(!finish) {
 				System.out.println("Mocking location to: (" + latitude + ", " + longitude + ")");
-				setLocation(locationManager, LocationManager.NETWORK_PROVIDER, latitude, longitude);
-				setLocation(locationManager, LocationManager.GPS_PROVIDER, latitude, longitude);
+
+                List<String> providerNames = locationManager.getProviders(true);
+
+                for (String providerName : providerNames) {
+                    System.out.println("Active provider: " + providerName);
+                    setLocation(locationManager, providerName, latitude, longitude);
+                }
+
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {

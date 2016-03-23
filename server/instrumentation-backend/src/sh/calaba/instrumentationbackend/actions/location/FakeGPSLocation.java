@@ -17,6 +17,7 @@ import android.provider.Settings;
 import sh.calaba.org.codehaus.jackson.map.util.Provider;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -73,20 +74,28 @@ public class FakeGPSLocation implements Action {
     	@Override
 		public void run() {
     		LocationManager locationManager = (LocationManager) InstrumentationBackend.instrumentation.getTargetContext().getSystemService(Context.LOCATION_SERVICE);
-    		locationManager.addTestProvider(LocationManager.NETWORK_PROVIDER, false, false, false, false, false, false, false, Criteria.POWER_LOW, Criteria.ACCURACY_FINE);
-    		locationManager.addTestProvider(LocationManager.GPS_PROVIDER, false, false, false, false, false, false, false, Criteria.POWER_LOW, Criteria.ACCURACY_FINE);
 
-    		locationManager.setTestProviderEnabled(LocationManager.NETWORK_PROVIDER, true);
-    		locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true);
+            final List<String> providerNames = locationManager.getProviders(true);
+            List<String> activeProviderNames = new ArrayList<String>();
+
+            for (String providerName : providerNames) {
+                try {
+                    locationManager.addTestProvider(providerName, false, false, false, false, false, false, false, Criteria.POWER_LOW, Criteria.ACCURACY_FINE);
+                    locationManager.setTestProviderEnabled(providerName, true);
+                    activeProviderNames.add(providerName);
+                } catch (IllegalArgumentException e) {
+                    // Ignored
+                }
+            }
 
     		while(!finish) {
 				System.out.println("Mocking location to: (" + latitude + ", " + longitude + ")");
 
-                List<String> providerNames = locationManager.getProviders(true);
-
-                for (String providerName : providerNames) {
-                    System.out.println("Active provider: " + providerName);
-                    setLocation(locationManager, providerName, latitude, longitude);
+                for (String providerName : activeProviderNames) {
+                    if (locationManager.getProvider(providerName) != null) {
+                        System.out.println("Active provider: " + providerName);
+                        setLocation(locationManager, providerName, latitude, longitude);
+                    }
                 }
 
 				try {

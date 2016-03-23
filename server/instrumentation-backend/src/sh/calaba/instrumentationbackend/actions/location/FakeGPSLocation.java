@@ -1,6 +1,7 @@
 package sh.calaba.instrumentationbackend.actions.location;
 
 
+import android.os.Build;
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
@@ -34,15 +35,19 @@ public class FakeGPSLocation implements Action {
         Context context = InstrumentationBackend.instrumentation.getTargetContext();
 
         try {
-            if (Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION) != 1) {
-                return Result.failedResult("Allow mock location is not enabled.");
+            if (Build.VERSION.SDK_INT <= 22) {
+                if (Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION) != 1) {
+                    return Result.failedResult("Allow mock location is not enabled.");
+                }
             }
         } catch (Settings.SettingNotFoundException e) {
             return Result.failedResult(e.getMessage());
         }
 
-        if (context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_MOCK_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return Result.failedResult("The application does not have access mock location permission. Add the permission '" + Manifest.permission.ACCESS_MOCK_LOCATION + "' to your manifest");
+        if (Build.VERSION.SDK_INT <= 22) {
+            if (context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_MOCK_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return Result.failedResult("The application does not have access mock location permission. Add the permission '" + Manifest.permission.ACCESS_MOCK_LOCATION + "' to your manifest");
+            }
         }
 
         if (t != null) {

@@ -26,11 +26,6 @@ public class FakeGPSLocation implements Action {
 
     @Override
     public Result execute(String... args) {
-        
-        if(!doesDeviceProvideGPS()) {
-            return new Result(false, "This devices does not support GPS");
-        }
-        
         final double latitude = Double.parseDouble(args[0]);
         final double longitude = Double.parseDouble(args[1]);
 
@@ -65,7 +60,6 @@ public class FakeGPSLocation implements Action {
     
    
     private class LocationProviderThread extends Thread {
-    	
     	private final double latitude;
 		private final double longitude;
 		
@@ -133,16 +127,6 @@ public class FakeGPSLocation implements Action {
         return "set_gps_coordinates";
     }
 
-    private boolean doesDeviceProvideGPS() {
-    LocationManager locationManager = (LocationManager) InstrumentationBackend.instrumentation.getTargetContext().getSystemService(Context.LOCATION_SERVICE);
-    if (locationManager.getProvider(LocationManager.GPS_PROVIDER) == null) {
-        return false;
-    } else {
-        return true;
-    }
-    
-    }
-    
     /**
      * Adds new LocationTestProvider matching actual provider on device.
      * 

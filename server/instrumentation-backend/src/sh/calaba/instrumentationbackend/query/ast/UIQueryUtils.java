@@ -215,13 +215,6 @@ public class UIQueryUtils {
 
 
     public static boolean isVisible(UIObject uiObject) {
-
-        try {
-            throw new Exception("yo");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         try {
             return new UIQueryVisibilityMatcher(uiObject).call();
         } catch (Exception e) {

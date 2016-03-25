@@ -16,6 +16,8 @@ import android.os.Build;
 import android.os.Bundle;
 
 import android.os.IBinder;
+import android.os.UserHandle;
+import sh.calaba.exposed.InstrumentationExposed;
 import sh.calaba.instrumentationbackend.actions.Actions;
 import sh.calaba.instrumentationbackend.actions.HttpServer;
 import sh.calaba.instrumentationbackend.automation.ApplicationUnderTest;
@@ -27,7 +29,7 @@ import sh.calaba.instrumentationbackend.utils.MonoUtils;
 /*
     Entry point for Calabash based on Android instrumentation
  */
-public class CalabashInstrumentation extends Instrumentation {
+public class CalabashInstrumentation extends InstrumentationExposed {
     private String testPackage;
     private String mainActivityName;
     private Bundle extras;

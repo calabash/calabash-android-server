@@ -276,6 +276,43 @@ public class HttpServer extends NanoHTTPD {
                 return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", FranklyResult.fromThrowable(ex).asJson());
             }
         }
+        else if (uri.endsWith("/file-exists")) {
+            try {
+                String json = params.getProperty("json");
+                ObjectMapper mapper = new ObjectMapper();
+                Map data = mapper.readValue(json, Map.class);
+
+                String fileName = (String) data.get("fileName");
+                File file = new File(fileName);
+
+                String result;
+
+                if (file.exists()) {
+                    result = "true";
+                } else {
+                    result = "false";
+                }
+
+                return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", result);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new NanoHTTPD.Response(HTTP_BADREQUEST, "application/json;charset=utf-8", FranklyResult.fromThrowable(e).asJson());
+            }
+        }
+        else if (uri.endsWith("/read-file")) {
+            try {
+                String json = params.getProperty("json");
+                ObjectMapper mapper = new ObjectMapper();
+                Map data = mapper.readValue(json, Map.class);
+
+                String fileName = (String) data.get("fileName");
+
+                return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", new FileInputStream(fileName));
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new NanoHTTPD.Response(HTTP_BADREQUEST, "application/json;charset=utf-8", FranklyResult.fromThrowable(e).asJson());
+            }
+        }
         else if (uri.endsWith("/add-file")) {
             // NOTE: There is a PUT hack in NanoHTTPD that stores PUTs in a tmp file,
             //       we need that!

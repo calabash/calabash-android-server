@@ -26,6 +26,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import android.os.Bundle;
 import dalvik.system.DexClassLoader;
 import sh.calaba.instrumentationbackend.Command;
 import sh.calaba.instrumentationbackend.FranklyResult;
@@ -152,6 +153,53 @@ public class HttpServer extends NanoHTTPD {
                 }
 
                 this.applicationStarter.startApplication(startIntent);
+
+                return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8",
+                        FranklyResult.emptyResult().asJson());
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new NanoHTTPD.Response(HTTP_INTERNALERROR, "application/json;charset=utf-8",
+                        FranklyResult.fromThrowable(e).asJson());
+            }
+        }
+        else if (uri.endsWith("/instrument")) {
+            try {
+                String json = params.getProperty("json");
+
+                ObjectMapper mapper = new ObjectMapper();
+                Map map = mapper.readValue(json, Map.class);
+
+                String packageName = (String) map.get("packageName");
+                String className = (String) map.get("className");
+
+                Bundle arguments = null;
+                Map extrasMap = (Map) map.get("extras");
+
+                if (extrasMap != null) {
+                    arguments = new Bundle();
+
+                    for (Object keyO : extrasMap.keySet()) {
+                        String key = (String) keyO;
+                        Object value = extrasMap.get(key);
+
+                        if (value == null) {
+                            throw new RuntimeException("Cannot put null");
+                        }
+
+                        if (value instanceof Integer) {
+                            arguments.putInt(key, (Integer)value);
+                        } else if (value instanceof Double) {
+                            arguments.putDouble(key, (Double)value);
+                        } else if (value instanceof String) {
+                            arguments.putString(key, (String)value);
+                        } else {
+                            throw new RuntimeException("Cannot put " + value + " of type " + value.getClass());
+                        }
+                    }
+                }
+
+                Context context = InstrumentationBackend.instrumentation.getContext();
+                context.startInstrumentation(new ComponentName(packageName, className), null, arguments);
 
                 return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8",
                         FranklyResult.emptyResult().asJson());

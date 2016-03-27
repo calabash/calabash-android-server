@@ -48,7 +48,7 @@ public class CalabashInstrumentation extends InstrumentationExposed {
                     && !"null".equals(arguments.getString("main_activity"))) {
                 mainActivity = arguments.getString("main_activity");
             } else {
-                mainActivity = detectMainActivity(statusReporter, arguments.getString("target_package"));
+                mainActivity = detectMainActivity(statusReporter, getTargetContext().getPackageName());
 
                 System.out.println("Main activity name automatically set to: " + mainActivity);
 
@@ -72,7 +72,6 @@ public class CalabashInstrumentation extends InstrumentationExposed {
             }
 
             Bundle extras = (Bundle) arguments.clone();
-            extras.remove("target_package");
             extras.remove("main_activity");
             extras.remove("test_server_port");
             extras.remove("class");
@@ -81,7 +80,6 @@ public class CalabashInstrumentation extends InstrumentationExposed {
                 extras = null;
             }
 
-            this.testPackage = arguments.getString("target_package");
             this.mainActivityName = mainActivity;
             this.extras = extras;
 
@@ -284,7 +282,7 @@ public class CalabashInstrumentation extends InstrumentationExposed {
             defaultStartIntent = activityIntent;
         } else {
             defaultStartIntent = new Intent(Intent.ACTION_MAIN);
-            defaultStartIntent.setClassName(this.testPackage,
+            defaultStartIntent.setClassName(getTargetContext().getPackageName(),
                     this.mainActivityName);
             defaultStartIntent.addCategory("android.intent.category.LAUNCHER");
             defaultStartIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);

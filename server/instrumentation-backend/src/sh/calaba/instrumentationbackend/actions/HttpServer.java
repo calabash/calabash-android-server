@@ -162,7 +162,7 @@ public class HttpServer extends NanoHTTPD {
                         FranklyResult.fromThrowable(e).asJson());
             }
         }
-        else if (uri.endsWith("/instrument")) {
+        else if (uri.endsWith("/instrument") || uri.endsWith("/start-activity")) {
             try {
                 String json = params.getProperty("json");
 
@@ -199,7 +199,16 @@ public class HttpServer extends NanoHTTPD {
                 }
 
                 Context context = InstrumentationBackend.instrumentation.getContext();
-                context.startInstrumentation(new ComponentName(packageName, className), null, arguments);
+
+                if (uri.endsWith("/instrument")) {
+                    context.startInstrumentation(new ComponentName(packageName, className), null, arguments);
+                } else if (uri.endsWith("/start-activity")) {
+                    Intent intent = new Intent();
+                    intent.setComponent(new ComponentName(packageName, className));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.replaceExtras(arguments);
+                    context.startActivity(intent);
+                }
 
                 return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8",
                         FranklyResult.emptyResult().asJson());

@@ -5,10 +5,8 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Application;
 import android.app.Fragment;
-import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -26,6 +24,8 @@ import sh.calaba.instrumentationbackend.intenthook.IIntentHook;
 import sh.calaba.instrumentationbackend.intenthook.IntentHookResult;
 import sh.calaba.instrumentationbackend.utils.MonoUtils;
 
+import java.lang.ref.WeakReference;
+
 /*
     Entry point for Calabash based on Android instrumentation
  */
@@ -34,6 +34,7 @@ public class CalabashInstrumentation extends InstrumentationExposed {
     private String mainActivityName;
     private Bundle extras;
     private Intent activityIntent;
+    private WeakReference<Activity> lastActivity;
 
     @Override
     public void onCreate(Bundle arguments) {
@@ -90,7 +91,7 @@ public class CalabashInstrumentation extends InstrumentationExposed {
 
             InstrumentationBackend.setDefaultCalabashAutomation(
                     new CalabashAutomationEmbedded(
-                            new ApplicationUnderTestInstrumentation(addMonitor((IntentFilter) null, null, false))));
+                            new ApplicationUnderTestInstrumentation()));
 
             InstrumentationBackend.instrumentation = this;
             InstrumentationBackend.actions = new Actions(this);
@@ -107,6 +108,26 @@ public class CalabashInstrumentation extends InstrumentationExposed {
         }
     }
 
+    @Override
+    public Activity newActivity(ClassLoader cl, String className, Intent intent)
+            throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+        Logger.info("newActivity1");
+        Activity activity = super.newActivity(cl, className, intent);
+        lastActivity = new WeakReference<Activity>(activity);
+
+        return activity;
+    }
+
+    @Override
+    public Activity newActivity(Class<?> clazz, Context context, IBinder token, Application application, Intent intent,
+                                ActivityInfo info, CharSequence title, Activity parent, String id, Object lastNonConfigurationInstance)
+            throws InstantiationException, IllegalAccessException {
+        Logger.info("newActivity2");
+        Activity activity = super.newActivity(clazz, context, token, application, intent, info, title, parent, id, lastNonConfigurationInstance);
+        lastActivity = new WeakReference<Activity>(activity);
+
+        return activity;
+    }
 
     @Override
     public void execStartActivities(Context who, IBinder contextThread, IBinder token, Activity target, Intent[] intents, Bundle options) {
@@ -334,20 +355,17 @@ public class CalabashInstrumentation extends InstrumentationExposed {
     }
 
     private final class ApplicationUnderTestInstrumentation implements ApplicationUnderTest {
-        private Instrumentation.ActivityMonitor activityMonitor;
-
-        public ApplicationUnderTestInstrumentation(Instrumentation.ActivityMonitor activityMonitor) {
-            this.activityMonitor = activityMonitor;
+        public ApplicationUnderTestInstrumentation() {
         }
 
         @Override
         public Application getApplication() {
-            return activityMonitor.getLastActivity().getApplication();
+            return CalabashInstrumentation.this.lastActivity.get().getApplication();
         }
 
         @Override
         public Activity getCurrentActivity() {
-            return activityMonitor.getLastActivity();
+            return CalabashInstrumentation.this.lastActivity.get();
         }
     }
 }

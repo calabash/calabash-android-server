@@ -30,7 +30,6 @@ import java.lang.ref.WeakReference;
     Entry point for Calabash based on Android instrumentation
  */
 public class CalabashInstrumentation extends InstrumentationExposed {
-    private String testPackage;
     private String mainActivityName;
     private Bundle extras;
     private Intent activityIntent;
@@ -106,6 +105,9 @@ public class CalabashInstrumentation extends InstrumentationExposed {
         }
     }
 
+    /*
+        Hook for a new activity being created using instrumentation. Often called from ActivityThread
+     */
     @Override
     public Activity newActivity(ClassLoader cl, String className, Intent intent)
             throws IllegalAccessException, ClassNotFoundException, InstantiationException {
@@ -116,6 +118,9 @@ public class CalabashInstrumentation extends InstrumentationExposed {
         return activity;
     }
 
+    /*
+        Hook for a new activity being created using instrumentation. Often called from ActivityThread
+     */
     @Override
     public Activity newActivity(Class<?> clazz, Context context, IBinder token, Application application, Intent intent,
                                 ActivityInfo info, CharSequence title, Activity parent, String id, Object lastNonConfigurationInstance)
@@ -125,6 +130,17 @@ public class CalabashInstrumentation extends InstrumentationExposed {
         lastActivity = new WeakReference<Activity>(activity);
 
         return activity;
+    }
+
+    /*
+        Hook for an activity being resumed. This can either be a new activity, or because a user
+        has pressed the back button etc.
+     */
+    @Override
+    public void callActivityOnResume(Activity activity) {
+        lastActivity = new WeakReference<Activity>(activity);
+
+        super.callActivityOnResume(activity);
     }
 
     @Override

@@ -28,10 +28,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import android.os.Bundle;
 import dalvik.system.DexClassLoader;
-import sh.calaba.instrumentationbackend.Command;
-import sh.calaba.instrumentationbackend.FranklyResult;
-import sh.calaba.instrumentationbackend.InstrumentationBackend;
-import sh.calaba.instrumentationbackend.Result;
+import sh.calaba.instrumentationbackend.*;
 import sh.calaba.instrumentationbackend.actions.webview.CalabashChromeClient;
 import sh.calaba.instrumentationbackend.intenthook.DoNothingHook;
 import sh.calaba.instrumentationbackend.intenthook.InstrumentationHook;
@@ -84,6 +81,7 @@ public class HttpServer extends NanoHTTPD {
 			throw new IllegalStateException("Can only instantiate once!");
 		}
 		try {
+            Logger.info("Instantiating http server at " + testServerPort);
 			instance = new HttpServer(testServerPort);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

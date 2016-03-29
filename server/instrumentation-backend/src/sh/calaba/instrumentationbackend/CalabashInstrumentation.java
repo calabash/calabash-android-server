@@ -59,6 +59,8 @@ public class CalabashInstrumentation extends InstrumentationExposed {
 
             MonoUtils.loadMono(getTargetContext());
 
+            Logger.info("Test server port: " + arguments.getString("test_server_port"));
+
             try {
                 // Start the HttpServer as soon as possible in a not-ready state
                 HttpServer.instantiate(Integer.parseInt(arguments.getString("test_server_port")));

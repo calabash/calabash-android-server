@@ -1,6 +1,7 @@
 package sh.calaba.instrumentationbackend.actions;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,6 +16,16 @@ public class Utils {
 
         while ((read = from.read(buffer)) != -1) {
             to.write(buffer, 0, read);
+        }
+    }
+
+    public static boolean isApplicationInstalled(Context context, String packageName) {
+        try {
+            context.getPackageManager().getApplicationInfo(packageName, 0);
+
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
         }
     }
 }

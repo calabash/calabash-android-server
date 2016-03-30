@@ -101,8 +101,8 @@ public class HttpServer extends NanoHTTPD {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public Response serve(String uri, String method, Properties header,
-			Properties params, Properties files) {
+	public Response serve(final String uri, String method, Properties header,
+                          Properties params, Properties files) {
 		System.out.println("URI: " + uri);
 		System.out.println("params: " + params);
 
@@ -167,8 +167,8 @@ public class HttpServer extends NanoHTTPD {
                 ObjectMapper mapper = new ObjectMapper();
                 Map map = mapper.readValue(json, Map.class);
 
-                String packageName = (String) map.get("packageName");
-                String className = (String) map.get("className");
+                final String packageName = (String) map.get("packageName");
+                final String className = (String) map.get("className");
 
                 Bundle arguments = null;
                 Map extrasMap = (Map) map.get("extras");
@@ -196,18 +196,53 @@ public class HttpServer extends NanoHTTPD {
                     }
                 }
 
-                Context context = InstrumentationBackend.instrumentation.getContext();
+                final Context context = InstrumentationBackend.instrumentation.getContext();
 
-                if (uri.endsWith("/instrument")) {
-                    context.startInstrumentation(new ComponentName(packageName, className), null, arguments);
-                } else if (uri.endsWith("/start-activity")) {
-                    Intent intent = new Intent();
-                    intent.setComponent(new ComponentName(packageName, className));
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    intent.replaceExtras(arguments);
-                    context.startActivity(intent);
+                boolean runInNewThread = false;
+
+                if (map.containsKey("async")) {
+                    runInNewThread = (Boolean) map.get("async");
                 }
 
+                final Bundle finalArguments = arguments;
+
+                final Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (uri.endsWith("/instrument")) {
+                            context.startInstrumentation(new ComponentName(packageName, className), null, finalArguments);
+                        } else if (uri.endsWith("/start-activity")) {
+                            Intent intent = new Intent();
+                            intent.setComponent(new ComponentName(packageName, className));
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.replaceExtras(finalArguments);
+                            context.startActivity(intent);
+                        }
+                    }
+                };
+
+                if (runInNewThread) {
+                    Logger.debug("Running in new thread");
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                Logger.debug("Sleeping");
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+
+                            Logger.debug("Running");
+                            runnable.run();
+                        }
+                    }).start();
+                } else {
+                    Logger.debug("Running2");
+                    runnable.run();
+                }
+
+                Logger.debug("Returning");
                 return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8",
                         FranklyResult.emptyResult().asJson());
             } catch (Exception e) {

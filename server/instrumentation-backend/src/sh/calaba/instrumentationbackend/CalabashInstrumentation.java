@@ -88,6 +88,18 @@ public class CalabashInstrumentation extends InstrumentationExposed {
                 activityIntent = arguments.getParcelable("intent_parcel");
             }
 
+            if ("NO_START".equals(mainActivity)) {
+                if (getTargetContext() instanceof Activity) {
+                    ((Activity) getTargetContext()).finish();
+                }
+
+                if (getContext() instanceof Activity) {
+                    ((Activity) getContext()).finish();
+                }
+
+                return;
+            }
+
             InstrumentationBackend.setDefaultCalabashAutomation(
                     new CalabashAutomationEmbedded(
                             new ApplicationUnderTestInstrumentation()));

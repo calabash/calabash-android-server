@@ -268,38 +268,42 @@
         resetSavedResults();
     }
 
-    if (arguments !== '%@') {
-        var length = res.length;
+    try {
+        if (arguments !== '%@') {
+            var length = res.length;
 
-        for (var i = 0; i < length; i++) {
-            res[i] = applyMethods(res[i], arguments);
-        }
-    }
-
-    var json;
-
-    if (Array.isArray(res)) {
-        log("res is array");
-        json = [];
-
-        for (var i = 0; i < res.length; i++) {
-            if (!isComparisonNodeCreated(res[i].window)) {
-                addComparisonNode(res[i].window);
-            }
-
-            json = json.concat(toJSON(res[i].object, res[i].window, res[i].parent));
-        }
-
-        for (var i = 0; i < res.length; i++) {
-            if (isComparisonNodeCreated(res[i].window)) {
-                removeComparisonNode(res[i].window);
+            for (var i = 0; i < length; i++) {
+                res[i] = applyMethods(res[i], arguments);
             }
         }
-    } else {
-        addComparisonNode(res.window);
-        json = toJSON(res.object, res.window, res.parent);
-        removeComparisonNode(res.window);
-    }
 
-    return JSON.stringify(json);
+        var json;
+
+        if (Array.isArray(res)) {
+            log("res is array");
+            json = [];
+
+            for (var i = 0; i < res.length; i++) {
+                if (!isComparisonNodeCreated(res[i].window)) {
+                    addComparisonNode(res[i].window);
+                }
+
+                json = json.concat(toJSON(res[i].object, res[i].window, res[i].parent));
+            }
+
+            for (var i = 0; i < res.length; i++) {
+                if (isComparisonNodeCreated(res[i].window)) {
+                    removeComparisonNode(res[i].window);
+                }
+            }
+        } else {
+            addComparisonNode(res.window);
+            json = toJSON(res.object, res.window, res.parent);
+            removeComparisonNode(res.window);
+        }
+
+        return JSON.stringify(json);
+    } catch (e) {
+        return JSON.stringify({error: 'Exception while running query: ' + exp, details: e.toString()});
+    }
 })();

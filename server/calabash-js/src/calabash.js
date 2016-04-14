@@ -1,4 +1,6 @@
 (function() {
+    function NoHTMLBodyTagException() {}
+
     /** David Mark's isHostMethod function,
      * http://peter.michaux.ca/articles/feature-detection-state-of-the-art-browser-scripting
      * Modified to use strict equality
@@ -24,15 +26,25 @@
         return getComparisonNode(contentWindow) != null;
     }
 
+    function getBody(contentWindow) {
+        var body = contentWindow.document.body;
+
+        if (body == undefined || body == null) {
+            throw new NoHTMLBodyTagException();
+        }
+
+        return body;
+    }
+
     function addComparisonNode(contentWindow) {
         var comparisonNode = contentWindow.document.createElement('div');
         comparisonNode.setAttribute('id', COMPARISON_NODE_ID);
         comparisonNode.style.cssText = 'position: absolute; left:0; top:0;';
-        contentWindow.document.body.appendChild(comparisonNode);
+        getBody(contentWindow).appendChild(comparisonNode);
     }
 
     function removeComparisonNode(contentWindow) {
-        contentWindow.document.body.removeChild(getComparisonNode(contentWindow));
+        getBody(contentWindow).removeChild(getComparisonNode(contentWindow));
     }
 
     function getComparisonNode(contentWindow) {
@@ -304,6 +316,11 @@
 
         return JSON.stringify(json);
     } catch (e) {
-        return JSON.stringify({error: 'Exception while running query: ' + exp, details: e.toString()});
+        if (e instanceof NoHTMLBodyTagException) {
+            /* The document has no body*/
+            return JSON.stringify(toJSON([], window, null));
+        } else {
+            return JSON.stringify({error: 'Exception while running query: ' + exp, details: e.toString()});
+        }
     }
 })();

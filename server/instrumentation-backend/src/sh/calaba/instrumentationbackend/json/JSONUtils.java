@@ -5,6 +5,7 @@ import java.util.Map;
 
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import sh.calaba.org.codehaus.jackson.map.SerializationConfig;
+import sh.calaba.org.codehaus.jackson.JsonNode;
 
 public class JSONUtils {
 
@@ -24,4 +25,14 @@ public class JSONUtils {
 
         return objectMapper;
     }
+
+	public static boolean isJson(String string) {
+		final ObjectMapper jsonMapper = new ObjectMapper();
+		try {
+			jsonMapper.readValue(string, JsonNode.class);
+		} catch (IOException e) {
+			return false;
+		}
+		return true;
+	}
 }

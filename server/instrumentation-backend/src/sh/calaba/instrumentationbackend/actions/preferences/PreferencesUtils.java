@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import sh.calaba.instrumentationbackend.Result;
+import sh.calaba.instrumentationbackend.json.JSONUtils;
 import sh.calaba.org.codehaus.jackson.map.DeserializationConfig.Feature;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import android.content.Context;
@@ -126,7 +127,8 @@ public class PreferencesUtils {
 			
 			if(entry.getValue() instanceof Integer ||
 				entry.getValue() instanceof Float || 
-				entry.getValue() instanceof Boolean){
+				entry.getValue() instanceof Boolean ||
+				JSONUtils.isJson(String.valueOf(entry.getValue()))) {
 				
 				value = String.valueOf(entry.getValue());
 				

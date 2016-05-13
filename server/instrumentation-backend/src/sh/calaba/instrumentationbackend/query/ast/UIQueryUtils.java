@@ -26,6 +26,7 @@ import sh.calaba.instrumentationbackend.query.antlr.UIQueryParser;
 import sh.calaba.instrumentationbackend.query.ui.UIObject;
 import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
 import sh.calaba.instrumentationbackend.utils.ViewWrapper;
+import sh.calaba.instrumentationbackend.utils.WindowManagerWrapper;
 import sh.calaba.org.codehaus.jackson.JsonProcessingException;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import sh.calaba.org.codehaus.jackson.type.TypeReference;
@@ -196,19 +197,10 @@ public class UIQueryUtils {
         }
 
         Set<View> parents = new HashSet<View>();
-        Window window = activity.getWindow();
 
-        if (window != null) {
-            View decorView = window.peekDecorView();
-
-            if (decorView != null) {
-                parents.add(getRootParent(decorView));
-            } else {
-                System.out.println("Calabash: DecorView is null");
-            }
-        } else {
-            System.out.println("Calabash: activity window is null");
-        }
+		for (View view : new WindowManagerWrapper(activity).getViews()) {
+			parents.add(getRootParent(view));
+		}
 
         return parents;
     }

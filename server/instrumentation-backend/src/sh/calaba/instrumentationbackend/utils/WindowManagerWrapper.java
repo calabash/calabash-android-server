@@ -5,68 +5,38 @@ import android.os.Build;
 import android.view.View;
 import android.view.WindowManager;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.List;
 
-public class WindowManagerWrapper {
-    private WindowManager windowManager;
+public abstract class WindowManagerWrapper {
+    protected static final Class<?> windowManagerImplClass;
 
-    public WindowManagerWrapper(Context context) {
-        windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+    static {
+        try {
+            windowManagerImplClass = Class.forName("android.view.WindowManagerImpl");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public List<View> getViews() {
+    public static WindowManagerWrapper fromContext(Context context) {
+        WindowManager windowManager = getWindowManagerFromContext(context);
+
         if (Build.VERSION.SDK_INT < 17) {
-            try {
-                Field viewsField = windowManager.getClass().getDeclaredField("mViews");
-                viewsField.setAccessible(true);
-
-                return Arrays.asList((View[]) viewsField.get(windowManager));
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            }
+            return new WindowManagerImplWrapper(windowManager);
         } else {
-            return new WindowManagerGlobalWrapper(windowManager).getViews();
+            return new WindowManagerGlobalWrapper(windowManager);
         }
     }
 
-    private class WindowManagerGlobalWrapper {
-        private Object windowManagerGlobal;
+    private static WindowManager getWindowManagerFromContext(Context context) {
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
 
-        public WindowManagerGlobalWrapper(WindowManager windowManager) {
-            try {
-                Field globalField = windowManager.getClass().getDeclaredField("mGlobal");
-                globalField.setAccessible(true);
-                windowManagerGlobal = globalField.get(windowManager);
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @SuppressWarnings("unchecked")
-        public List<View> getViews() {
-            try {
-                Field viewsField = windowManagerGlobal.getClass().getDeclaredField("mViews");
-                viewsField.setAccessible(true);
-
-
-                if (Build.VERSION.SDK_INT >= 19) {
-                    return (List) viewsField.get(windowManagerGlobal);
-                } else {
-                    return Arrays.asList((View[]) viewsField.get(windowManagerGlobal));
-
-                }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            }
+        if (WindowManagerWrapper.windowManagerImplClass.isAssignableFrom(windowManager.getClass())) {
+            return windowManager;
+        } else {
+            return null;
         }
     }
 
+    public abstract List<View> getViews();
 }

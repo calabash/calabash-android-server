@@ -198,7 +198,7 @@ public class UIQueryUtils {
 
         Set<View> parents = new HashSet<View>();
 
-		for (View view : new WindowManagerWrapper(activity).getViews()) {
+		for (View view : WindowManagerWrapper.fromContext(activity).getViews()) {
 			parents.add(getRootParent(view));
 		}
 

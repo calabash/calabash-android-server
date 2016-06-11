@@ -1,0 +1,1 @@
+gem 'calabash-android'

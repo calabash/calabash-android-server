@@ -80,7 +80,10 @@ public class FakeGPSLocation implements Action {
 
             for (String providerName : providerNames) {
                 try {
-                    locationManager.addTestProvider(providerName, false, false, false, false, false, false, false, Criteria.POWER_LOW, Criteria.ACCURACY_FINE);
+                    LocationProvider provider = locationManager.getProvider(providerName);
+                    locationManager.addTestProvider(providerName, provider.requiresNetwork(), provider.requiresSatellite(),
+                            provider.requiresCell(), provider.hasMonetaryCost(), provider.supportsAltitude(), provider.supportsSpeed(),
+                            provider.supportsBearing(), provider.getPowerRequirement(), provider.getAccuracy());
                     locationManager.setTestProviderEnabled(providerName, true);
                     activeProviderNames.add(providerName);
                 } catch (IllegalArgumentException e) {

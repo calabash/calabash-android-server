@@ -36,6 +36,7 @@ public abstract class TextAction implements Action {
             // we have gotten the servedView.
             inputConnection = InfoMethodUtil.getInputConnection();
         } catch (InfoMethodUtil.UnexpectedInputMethodManagerStructureException e) {
+            e.printStackTrace();
             return Result.failedResult(e.getMessage());
         }
 

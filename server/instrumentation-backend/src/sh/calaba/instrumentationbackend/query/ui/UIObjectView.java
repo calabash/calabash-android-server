@@ -3,6 +3,7 @@ package sh.calaba.instrumentationbackend.query.ui;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -34,7 +35,7 @@ public class UIObjectView implements UIObject {
         return futureTask;
     }
 
-    public static List<UIObjectView> listOfUIObjects(List<View> views) {
+    public static List<UIObjectView> listOfUIObjects(Collection<View> views) {
         List<UIObjectView> list = new ArrayList<UIObjectView>(views.size());
 
         for (View view : views) {

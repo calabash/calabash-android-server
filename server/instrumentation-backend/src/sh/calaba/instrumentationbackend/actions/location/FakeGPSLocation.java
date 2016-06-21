@@ -14,7 +14,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.provider.Settings;
-import sh.calaba.org.codehaus.jackson.map.util.Provider;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -22,8 +21,13 @@ import java.util.List;
 
 
 public class FakeGPSLocation implements Action {
-	
-	static LocationProviderThread t;
+    private static LocationProviderThread t;
+
+    public static void stopLocationMocking() {
+        if (t != null) {
+            t.finish();
+        }
+    }
 
     @Override
     public Result execute(String... args) {
@@ -49,38 +53,53 @@ public class FakeGPSLocation implements Action {
         }
 
         if (t != null) {
-        	t.finish();
+            t.finish();
+            t.interrupt();
+
+            try {
+                t.join(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                return Result.fromThrowable(e);
+            }
+
+            if (t.isAlive()) {
+                return Result.failedResult("Failed to stop thread mocking location");
+            }
         }
-    	
-    	t = new LocationProviderThread(latitude, longitude);
-    	
-    	t.start();
-    	
+
+        t = new LocationProviderThread(latitude, longitude);
+
+        t.start();
+
         return Result.successResult();
     }
-    
-   
-    private class LocationProviderThread extends Thread {
-    	private final double latitude;
-		private final double longitude;
-		
-		boolean finish = false;
 
-		LocationProviderThread(double latitude, double longitude) {
-			this.latitude = latitude;
-			this.longitude = longitude;
-    	}
-    	
-    	@Override
-		public void run() {
-    		LocationManager locationManager = (LocationManager) InstrumentationBackend.instrumentation.getTargetContext().getSystemService(Context.LOCATION_SERVICE);
+
+    private class LocationProviderThread extends Thread {
+        private final double latitude;
+        private final double longitude;
+
+        private boolean finish = false;
+
+        LocationProviderThread(double latitude, double longitude) {
+            this.latitude = latitude;
+            this.longitude = longitude;
+        }
+
+        @Override
+        public void run() {
+            LocationManager locationManager = (LocationManager) InstrumentationBackend.instrumentation.getTargetContext().getSystemService(Context.LOCATION_SERVICE);
 
             final List<String> providerNames = locationManager.getProviders(true);
             List<String> activeProviderNames = new ArrayList<String>();
 
             for (String providerName : providerNames) {
                 try {
-                    locationManager.addTestProvider(providerName, false, false, false, false, false, false, false, Criteria.POWER_LOW, Criteria.ACCURACY_FINE);
+                    LocationProvider provider = locationManager.getProvider(providerName);
+                    locationManager.addTestProvider(providerName, provider.requiresNetwork(), provider.requiresSatellite(),
+                            provider.requiresCell(), provider.hasMonetaryCost(), provider.supportsAltitude(), provider.supportsSpeed(),
+                            provider.supportsBearing(), provider.getPowerRequirement(), provider.getAccuracy());
                     locationManager.setTestProviderEnabled(providerName, true);
                     activeProviderNames.add(providerName);
                 } catch (IllegalArgumentException e) {
@@ -88,8 +107,8 @@ public class FakeGPSLocation implements Action {
                 }
             }
 
-    		while(!finish) {
-				System.out.println("Mocking location to: (" + latitude + ", " + longitude + ")");
+            while (!finish) {
+                System.out.println("Mocking location to: (" + latitude + ", " + longitude + ")");
 
                 for (String providerName : activeProviderNames) {
                     if (locationManager.getProvider(providerName) != null) {
@@ -98,21 +117,31 @@ public class FakeGPSLocation implements Action {
                     }
                 }
 
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		}
-    	
-    	private void setLocation(LocationManager locationManager, String locationProvider, double latitude, double longitude) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
 
-    		Location location = new Location(locationProvider);
-    		location.setLatitude(latitude);
-    		location.setLongitude(longitude);
-    		location.setAccuracy(1);
-    		location.setTime(System.currentTimeMillis());
+            for (String providerName : activeProviderNames) {
+                System.out.println("Removing test provider: " + providerName);
+
+                try {
+                    locationManager.removeTestProvider(providerName);
+                } catch (IllegalArgumentException e) {
+                    // Ignored
+                }
+            }
+        }
+
+        private void setLocation(LocationManager locationManager, String locationProvider, double latitude, double longitude) {
+
+            Location location = new Location(locationProvider);
+            location.setLatitude(latitude);
+            location.setLongitude(longitude);
+            location.setAccuracy(1);
+            location.setTime(System.currentTimeMillis());
 
             try {
                 Method makeComplete = Location.class.getMethod("makeComplete");
@@ -124,38 +153,16 @@ public class FakeGPSLocation implements Action {
             }
 
             locationManager.setTestProviderLocation(locationProvider, location);
-    	}
+        }
 
-    	public void finish() {
-    		finish = true;
-    	}
+        public void finish() {
+            finish = true;
+        }
     }
 
     @Override
     public String key() {
         return "set_gps_coordinates";
     }
-
-    /**
-     * Adds new LocationTestProvider matching actual provider on device.
-     * 
-     * @param currentProvider
-     * @param providerType
-     */
-    private void addTestProvider(LocationProvider currentProvider, String providerType) {
-    LocationManager locationManager = (LocationManager) InstrumentationBackend.instrumentation.getTargetContext().getSystemService(Context.LOCATION_SERVICE);
-    
-    locationManager.addTestProvider(providerType, 
-                    currentProvider.requiresNetwork(), 
-                    currentProvider.requiresSatellite(), 
-                    currentProvider.requiresCell(), 
-                    currentProvider.hasMonetaryCost(), 
-                    currentProvider.supportsAltitude(), 
-                    currentProvider.supportsSpeed(), 
-                    currentProvider.supportsBearing(), 
-                    currentProvider.getPowerRequirement(), 
-                    currentProvider.getAccuracy());
-    }
-
 
 }

@@ -14,7 +14,7 @@ public class GetActivityName implements Action {
 
 	@Override
 	public Result execute(String... args) {
-		Activity currentActivity = InstrumentationBackend.solo.getCurrentActivity();
+		Activity currentActivity = InstrumentationBackend.getCurrentActivity();
 		
 		Result result = new Result(true, currentActivity.getClass().getSimpleName());
 		

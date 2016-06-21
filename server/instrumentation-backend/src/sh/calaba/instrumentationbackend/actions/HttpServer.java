@@ -44,6 +44,7 @@ import sh.calaba.instrumentationbackend.query.Query;
 import sh.calaba.instrumentationbackend.query.QueryResult;
 import sh.calaba.instrumentationbackend.query.WebContainer;
 import sh.calaba.instrumentationbackend.query.ui.UIObject;
+import sh.calaba.org.codehaus.jackson.JsonNode;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 
 import android.app.Activity;
@@ -58,6 +59,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AlphaAnimation;
+import sh.calaba.org.codehaus.jackson.node.BooleanNode;
+import sh.calaba.org.codehaus.jackson.node.ObjectNode;
 
 public class HttpServer extends NanoHTTPD {
 	private static final String TAG = "InstrumentationBackend";
@@ -77,12 +80,25 @@ public class HttpServer extends NanoHTTPD {
 	 * Can only be called once. Otherwise, you'll get an IllegalStateException.
 	 */
 	public synchronized static HttpServer instantiate(int testServerPort) {
+        return instantiate((Integer)testServerPort);
+    }
+
+    public synchronized static HttpServer instantiate() {
+        return instantiate((Integer)null);
+    }
+
+    private synchronized static HttpServer instantiate(Integer testServerPort) {
 		if (instance != null) {
 			throw new IllegalStateException("Can only instantiate once!");
 		}
 		try {
-            Logger.info("Instantiating http server at " + testServerPort);
-			instance = new HttpServer(testServerPort);
+            if (testServerPort == null) {
+                Logger.info("Instantiating http server NOT listening to any port");
+                instance = new HttpServer();
+            } else {
+                Logger.info("Instantiating http server at " + testServerPort);
+                instance = new HttpServer(testServerPort);
+            }
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -100,6 +116,11 @@ public class HttpServer extends NanoHTTPD {
 		super(testServerPort, new File("/"));
 	}
 
+    /* Internal: Don't listen to any port */
+    private HttpServer() throws IOException {
+        super(new File("/"));
+    }
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Response serve(final String uri, String method, Properties header,
                           Properties params, Properties files) {
@@ -114,40 +135,19 @@ public class HttpServer extends NanoHTTPD {
             try {
                 String json = params.getProperty("json");
 
-                Map map;
+                ObjectMapper mapper = JSONUtils.calabashObjectMapper();
+                JsonNode jsonNode = mapper.readTree(mapper.getJsonFactory().createJsonParser(json));
 
-                if (json != null) {
-                    ObjectMapper mapper = new ObjectMapper();
-                    map = mapper.readValue(json, Map.class);
-                } else {
-                    map = null;
+                if (!(jsonNode instanceof ObjectNode)) {
+                    throw new RuntimeException("Invalid json, not an object node");
                 }
 
-                //ComponentName componentName = startIntent.getComponent();
+                ObjectNode objectNode = (ObjectNode) jsonNode;
 
                 Intent startIntent = null;
 
-                if (map != null && map.containsKey("intent")) {
-                    String intentString = (String) map.get("intent");
-                    System.out.println("INTENT: " + intentString);
-
-                    if (intentString != null) {
-                        ObjectMapper mapper = new ObjectMapper();
-                        Map intentMap = mapper.readValue(intentString, Map.class);
-
-                        if (intentMap != null) {
-                            startIntent = new Intent();
-                            startIntent.setAction((String) intentMap.get("action"));
-                            String data = (String) intentMap.get("data");
-
-                            if (data != null) {
-                                startIntent.setData(Uri.parse(data));
-                            }
-
-                            startIntent.setPackage((String) intentMap.get("package"));
-                            startIntent.setFlags((Integer) intentMap.get("flags"));
-                        }
-                    }
+                if (objectNode.has("intent")) {
+                    startIntent = mapper.readValue(objectNode.get("intent"), Intent.class);
                 }
 
                 this.applicationStarter.startApplication(startIntent);
@@ -164,85 +164,57 @@ public class HttpServer extends NanoHTTPD {
             try {
                 String json = params.getProperty("json");
 
-                ObjectMapper mapper = new ObjectMapper();
-                Map map = mapper.readValue(json, Map.class);
+                ObjectMapper mapper = JSONUtils.calabashObjectMapper();
+                JsonNode jsonNode = mapper.readTree(mapper.getJsonFactory().createJsonParser(json));
 
-                final String packageName = (String) map.get("packageName");
-                final String className = (String) map.get("className");
-
-                Bundle arguments = null;
-                Map extrasMap = (Map) map.get("extras");
-
-                if (extrasMap != null) {
-                    arguments = new Bundle();
-
-                    for (Object keyO : extrasMap.keySet()) {
-                        String key = (String) keyO;
-                        Object value = extrasMap.get(key);
-
-                        if (value == null) {
-                            throw new RuntimeException("Cannot put null");
-                        }
-
-                        if (value instanceof Integer) {
-                            arguments.putInt(key, (Integer)value);
-                        } else if (value instanceof Double) {
-                            arguments.putDouble(key, (Double)value);
-                        } else if (value instanceof String) {
-                            arguments.putString(key, (String)value);
-                        } else {
-                            throw new RuntimeException("Cannot put " + value + " of type " + value.getClass());
-                        }
-                    }
+                if (!(jsonNode instanceof ObjectNode)) {
+                    throw new RuntimeException("Invalid json, not an object node");
                 }
+
+                ObjectNode objectNode = (ObjectNode) jsonNode;
+
+                if (!objectNode.has("intent")) {
+                    throw new RuntimeException("No intent given");
+                }
+
+                final Intent intent = mapper.readValue(objectNode.get("intent"), Intent.class);
 
                 final Context context = InstrumentationBackend.instrumentation.getContext();
 
                 boolean runInNewThread = false;
 
-                if (map.containsKey("async")) {
-                    runInNewThread = (Boolean) map.get("async");
+                if (objectNode.has("async") && objectNode.get("async") instanceof BooleanNode) {
+                    runInNewThread = (objectNode.get("async")).asBoolean();
                 }
-
-                final Bundle finalArguments = arguments;
 
                 final Runnable runnable = new Runnable() {
                     @Override
                     public void run() {
                         if (uri.endsWith("/instrument")) {
-                            context.startInstrumentation(new ComponentName(packageName, className), null, finalArguments);
+                            context.startInstrumentation(intent.getComponent(), null, intent.getExtras());
                         } else if (uri.endsWith("/start-activity")) {
-                            Intent intent = new Intent();
-                            intent.setComponent(new ComponentName(packageName, className));
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            intent.replaceExtras(finalArguments);
                             context.startActivity(intent);
                         }
                     }
                 };
 
                 if (runInNewThread) {
-                    Logger.debug("Running in new thread");
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                Logger.debug("Sleeping");
                                 Thread.sleep(1000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
 
-                            Logger.debug("Running");
                             runnable.run();
                         }
                     }).start();
                 } else {
-                    Logger.debug("Running2");
                     runnable.run();
                 }
 
-                Logger.debug("Returning");
                 return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8",
                         FranklyResult.emptyResult().asJson());
             } catch (Exception e) {
@@ -297,17 +269,9 @@ public class HttpServer extends NanoHTTPD {
             try {
                 String json = params.getProperty("json");
                 ObjectMapper mapper = new ObjectMapper();
-                Map data = mapper.readValue(json, Map.class);
-
-                Intent intent = new Intent();
-
-                if (data.containsKey("action")) {
-                    intent.setAction((String) data.get("action"));
-                }
+                Intent intent = mapper.readValue(json, Intent.class);
 
                 Activity activity = InstrumentationBackend.getCurrentActivity();
-
-                Log.d(TAG, "Broadcasting intent " + intent);
                 activity.sendBroadcast(intent);
 
                 return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", "");

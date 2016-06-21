@@ -66,9 +66,11 @@ public class InstrumentationBackend {
         System.out.println("Finishing");
 
         try {
-            solo.finishOpenedActivities();
-            solo.finalize();
-        } catch (Throwable e) {
+            if (solo != null) {
+                solo.finishOpenedActivities();
+                solo.finalize();
+            }
+        } catch (Throwable e) { // Solo throws throwable...
             e.printStackTrace();
         }
 

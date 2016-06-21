@@ -19,6 +19,7 @@ public class IntentTest {
     private static String json = "{\n" +
             "  \"action\": \"My Action\",\n" +
             "  \"data\": \"http://example.com/test\",\n" +
+            "  \"package\": \"com.example.package\",\n" +
             "  \"flags\": 12345,\n" +
             "  \"component\": {\n" +
                 "  \"packageName\": \"com.mypackage\",\n" +
@@ -36,9 +37,10 @@ public class IntentTest {
         expectedIntent = new Intent();
         expectedIntent.setAction("My Action");
         expectedIntent.setData(Uri.parse("http://example.com/test"));
+        expectedIntent.setPackage("com.example.package");
         expectedIntent.setComponent(new ComponentName("com.mypackage", "MyClass"));
-        expectedIntent.setFlags(12345);
         serializedIntent = myObjectMapper.readValue(json, Intent.class);
+        expectedIntent.setFlags(12345);
     }
 
     @Test
@@ -59,6 +61,11 @@ public class IntentTest {
     @Test
     public void serializationOfFlags() throws Exception {
         assertEquals(expectedIntent.getFlags(), serializedIntent.getFlags());
+    }
+
+    @Test
+    public void serializationOfPackage() throws Exception {
+        assertEquals(expectedIntent.getPackage(), serializedIntent.getPackage());
     }
 
     @Test

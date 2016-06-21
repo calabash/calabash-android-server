@@ -15,7 +15,6 @@ public class UIQueryEvaluator {
                                                        List<Operation> operations) {
         List<UIObject> uiObjects = evaluateQueryForPath(query, inputViews);
         List<?> result = applyOperations(uiObjects, operations);
-
         return new QueryResult(result);
 	}
 

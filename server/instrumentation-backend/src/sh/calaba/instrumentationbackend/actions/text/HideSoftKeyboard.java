@@ -15,7 +15,7 @@ public class HideSoftKeyboard implements Action {
         Context context = InstrumentationBackend.instrumentation.getTargetContext();
         InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 
-        Activity activity = InstrumentationBackend.solo.getCurrentActivity();
+        Activity activity = InstrumentationBackend.getCurrentActivity();
         View view = null;
 
         try {

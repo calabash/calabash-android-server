@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 
+import android.app.Activity;
+import android.view.Window;
 import org.antlr.runtime.tree.CommonTree;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
@@ -24,6 +26,7 @@ import sh.calaba.instrumentationbackend.query.antlr.UIQueryParser;
 import sh.calaba.instrumentationbackend.query.ui.UIObject;
 import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
 import sh.calaba.instrumentationbackend.utils.ViewWrapper;
+import sh.calaba.instrumentationbackend.utils.WindowManagerWrapper;
 import sh.calaba.org.codehaus.jackson.JsonProcessingException;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import sh.calaba.org.codehaus.jackson.type.TypeReference;
@@ -174,7 +177,36 @@ public class UIQueryUtils {
 		}
 	}
 
-	public static boolean isVisible(UIObject uiObject) {
+    public static View getRootParent(View view) {
+        ViewParent parent = view.getParent();
+
+        if (parent != null && parent instanceof View) {
+            return getRootParent((View) parent);
+        }
+
+        return view;
+    }
+
+    public static Set<View> getRootViews() {
+        Activity activity = InstrumentationBackend.getCurrentActivity();
+
+        if (activity == null) {
+            System.out.println("Calabash: Activity is null");
+
+            return Collections.emptySet();
+        }
+
+        Set<View> parents = new HashSet<View>();
+
+		for (View view : WindowManagerWrapper.fromContext(activity).getViews()) {
+			parents.add(getRootParent(view));
+		}
+
+        return parents;
+    }
+
+
+    public static boolean isVisible(UIObject uiObject) {
         try {
             return new UIQueryVisibilityMatcher(uiObject).call();
         } catch (Exception e) {
@@ -248,6 +280,7 @@ public class UIQueryUtils {
         if(view.getHandler() == null || view.getHandler().getLooper() == null || view.getHandler().getLooper().getThread() == Thread.currentThread()) {
             runnable.run();
         } else {
+
             view.post(runnable);
         }
     }
@@ -348,7 +381,16 @@ public class UIQueryUtils {
 	 */
 	public static Map<?, ?> dump() {
 		Query dummyQuery = new Query("not_used");
-		return dumpRecursively(emptyRootView(), dummyQuery.rootViews());
+
+		List<View> views = new ArrayList<View>();
+
+        for (UIObject uiObject : dummyQuery.rootViews()) {
+            if (uiObject.getObject() instanceof View) {
+                views.add((View) uiObject.getObject());
+            }
+        }
+
+		return dumpRecursively(emptyRootView(), views);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -432,7 +474,13 @@ public class UIQueryUtils {
 		Query dummyQuery = new Query("not_used");
 
 		Map currentView = emptyRootView();
-		List<View> currentChildren = dummyQuery.rootViews();
+		List<View> currentChildren = new ArrayList<View>();
+
+        for (UIObject uiObject : dummyQuery.rootViews()) {
+            if (uiObject.getObject() instanceof View) {
+                currentChildren.add((View) uiObject.getObject());
+            }
+        }
 
 		for (Integer i : path) {
 			if (i < currentChildren.size()) {

@@ -83,7 +83,7 @@ public class ViewMapper {
             if(v.getResources() != null) {
                 return v.getResources().getResourceEntryName(id);
             } else {
-                return InstrumentationBackend.solo.getCurrentActivity().getResources().getResourceEntryName(id);
+                return InstrumentationBackend.instrumentation.getTargetContext().getResources().getResourceEntryName(id);
             }
         } catch (Resources.NotFoundException e) {
             if(id == -1) {

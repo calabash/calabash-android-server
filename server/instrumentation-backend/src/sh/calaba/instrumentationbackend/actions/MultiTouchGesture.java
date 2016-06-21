@@ -66,7 +66,6 @@ public class MultiTouchGesture {
 
         long timeout = (long) ((Double) multiTouchGestureMap.get("query_timeout") * 1000);
         Map<String, Map<String, Integer>> evaluatedQueries = evaluateQueries(queryStrings, timeout);
-
         for (Map<String, Object> gestureMap : sentGestures) {
             String queryString = (String) gestureMap.get("query_string");
             Map<String,Integer> rect = evaluatedQueries.get(queryString);
@@ -335,8 +334,8 @@ public class MultiTouchGesture {
     }
 
     public static void tryWaitForKeyguard(int timeoutSeconds) {
-        Activity activity = InstrumentationBackend.solo.getCurrentActivity();
-        KeyguardManager keyguardManager = (KeyguardManager) activity.getSystemService(Context.KEYGUARD_SERVICE);
+        KeyguardManager keyguardManager = (KeyguardManager)
+                InstrumentationBackend.instrumentation.getContext().getSystemService(Context.KEYGUARD_SERVICE);
 
         if (!keyguardManager.inKeyguardRestrictedInputMode()) {
             return;

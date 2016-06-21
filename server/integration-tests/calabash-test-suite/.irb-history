@@ -1,0 +1,4 @@
+start_test_server_in_background
+reinstall_apps
+start_test_server_in_background
+backdoor('startTest')

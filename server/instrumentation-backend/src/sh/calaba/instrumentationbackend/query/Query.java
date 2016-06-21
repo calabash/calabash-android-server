@@ -1,29 +1,19 @@
 package sh.calaba.instrumentationbackend.query;
 
-import static sh.calaba.instrumentationbackend.InstrumentationBackend.viewFetcher;
-
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
 
+import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.query.antlr.UIQueryLexer;
 import sh.calaba.instrumentationbackend.query.antlr.UIQueryParser;
-import sh.calaba.instrumentationbackend.query.ast.InvalidUIQueryException;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryAST;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryASTClassName;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryASTPredicate;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryASTWith;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryDirection;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryEvaluator;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryVisibility;
+import sh.calaba.instrumentationbackend.query.ast.*;
 import sh.calaba.instrumentationbackend.query.ast.evaluation.QueryEvaluator;
 import sh.calaba.instrumentationbackend.query.ast.evaluation.UIQueryEvaluationStep;
 import sh.calaba.instrumentationbackend.query.ast.optimization.GeneralUIQueryOptimizer;
@@ -31,8 +21,6 @@ import sh.calaba.instrumentationbackend.query.ast.optimization.QueryOptimization
 import sh.calaba.instrumentationbackend.query.ast.optimization.QueryOptimizer;
 import sh.calaba.instrumentationbackend.query.ui.UIObject;
 import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
-
-import android.view.View;
 
 public class Query {
 
@@ -56,7 +44,7 @@ public class Query {
 	}
 
 	public QueryResult executeQuery() {
-		List<UIQueryAST> queryPath = parseQuery(this.queryString);
+        List<UIQueryAST> queryPath = parseQuery(this.queryString);
 		List<UIQueryAST> optimizedQuery = QueryOptimizationCache.getCacheFor(this.queryString);
 
 		if (optimizedQuery == null) {
@@ -65,8 +53,8 @@ public class Query {
 			QueryOptimizationCache.cache(this.queryString, optimizedQuery);
 		}
 
-		return UIQueryEvaluator.evaluateQueryWithOptions(optimizedQuery,
-                UIObjectView.listOfUIObjects(rootViews()), parseOperations(this.operations));
+				return UIQueryEvaluator.evaluateQueryWithOptions(optimizedQuery, rootViews(),
+						parseOperations(this.operations));
 	}
 
     // @todo: Remove this when we make next iteration on types. `executeQuery` should return
@@ -82,7 +70,7 @@ public class Query {
         }
 
         return QueryEvaluator.evaluateQueryForPath(queryPath,
-                new UIQueryEvaluationStep(UIObjectView.listOfUIObjects(rootViews())));
+                new UIQueryEvaluationStep(rootViews()));
     }
 
 	@SuppressWarnings("rawtypes")
@@ -180,19 +168,7 @@ public class Query {
 
 	}
 
-    public List<View> rootViews() {
-        Set<View> parents = new HashSet<View>();
-
-        if (viewFetcher != null) {
-            for (View v : viewFetcher.getAllViews(false)) {
-                View parent = viewFetcher.getTopParent(v);
-                parents.add(parent);
-            }
-        }
-
-        List<View> results = new ArrayList<View>(parents);
-        return results;
+    public List<UIObject> rootViews() {
+        return new ArrayList<UIObject>(InstrumentationBackend.getRootViews());
     }
-
-
 }

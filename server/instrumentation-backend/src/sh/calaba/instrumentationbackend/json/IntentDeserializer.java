@@ -43,6 +43,10 @@ public class IntentDeserializer extends JsonDeserializer<Intent> {
             intent.setType((String)map.get("type"));
         }
 
+        if (map.containsKey("package")) {
+            intent.setPackage((String)map.get("package"));
+        }
+
         if (map.containsKey("extras") && map.get("extras") != null) {
             Map extrasMap = (Map) map.get("extras");
 

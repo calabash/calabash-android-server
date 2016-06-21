@@ -14,11 +14,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import sh.calaba.instrumentationbackend.actions.webview.CalabashChromeClient;
 import sh.calaba.instrumentationbackend.actions.webview.JavaScriptExecuter;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
+import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 
 public class WebContainer {
@@ -69,7 +71,7 @@ public class WebContainer {
 
                 javaScriptExecuter.executeJavaScript(javaScript);
 
-                return chromeClient.getResult() ;
+                return chromeClient.getResult();
             } else {
                 webView.getSettings().setJavaScriptEnabled(true);
 
@@ -131,8 +133,10 @@ public class WebContainer {
         };
 
         try {
-            Map value = (Map) UIQueryUtils.evaluateAsyncInMainThread(callable)
-                    .get(10, TimeUnit.SECONDS);
+            Future<CalabashChromeClient.WebFuture> future =
+                    new UIObjectView(getView()).evaluateAsyncInMainThread(callable);
+            CalabashChromeClient.WebFuture webFuture = future.get(10, TimeUnit.SECONDS);
+            Map value = webFuture.get();
 
             return (String) value.get("result");
         } catch (ExecutionException e) {

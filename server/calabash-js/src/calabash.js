@@ -1,4 +1,6 @@
 (function() {
+    function NoHTMLBodyTagException() {}
+
     /** David Mark's isHostMethod function,
      * http://peter.michaux.ca/articles/feature-detection-state-of-the-art-browser-scripting
      * Modified to use strict equality
@@ -24,15 +26,25 @@
         return getComparisonNode(contentWindow) != null;
     }
 
+    function getBody(contentWindow) {
+        var body = contentWindow.document.body;
+
+        if (body == undefined || body == null) {
+            throw new NoHTMLBodyTagException();
+        }
+
+        return body;
+    }
+
     function addComparisonNode(contentWindow) {
         var comparisonNode = contentWindow.document.createElement('div');
         comparisonNode.setAttribute('id', COMPARISON_NODE_ID);
         comparisonNode.style.cssText = 'position: absolute; left:0; top:0;';
-        contentWindow.document.body.appendChild(comparisonNode);
+        getBody(contentWindow).appendChild(comparisonNode);
     }
 
     function removeComparisonNode(contentWindow) {
-        contentWindow.document.body.removeChild(getComparisonNode(contentWindow));
+        getBody(contentWindow).removeChild(getComparisonNode(contentWindow));
     }
 
     function getComparisonNode(contentWindow) {
@@ -268,38 +280,47 @@
         resetSavedResults();
     }
 
-    if (arguments !== '%@') {
-        var length = res.length;
+    try {
+        if (arguments !== '%@') {
+            var length = res.length;
 
-        for (var i = 0; i < length; i++) {
-            res[i] = applyMethods(res[i], arguments);
-        }
-    }
-
-    var json;
-
-    if (Array.isArray(res)) {
-        log("res is array");
-        json = [];
-
-        for (var i = 0; i < res.length; i++) {
-            if (!isComparisonNodeCreated(res[i].window)) {
-                addComparisonNode(res[i].window);
-            }
-
-            json = json.concat(toJSON(res[i].object, res[i].window, res[i].parent));
-        }
-
-        for (var i = 0; i < res.length; i++) {
-            if (isComparisonNodeCreated(res[i].window)) {
-                removeComparisonNode(res[i].window);
+            for (var i = 0; i < length; i++) {
+                res[i] = applyMethods(res[i], arguments);
             }
         }
-    } else {
-        addComparisonNode(res.window);
-        json = toJSON(res.object, res.window, res.parent);
-        removeComparisonNode(res.window);
-    }
 
-    return JSON.stringify(json);
+        var json;
+
+        if (Array.isArray(res)) {
+            log("res is array");
+            json = [];
+
+            for (var i = 0; i < res.length; i++) {
+                if (!isComparisonNodeCreated(res[i].window)) {
+                    addComparisonNode(res[i].window);
+                }
+
+                json = json.concat(toJSON(res[i].object, res[i].window, res[i].parent));
+            }
+
+            for (var i = 0; i < res.length; i++) {
+                if (isComparisonNodeCreated(res[i].window)) {
+                    removeComparisonNode(res[i].window);
+                }
+            }
+        } else {
+            addComparisonNode(res.window);
+            json = toJSON(res.object, res.window, res.parent);
+            removeComparisonNode(res.window);
+        }
+
+        return JSON.stringify(json);
+    } catch (e) {
+        if (e instanceof NoHTMLBodyTagException) {
+            /* The document has no body*/
+            return JSON.stringify(toJSON([], window, null));
+        } else {
+            return JSON.stringify({error: 'Exception while running query: ' + exp, details: e.toString()});
+        }
+    }
 })();

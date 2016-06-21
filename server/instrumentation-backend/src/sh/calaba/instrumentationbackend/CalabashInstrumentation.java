@@ -1,6 +1,5 @@
 package sh.calaba.instrumentationbackend;
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Application;
@@ -8,115 +7,39 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
 import android.os.IBinder;
 import android.os.UserHandle;
 import sh.calaba.exposed.InstrumentationExposed;
-import sh.calaba.instrumentationbackend.actions.Actions;
-import sh.calaba.instrumentationbackend.actions.HttpServer;
-import sh.calaba.instrumentationbackend.automation.ApplicationUnderTest;
-import sh.calaba.instrumentationbackend.automation.CalabashAutomationEmbedded;
+import sh.calaba.instrumentationbackend.entrypoint.AndroidInstrumentationStartup;
 import sh.calaba.instrumentationbackend.intenthook.IIntentHook;
 import sh.calaba.instrumentationbackend.intenthook.IntentHookResult;
-import sh.calaba.instrumentationbackend.utils.MonoUtils;
 
 import java.lang.ref.WeakReference;
 
-/*
-    Entry point for Calabash based on Android instrumentation
- */
 public class CalabashInstrumentation extends InstrumentationExposed {
-    private String mainActivityName;
-    private Bundle extras;
-    private Intent activityIntent;
     private WeakReference<Activity> lastActivity;
 
+    // Android invokes onCreate automatically. dontRun is set by Main to ensure
+    // that this entry point is not mistakenly started.
+    public static boolean dontRun = false;
+
+    // This method is called automatically when started using instrumentation
+    // from activityservice (am instrument ...)
     @Override
     public void onCreate(Bundle arguments) {
-        StatusReporter statusReporter = new StatusReporter(getContext());
-
-        try {
-            final String mainActivity;
-
-            if (arguments.containsKey("main_activity")
-                    && arguments.getString("main_activity") != null
-                    && !"null".equals(arguments.getString("main_activity"))) {
-                mainActivity = arguments.getString("main_activity");
-            } else {
-                mainActivity = detectMainActivity(statusReporter, getTargetContext().getPackageName());
-
-                System.out.println("Main activity name automatically set to: " + mainActivity);
-
-                if (mainActivity == null || "".equals(mainActivity)) {
-                    statusReporter.reportFailure("E_COULD_NOT_DETECT_MAIN_ACTIVITY");
-                    throw new RuntimeException("Could not detect main activity");
-                }
-            }
-
-            MonoUtils.loadMono(getTargetContext());
-
-            Logger.info("Test server port: " + arguments.getString("test_server_port"));
-
-            try {
-                // Start the HttpServer as soon as possible in a not-ready state
-                HttpServer.instantiate(Integer.parseInt(arguments.getString("test_server_port")));
-            } catch (RuntimeException e) {
-                if (getTargetContext().checkCallingOrSelfPermission(Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
-                    statusReporter.reportFailure("E_NO_INTERNET_PERMISSION");
-                }
-
-                throw e;
-            }
-
-            Bundle extras = (Bundle) arguments.clone();
-            extras.remove("main_activity");
-            extras.remove("test_server_port");
-            extras.remove("class");
-
-            if (extras.isEmpty()) {
-                extras = null;
-            }
-
-            this.mainActivityName = mainActivity;
-            this.extras = extras;
-
-            if (arguments.containsKey("intent_parcel")) {
-                activityIntent = arguments.getParcelable("intent_parcel");
-            }
-
-            if ("NO_START".equals(mainActivity)) {
-                if (getTargetContext() instanceof Activity) {
-                    ((Activity) getTargetContext()).finish();
-                }
-
-                if (getContext() instanceof Activity) {
-                    ((Activity) getContext()).finish();
-                }
-
-                return;
-            }
-
-            InstrumentationBackend.setDefaultCalabashAutomation(
-                    new CalabashAutomationEmbedded(
-                            new ApplicationUnderTestInstrumentation()));
-
-            InstrumentationBackend.instrumentation = this;
-            InstrumentationBackend.actions = new Actions(this);
-
-            super.onCreate(arguments);
-
-            startTestServer();
-        } catch (RuntimeException e) {
-            if (!statusReporter.hasReportedFailure()) {
-                statusReporter.reportFailure(e);
-            }
-
-            throw e;
+        if (dontRun) {
+            return;
         }
+
+        // Entry-point for instrumentation with services
+        Main.start(AndroidInstrumentationStartup.Factory.newInstance(this, arguments));
+    }
+
+    public WeakReference<Activity> getLastActivity() {
+        return lastActivity;
     }
 
     /*
@@ -303,97 +226,5 @@ public class CalabashInstrumentation extends InstrumentationExposed {
         public IntentHookResult whenFiltered(IIntentHook intentHook);
 
         public ActivityResult whenUnhandled(Intent modifiedIntent);
-    }
-
-    private void startTestServer() {
-        Intent defaultStartIntent;
-
-        if (activityIntent != null) {
-            defaultStartIntent = activityIntent;
-        } else {
-            defaultStartIntent = new Intent(Intent.ACTION_MAIN);
-            defaultStartIntent.setClassName(getTargetContext().getPackageName(),
-                    this.mainActivityName);
-            defaultStartIntent.addCategory("android.intent.category.LAUNCHER");
-            defaultStartIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-            defaultStartIntent.replaceExtras(this.extras);
-        }
-
-        final InstrumentationApplicationLifeCycle applicationLifeCycle =
-                new InstrumentationApplicationLifeCycle(this, defaultStartIntent);
-
-        final HttpTestServerLifeCycle testServerLifeCycle =
-                new HttpTestServerLifeCycle(HttpServer.getInstance(), applicationLifeCycle);
-
-        testServerLifeCycle.start();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (testServerLifeCycle.isHttpServerRunning()) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        System.out.println("Thread is interrupted, breaking.");
-                        break;
-                    }
-                }
-
-
-                runOnMainSync(new Runnable() {
-                    @Override
-                    public void run() {
-                        testServerLifeCycle.stop();
-                        InstrumentationBackend.tearDown();
-                    }
-                });
-            }
-        }).start();
-    }
-
-    private String detectMainActivity(StatusReporter statusReporter, String targetPackage) {
-        PackageManager packageManager = getTargetContext().getPackageManager();
-        Intent launchIntent =
-                packageManager.getLaunchIntentForPackage(targetPackage);
-
-        if (launchIntent == null) {
-            statusReporter.reportFailure("E_NO_LAUNCH_INTENT_FOR_PACKAGE");
-            throw new RuntimeException("No launch intent set for package '" + targetPackage + "'");
-        }
-
-        String mainActivityTmpName = launchIntent.getComponent().getClassName();
-
-        try {
-            PackageInfo packageInfo = packageManager.getPackageInfo(targetPackage,
-                    PackageManager.GET_ACTIVITIES);
-            ActivityInfo[] activityInfoArr = packageInfo.activities;
-
-            for (ActivityInfo activityInfo : activityInfoArr) {
-                if (activityInfo.name.equals(mainActivityTmpName) &&
-                        activityInfo.targetActivity != null) {
-                    mainActivityTmpName = activityInfo.targetActivity;
-                    break;
-                }
-            }
-
-            return mainActivityTmpName;
-        } catch (PackageManager.NameNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private final class ApplicationUnderTestInstrumentation implements ApplicationUnderTest {
-        public ApplicationUnderTestInstrumentation() {
-        }
-
-        @Override
-        public Application getApplication() {
-            return CalabashInstrumentation.this.lastActivity.get().getApplication();
-        }
-
-        @Override
-        public Activity getCurrentActivity() {
-            return CalabashInstrumentation.this.lastActivity.get();
-        }
     }
 }

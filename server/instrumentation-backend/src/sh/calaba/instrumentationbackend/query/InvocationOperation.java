@@ -89,7 +89,7 @@ public class InvocationOperation implements Operation {
 		 return ref.get();				
 	}
 
-	private MethodWithArguments findCompatibleMethod(Object object) {
+	public MethodWithArguments findCompatibleMethod(Object object) {
 		// Fast path
 		try {
             return new MethodWithArguments(object.getClass().getMethod(methodName, argumentTypes), 
@@ -331,7 +331,7 @@ public class InvocationOperation implements Operation {
         }
     }
 
-    private static class MethodWithArguments {
+    public static class MethodWithArguments {
         private Method method;
         private List<Object> arguments;
 

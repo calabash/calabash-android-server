@@ -241,6 +241,15 @@ public class NanoHTTPD
 			});
 		myThread.setDaemon( true );
 		myThread.start();
+		System.out.println("HTTP Daemon listening on: " + port);
+	}
+
+	/* Internal: Initialize without listening */
+	protected NanoHTTPD(File wwwroot) throws IOException {
+		myTcpPort = -1;
+		this.myRootDir = wwwroot;
+		myServerSocket = null;
+		System.out.println("HTTP Daemon NOT listening");
 	}
 
 	/**

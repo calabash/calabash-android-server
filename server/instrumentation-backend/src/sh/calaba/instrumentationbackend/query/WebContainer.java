@@ -236,7 +236,8 @@ public class WebContainer {
 
     private static boolean isCrossWalkContentClass(Class<?> clz) {
         return superClassEquals(clz, "org.xwalk.core.internal.XWalkContent") ||
-                superClassEquals(clz, "org.xwalk.core.internal.XWalkContent$1");
+                superClassEquals(clz, "org.xwalk.core.internal.XWalkContent$1") ||
+                superClassEquals(clz, "org.xwalk.core.internal.XWalkContent$2");
     }
 
     private static boolean superClassEquals(Class clazz, String className) {
@@ -277,7 +278,8 @@ public class WebContainer {
                 xWalkContent = getChildOf((View)xWalkContent);
             }
 
-            if (superClassEquals(xWalkContent.getClass(), "org.xwalk.core.internal.XWalkContent$1")) {
+            if (superClassEquals(xWalkContent.getClass(), "org.xwalk.core.internal.XWalkContent$1")
+                    || superClassEquals(xWalkContent.getClass(), "org.xwalk.core.internal.XWalkContent$2")) {
                 try {
                     Field outer = xWalkContent.getClass().getDeclaredField("this$0");
                     outer.setAccessible(true);

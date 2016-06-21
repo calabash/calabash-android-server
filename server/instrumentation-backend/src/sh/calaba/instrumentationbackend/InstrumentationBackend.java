@@ -3,6 +3,7 @@ package sh.calaba.instrumentationbackend;
 import android.app.Activity;
 import android.content.Intent;
 import sh.calaba.instrumentationbackend.actions.Actions;
+import sh.calaba.instrumentationbackend.actions.location.FakeGPSLocation;
 import sh.calaba.instrumentationbackend.intenthook.ActivityIntentFilter;
 import sh.calaba.instrumentationbackend.intenthook.IIntentHook;
 
@@ -74,7 +75,7 @@ public class InstrumentationBackend {
             e.printStackTrace();
         }
 
-        removeTestLocationProviders(instrumentation.getTargetContext());
+        FakeGPSLocation.stopLocationMocking();
     }
 
     public static void putIntentHook(ActivityIntentFilter activityIntentFilter, IIntentHook intentHook,
@@ -127,17 +128,6 @@ public class InstrumentationBackend {
         ActivityIntentFilter activityIntentFilter = getFilterFor(intent, targetActivity);
 
         return (activityIntentFilter != null);
-    }
-
-    private static void removeTestLocationProviders(Context context) {
-        int hasPermission = context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_MOCK_LOCATION);
-
-        if (hasPermission == PackageManager.PERMISSION_GRANTED) {
-            LocationManager locationService = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-            for (final String provider : locationService.getAllProviders()) {
-                locationService.removeTestProvider(provider);
-            }
-        }
     }
 
     private static class IntentHookWithCount {

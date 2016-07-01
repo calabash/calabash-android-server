@@ -1,5 +1,6 @@
 package sh.calaba.instrumentationbackend.actions.l10n;
 
+import android.app.Application;
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 
 /**
@@ -17,20 +18,21 @@ public class L10nHelper {
    * @return The translated value.
    */
   public static String getValue(String l10nKey, String pckg) {
-    
-    if(pckg == null){
-        pckg = InstrumentationBackend.solo.getCurrentActivity().getPackageName();
+    Application application = InstrumentationBackend.getDefaultCalabashAutomation().getCurrentApplication();
+
+    if (application == null) {
+        throw new RuntimeException("Application is null");
+    }
+
+    if (pckg == null) {
+        pckg = application.getPackageName();
     }
       
     int resourceId =
-        InstrumentationBackend.solo
-            .getCurrentActivity()
+        application
             .getResources()
             .getIdentifier(l10nKey, "string", pckg);
 
-    String localizedString =
-        InstrumentationBackend.solo.getCurrentActivity().getResources().getString(resourceId);
-
-    return localizedString;
+    return application.getResources().getString(resourceId);
   }
 }

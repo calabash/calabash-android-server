@@ -71,7 +71,8 @@ public class ClearAppData2 extends InstrumentationTestRunner {
     }
 
     private void removeOwnAccountTypes() {
-        if (getTargetContext().checkCallingOrSelfPermission(Manifest.permission.GET_ACCOUNTS) == PackageManager.PERMISSION_GRANTED) {
+        if (getTargetContext().checkCallingOrSelfPermission(Manifest.permission.GET_ACCOUNTS) == PackageManager.PERMISSION_GRANTED
+                && getTargetContext().checkCallingOrSelfPermission(Manifest.permission.MANAGE_ACCOUNTS) == PackageManager.PERMISSION_GRANTED) {
             final AccountManager manager = AccountManager.get(getTargetContext());
             final Account[] accounts = manager.getAccounts();
             final List<String> typesToDelete = new ArrayList<String>();

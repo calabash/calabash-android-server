@@ -5,4 +5,5 @@ import android.content.Intent;
 
 public interface ApplicationLifeCycle {
     public Activity start(Intent startIntent);
+    public void stop();
 }

@@ -4,7 +4,6 @@ import android.app.Activity;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
 import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
 
-import java.lang.ref.WeakReference;
 import java.util.List;
 
 /*

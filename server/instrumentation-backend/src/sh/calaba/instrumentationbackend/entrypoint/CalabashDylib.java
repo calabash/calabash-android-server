@@ -74,35 +74,13 @@ public class CalabashDylib implements EntryPoint {
             HttpServer.instantiate(testServerPort);
         }
 
-        final InstrumentationApplicationLifeCycle applicationLifeCycle =
-                new InstrumentationApplicationLifeCycle(instrumentation, null);
+        final CalabashInstrumentationApplicationLifeCycle applicationLifeCycle =
+                new CalabashInstrumentationApplicationLifeCycle(instrumentation, null);
 
         final HttpTestServerLifeCycle testServerLifeCycle =
                 new HttpTestServerLifeCycle(HttpServer.getInstance(), applicationLifeCycle);
 
-        testServerLifeCycle.start();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (testServerLifeCycle.isHttpServerRunning()) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        System.out.println("Thread is interrupted, breaking.");
-                        break;
-                    }
-                }
-
-                instrumentation.runOnMainSync(new Runnable() {
-                    @Override
-                    public void run() {
-                        testServerLifeCycle.stop();
-                        InstrumentationBackend.tearDown();
-                    }
-                });
-            }
-        }).start();
+        testServerLifeCycle.startAndWaitForKill();
     }
 
     @Override

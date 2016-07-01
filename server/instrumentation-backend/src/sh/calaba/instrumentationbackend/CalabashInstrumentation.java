@@ -18,9 +18,11 @@ import sh.calaba.instrumentationbackend.intenthook.IIntentHook;
 import sh.calaba.instrumentationbackend.intenthook.IntentHookResult;
 
 import java.lang.ref.WeakReference;
+import java.util.Iterator;
+import java.util.Stack;
 
 public class CalabashInstrumentation extends InstrumentationExposed {
-    private WeakReference<Activity> lastActivity;
+    private Stack<WeakReference<Activity>> lastActivities = new Stack<WeakReference<Activity>>();
 
     // Android invokes onCreate automatically. dontRun is set by Main to ensure
     // that this entry point is not mistakenly started.
@@ -39,7 +41,11 @@ public class CalabashInstrumentation extends InstrumentationExposed {
     }
 
     public WeakReference<Activity> getLastActivity() {
-        return lastActivity;
+        return lastActivities.peek();
+    }
+
+    public Iterator<WeakReference<Activity>> getLastActivitiesIterator() {
+        return lastActivities.iterator();
     }
 
     /*
@@ -50,7 +56,7 @@ public class CalabashInstrumentation extends InstrumentationExposed {
             throws IllegalAccessException, ClassNotFoundException, InstantiationException {
         Logger.info("newActivity1");
         Activity activity = super.newActivity(cl, className, intent);
-        lastActivity = new WeakReference<Activity>(activity);
+        lastActivities.push(new WeakReference<Activity>(activity));
 
         return activity;
     }
@@ -64,7 +70,7 @@ public class CalabashInstrumentation extends InstrumentationExposed {
             throws InstantiationException, IllegalAccessException {
         Logger.info("newActivity2");
         Activity activity = super.newActivity(clazz, context, token, application, intent, info, title, parent, id, lastNonConfigurationInstance);
-        lastActivity = new WeakReference<Activity>(activity);
+        lastActivities.push(new WeakReference<Activity>(activity));
 
         return activity;
     }
@@ -75,7 +81,7 @@ public class CalabashInstrumentation extends InstrumentationExposed {
      */
     @Override
     public void callActivityOnResume(Activity activity) {
-        lastActivity = new WeakReference<Activity>(activity);
+        lastActivities.push(new WeakReference<Activity>(activity));
 
         super.callActivityOnResume(activity);
     }

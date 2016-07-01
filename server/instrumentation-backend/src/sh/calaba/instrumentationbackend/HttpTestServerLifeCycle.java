@@ -6,6 +6,7 @@ import android.content.Intent;
 import com.jayway.android.robotium.solo.SoloEnhanced;
 
 import sh.calaba.instrumentationbackend.actions.HttpServer;
+import sh.calaba.instrumentationbackend.actions.location.FakeGPSLocation;
 
 public class HttpTestServerLifeCycle implements TestServerLifeCycle {
     private final HttpServer httpServer;
@@ -32,9 +33,31 @@ public class HttpTestServerLifeCycle implements TestServerLifeCycle {
         this.httpServer.setReady();
     }
 
+    public void startAndWaitForKill() {
+        start();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (isHttpServerRunning()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        System.out.println("Thread is interrupted, breaking.");
+                        break;
+                    }
+                }
+
+                stop();
+                applicationLifeCycle.stop();
+            }
+        }).start();
+    }
+
     @Override
     public void stop() {
         httpServer.stop();
+        FakeGPSLocation.stopLocationMocking();
     }
 
     public boolean isHttpServerRunning() {

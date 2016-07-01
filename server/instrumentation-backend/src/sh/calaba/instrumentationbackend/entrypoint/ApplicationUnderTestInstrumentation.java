@@ -5,6 +5,9 @@ import android.app.Application;
 import sh.calaba.instrumentationbackend.CalabashInstrumentation;
 import sh.calaba.instrumentationbackend.automation.ApplicationUnderTest;
 
+import java.lang.ref.WeakReference;
+import java.util.Iterator;
+
 public final class ApplicationUnderTestInstrumentation implements ApplicationUnderTest {
     private final CalabashInstrumentation calabashInstrumentation;
 

@@ -63,21 +63,6 @@ public class InstrumentationBackend {
         Log.e(TAG, message);
     }
 
-    public static void tearDown() {
-        System.out.println("Finishing");
-
-        try {
-            if (solo != null) {
-                solo.finishOpenedActivities();
-                solo.finalize();
-            }
-        } catch (Throwable e) { // Solo throws throwable...
-            e.printStackTrace();
-        }
-
-        FakeGPSLocation.stopLocationMocking();
-    }
-
     public static void putIntentHook(ActivityIntentFilter activityIntentFilter, IIntentHook intentHook,
                                      int hookUsageCount) {
         Logger.debug("Adding intent hook '" + intentHook + "' for '" + activityIntentFilter + "'");

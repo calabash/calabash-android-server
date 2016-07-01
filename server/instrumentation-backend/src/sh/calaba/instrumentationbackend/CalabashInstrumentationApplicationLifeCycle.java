@@ -4,14 +4,17 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
 
+import java.lang.ref.WeakReference;
+import java.util.Iterator;
+
 /**
  * Handles application life cycle using instrumentation
  */
-public class InstrumentationApplicationLifeCycle implements ApplicationLifeCycle {
-    private Instrumentation instrumentation;
+public class CalabashInstrumentationApplicationLifeCycle implements ApplicationLifeCycle {
+    private CalabashInstrumentation instrumentation;
     private Intent defaultIntent;
 
-    public InstrumentationApplicationLifeCycle(Instrumentation instrumentation, Intent defaultIntent) {
+    public CalabashInstrumentationApplicationLifeCycle(CalabashInstrumentation instrumentation, Intent defaultIntent) {
         this.instrumentation = instrumentation;
         this.defaultIntent = defaultIntent;
     }
@@ -30,6 +33,23 @@ public class InstrumentationApplicationLifeCycle implements ApplicationLifeCycle
         instrumentation.setInTouchMode(true);
 
         return getInstrumentation().startActivitySync(startIntentAdded);
+    }
+
+    @Override
+    public void stop() {
+        Iterator<WeakReference<Activity>> iterator = instrumentation.getLastActivitiesIterator();
+
+        while (iterator.hasNext()) {
+            WeakReference<Activity> weakReference = iterator.next();
+
+            if (weakReference != null) {
+                Activity activity = weakReference.get();
+
+                if (activity != null) {
+                    activity.finish();
+                }
+            }
+        }
     }
 
     public Instrumentation getInstrumentation() {

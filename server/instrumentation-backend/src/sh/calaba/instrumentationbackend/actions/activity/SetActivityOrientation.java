@@ -1,5 +1,6 @@
 package sh.calaba.instrumentationbackend.actions.activity;
 
+import android.content.pm.ActivityInfo;
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
@@ -14,9 +15,9 @@ public class SetActivityOrientation implements Action {
         String orientation = args[0].toLowerCase();
 
         if (orientation.equals("landscape")) {
-            InstrumentationBackend.solo.setActivityOrientation(0);
+            InstrumentationBackend.getCurrentActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         } else if(orientation.equals("portrait")) {
-            InstrumentationBackend.solo.setActivityOrientation(1);
+            InstrumentationBackend.getCurrentActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         } else {
             throw new IllegalArgumentException("Invalid orientation '" + orientation + "'. Use 'landscape' or 'portrait'");
         }

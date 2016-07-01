@@ -445,21 +445,15 @@ public class HttpServer extends NanoHTTPD {
                 List arguments = (List) backdoorMethod.get("arguments");
                 Operation operation = new InvocationOperation(methodName, arguments);
 
-                Application application = InstrumentationBackend.solo.getCurrentActivity().getApplication();
+                Application application = InstrumentationBackend.getDefaultCalabashAutomation().getCurrentApplication();
                 Object invocationResult;
 
                 invocationResult = operation.apply(application);
 
                 if (invocationResult instanceof Map && ((Map) invocationResult).containsKey("error")) {
-                    Context context = InstrumentationBackend.solo.getCurrentActivity();
+                    Context context = InstrumentationBackend.getDefaultCalabashAutomation().getCurrentActivity();
                     invocationResult = operation.apply(context);
                 }
-
-                if (invocationResult instanceof Map && ((Map) invocationResult).containsKey("error")) {
-                    Context context = InstrumentationBackend.getCurrentActivity();
-                    invocationResult = operation.apply(context);
-                }
-
                 Map<String, String> result = new HashMap<String, String>();
 
                 if (invocationResult instanceof Map && ((Map) invocationResult).containsKey("error")) {

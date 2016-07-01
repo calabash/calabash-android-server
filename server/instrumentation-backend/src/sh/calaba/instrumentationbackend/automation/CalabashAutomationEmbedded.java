@@ -1,6 +1,7 @@
 package sh.calaba.instrumentationbackend.automation;
 
 import android.app.Activity;
+import android.app.Application;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
 import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
 
@@ -19,6 +20,11 @@ public class CalabashAutomationEmbedded implements CalabashAutomation {
     @Override
     public Activity getCurrentActivity() {
         return applicationUnderTest.getCurrentActivity();
+    }
+
+    @Override
+    public Application getCurrentApplication() {
+        return applicationUnderTest.getApplication();
     }
 
     @Override

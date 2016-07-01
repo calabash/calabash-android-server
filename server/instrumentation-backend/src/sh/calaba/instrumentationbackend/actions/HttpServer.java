@@ -43,6 +43,7 @@ import sh.calaba.instrumentationbackend.query.Operation;
 import sh.calaba.instrumentationbackend.query.Query;
 import sh.calaba.instrumentationbackend.query.QueryResult;
 import sh.calaba.instrumentationbackend.query.WebContainer;
+import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
 import sh.calaba.instrumentationbackend.query.ui.UIObject;
 import sh.calaba.org.codehaus.jackson.JsonNode;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
@@ -507,7 +508,7 @@ public class HttpServer extends NanoHTTPD {
                     for (final Object o : queryResultList) {
                         final View view = (View) o;
 
-                        InstrumentationBackend.solo.runOnMainSync(new Runnable() {
+                        UIQueryUtils.runOnViewThread(view, new Runnable() {
                             @Override
                             public void run() {
                                 Animation animation = new AlphaAnimation(1, 0);

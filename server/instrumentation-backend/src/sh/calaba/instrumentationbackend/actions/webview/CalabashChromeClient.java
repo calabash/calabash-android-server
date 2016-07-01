@@ -5,10 +5,7 @@ import java.lang.RuntimeException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -17,8 +14,12 @@ import java.util.concurrent.TimeoutException;
 import android.graphics.Bitmap;
 import android.os.Looper;
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
+import sh.calaba.instrumentationbackend.query.Operation;
+import sh.calaba.instrumentationbackend.query.QueryResult;
 import sh.calaba.instrumentationbackend.query.WebContainer;
-import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
+import sh.calaba.instrumentationbackend.query.ast.*;
+import sh.calaba.instrumentationbackend.query.ast.optimization.UIQueryASTClassNameCache;
+import sh.calaba.instrumentationbackend.query.ui.UIObject;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import sh.calaba.org.codehaus.jackson.type.TypeReference;
 
@@ -188,16 +189,33 @@ public class CalabashChromeClient extends WebChromeClient {
 
 	public static List<CalabashChromeClient> findAndPrepareWebViews() {
 		List<CalabashChromeClient> webViews = new ArrayList<CalabashChromeClient>();
-		ArrayList<View> views = InstrumentationBackend.solo.getCurrentViews();
-		for (View view : views) {
-			if (view instanceof WebView) {
-				WebView webView = (WebView) view;
-				webViews.add(prepareWebView(webView));
-			}
-		}
-		return webViews;
 
+		for (WebView webView : getAllWebViews()) {
+            webViews.add(prepareWebView(webView));
+		}
+
+		return webViews;
 	}
+
+    public static List<WebView> getAllWebViews() {
+        final List<UIQueryAST> webViewQuery = new ArrayList<UIQueryAST>();
+        webViewQuery.add(UIQueryVisibility.ALL);
+        webViewQuery.add(UIQueryASTClassName.fromClass(WebView.class));
+
+        QueryResult uiObjects =
+                UIQueryEvaluator.evaluateQueryWithOptions(webViewQuery,
+                        new ArrayList<UIObject>(InstrumentationBackend.getRootViews()), Collections.<Operation>emptyList());
+
+        List<WebView> webViews = new ArrayList<WebView>();
+
+        for (Object o : uiObjects.asList()) {
+            if (o instanceof WebView) {
+                webViews.add((WebView) o);
+            }
+        }
+
+        return webViews;
+    }
 
 	public WebFuture getResult() {
 		return scriptFuture;

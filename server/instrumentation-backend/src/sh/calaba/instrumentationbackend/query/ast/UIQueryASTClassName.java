@@ -50,6 +50,10 @@ public class UIQueryASTClassName implements UIQueryAST {
 		return new UIQueryASTClassName(simpleClassName);
 	}
 
+	public static UIQueryASTClassName fromClass(Class<?> clz) {
+		return new UIQueryASTClassName(clz);
+	}
+
 	private static Class<?> findLoadedClass(ClassLoader classLoader, String qualifiedClassName) {
 		Class<?> classFromCache = UIQueryASTClassNameCache.loadedClass(qualifiedClassName);
 

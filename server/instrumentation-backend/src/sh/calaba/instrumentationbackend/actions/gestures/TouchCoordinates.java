@@ -11,8 +11,6 @@ public class TouchCoordinates implements Action {
 
     @Override
     public Result execute(String... args) {
-        Display display = InstrumentationBackend.solo.getCurrentActivity().getWindowManager().getDefaultDisplay();
-        
         float x = Float.parseFloat(args[0]);
         float y = Float.parseFloat(args[1]);
 

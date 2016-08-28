@@ -9,7 +9,8 @@ import org.junit.runner.notification.RunListener;
 public class TestRunner extends JUnitCore {
     private static Class<?>[] testClasses =
             {
-                    sh.calaba.json.IntentTest.class
+                    sh.calaba.json.IntentTest.class,
+                    sh.calaba.instrumentationbackend.utils.WindowManagerWrapperTest.class
             };
 
     public static void main(String... args) {

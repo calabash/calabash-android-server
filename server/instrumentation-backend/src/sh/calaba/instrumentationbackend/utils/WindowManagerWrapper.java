@@ -29,9 +29,19 @@ public abstract class WindowManagerWrapper {
     }
 
     private static WindowManager getWindowManagerFromContext(Context context) {
-        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        WindowManager windowManager;
 
-        if (WindowManagerWrapper.windowManagerImplClass.isAssignableFrom(windowManager.getClass())) {
+        try {
+            windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        } catch (IllegalStateException e) {
+            // This exception will be thrown if the system service is requested before the onCreate
+            // method of the activity is called. This is fine, we should just not use the window
+            // manager of this particular activity, but use the default one.
+            windowManager = null;
+        }
+
+        if (windowManager != null
+            && WindowManagerWrapper.windowManagerImplClass.isAssignableFrom(windowManager.getClass())) {
             return windowManager;
         } else {
             return null;

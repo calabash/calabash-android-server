@@ -68,10 +68,10 @@ public class CalabashDylib implements EntryPoint {
 
         if (testServerPort == null) {
             System.out.println("Dylib instantiating server. Not listening at any port!");
-            HttpServer.instantiate();
+            HttpServer.instantiateWithoutListening();
         } else {
             System.out.println("Dylib instantiating server at " + testServerPort);
-            HttpServer.instantiate(testServerPort);
+            HttpServer.instantiateAndListen(testServerPort);
         }
 
         final CalabashInstrumentationApplicationLifeCycle applicationLifeCycle =

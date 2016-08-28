@@ -80,11 +80,11 @@ public class HttpServer extends NanoHTTPD {
 	 *
 	 * Can only be called once. Otherwise, you'll get an IllegalStateException.
 	 */
-	public synchronized static HttpServer instantiate(int testServerPort) {
+	public synchronized static HttpServer instantiateAndListen(int testServerPort) {
         return instantiate((Integer)testServerPort);
     }
 
-    public synchronized static HttpServer instantiate() {
+    public synchronized static HttpServer instantiateWithoutListening() {
         return instantiate((Integer)null);
     }
 

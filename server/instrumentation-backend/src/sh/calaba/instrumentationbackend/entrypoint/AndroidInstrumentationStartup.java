@@ -136,7 +136,7 @@ public class AndroidInstrumentationStartup implements EntryPoint {
             defaultStartIntent.replaceExtras(this.extras);
         }
 
-        HttpServer.instantiate(Integer.parseInt(arguments.getString("test_server_port")));
+        HttpServer.instantiateAndListen(Integer.parseInt(arguments.getString("test_server_port")));
 
         final CalabashInstrumentationApplicationLifeCycle applicationLifeCycle =
                 new CalabashInstrumentationApplicationLifeCycle(instrumentation, defaultStartIntent);

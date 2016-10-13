@@ -45,7 +45,13 @@ public class ActivityLaunchedWaiter implements Runnable {
             List<MessageQueue.IdleHandler> idleHandlers = getIdleHandlers(instrumentationMessageQueue);
 
             for (int i = 0; i < idleHandlers.size(); i++) {
-                MessageQueue.IdleHandler idleHandler = idleHandlers.get(i);
+                MessageQueue.IdleHandler idleHandler;
+
+                try {
+                    idleHandler = idleHandlers.get(i);
+                } catch (IndexOutOfBoundsException ex) {
+                    continue;
+                }
 
                 if (idleHandler.getClass().isAssignableFrom(activityGoingClass)) {
                     // We have found the right idleHandler.

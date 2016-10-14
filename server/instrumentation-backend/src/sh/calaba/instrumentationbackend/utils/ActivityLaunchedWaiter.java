@@ -2,6 +2,7 @@ package sh.calaba.instrumentationbackend.utils;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.os.Message;
 import android.os.MessageQueue;
 import sh.calaba.instrumentationbackend.Logger;
 
@@ -43,7 +44,15 @@ public class ActivityLaunchedWaiter implements Runnable {
         while (true) {
             List<MessageQueue.IdleHandler> idleHandlers = getIdleHandlers(instrumentationMessageQueue);
 
-            for (MessageQueue.IdleHandler idleHandler : idleHandlers) {
+            for (int i = 0; i < idleHandlers.size(); i++) {
+                MessageQueue.IdleHandler idleHandler;
+
+                try {
+                    idleHandler = idleHandlers.get(i);
+                } catch (IndexOutOfBoundsException ex) {
+                    continue;
+                }
+
                 if (idleHandler.getClass().isAssignableFrom(activityGoingClass)) {
                     // We have found the right idleHandler.
                     Object activityWaiter = getActivityWaiterOfActivityGoing(idleHandler);

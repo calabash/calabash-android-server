@@ -87,7 +87,11 @@
         res.nodeType = NODE_TYPES[object.nodeType] || res.nodeType + ' (Unexpected)';
         res.nodeName = object.nodeName;
         res.id = object.id || '';
-        res['class'] = object.getAttribute("class") || '';
+        if (object.className.baseVal == undefined) {
+            res['class'] = object.className || '';
+        } else {
+            res['class'] = object.className.baseVal || '';
+        }
         if (object.href)
         {
             res.href = object.href;

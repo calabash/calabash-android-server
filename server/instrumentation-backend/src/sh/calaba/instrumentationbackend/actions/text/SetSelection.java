@@ -31,10 +31,8 @@ public class SetSelection extends TextAction {
 
     @Override
     protected Result executeOnUIThread(final View servedView, final InputConnection inputConnection) {
-        final Editable editable = InfoMethodUtil.getEditable(servedView, inputConnection);
-
         // Find length of non-formatted text
-        int textLength = InfoMethodUtil.getEditableTextLength(editable);
+        int textLength = InfoMethodUtil.getTextLength(servedView, inputConnection);
         int from, to;
 
         if (argFrom < 0) {

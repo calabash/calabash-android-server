@@ -3,6 +3,7 @@ package sh.calaba.instrumentationbackend.actions.text;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -27,6 +28,7 @@ public abstract class TextAction implements Action {
         }
 
         final View servedView;
+        InputConnection inputConnectionT;
         final InputConnection inputConnection;
 
         try {
@@ -51,16 +53,22 @@ public abstract class TextAction implements Action {
             }
         });
 
-        UIQueryUtils.runOnViewThread(servedView, futureResult);
+        // HACK: ThreadedInputConnection should only be used while not on the
+        // UI-thread.
+        if ("org.chromium.content.browser.input.ThreadedInputConnection".equals(inputConnection.getClass().getName())) {
+            return executeOnUIThread(servedView, inputConnection);
+        } else {
+            UIQueryUtils.runOnViewThread(servedView, futureResult);
 
-        try {
-            return futureResult.get(10, TimeUnit.SECONDS);
-        } catch (ExecutionException executionException) {
-            throw new RuntimeException(executionException.getCause());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (TimeoutException e) {
-            throw new RuntimeException(e);
+            try {
+                return futureResult.get(10, TimeUnit.SECONDS);
+            } catch (ExecutionException executionException) {
+                throw new RuntimeException(executionException.getCause());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (TimeoutException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

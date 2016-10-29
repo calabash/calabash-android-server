@@ -105,6 +105,33 @@ public class InfoMethodUtil {
         }
     }
 
+    public static int getTextLength(View servedView, InputConnection inputConnection) {
+        if ("org.chromium.content.browser.input.ThreadedInputConnection".equals(inputConnection.getClass().getName())) {
+            try {
+                Field imeAdapterField = inputConnection.getClass().getDeclaredField("mImeAdapter");
+                imeAdapterField.setAccessible(true);
+                Object imeAdapter = imeAdapterField.get(inputConnection);
+
+                Class<?> imeAdapterClass = inputConnection.getClass().getClassLoader().loadClass("org.chromium.content.browser.input.ImeAdapter");
+                Field inputConnectionField = imeAdapterClass.getDeclaredField("mLastText");
+                inputConnectionField.setAccessible(true);
+
+                return ((String)inputConnectionField.get(imeAdapter)).length();
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            final Editable editable = InfoMethodUtil.getEditable(servedView, inputConnection);
+
+            // Find length of non-formatted text
+            return InfoMethodUtil.getEditableTextLength(editable);
+        }
+    }
+
     public static class UnexpectedInputMethodManagerStructureException extends Exception {
         public UnexpectedInputMethodManagerStructureException() {
             super();

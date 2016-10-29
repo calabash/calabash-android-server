@@ -34,10 +34,8 @@ public class DeleteSurroundingText extends TextAction {
 
     @Override
     protected Result executeOnUIThread(final View servedView, final InputConnection inputConnection) {
-        final Editable editable = InfoMethodUtil.getEditable(servedView, inputConnection);
-
         // Find length of non-formatted text
-        int textLength = InfoMethodUtil.getEditableTextLength(editable);
+        int textLength = InfoMethodUtil.getTextLength(servedView, inputConnection);
         int beforeLength, afterLength;
 
         if (argBeforeLength < 0) {
@@ -53,9 +51,7 @@ public class DeleteSurroundingText extends TextAction {
         }
 
         if (Build.VERSION.SDK_INT >= 9) {
-            int start = Selection.getSelectionStart(editable);
-            int end = Selection.getSelectionEnd(editable);
-            inputConnection.setComposingRegion(start, end);
+            inputConnection.setComposingRegion(-1, -1);
         }
 
         inputConnection.deleteSurroundingText(beforeLength, afterLength);

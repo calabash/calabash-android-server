@@ -32,13 +32,13 @@ public class SetComposingRegion extends TextAction {
     }
 
     @Override
-    protected Result executeOnUIThread(final View servedView, final InputConnection inputConnection) {
+    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         if (Build.VERSION.SDK_INT < 9) {
             return Result.failedResult("Cannot set composing region on Android < 9");
         }
 
         // Find length of non-formatted text
-        int textLength = InfoMethodUtil.getTextLength(servedView, inputConnection);
+        int textLength = InfoMethodUtil.getTextLength(inputConnection);
         int from, to;
 
         if (argFrom < 0) {

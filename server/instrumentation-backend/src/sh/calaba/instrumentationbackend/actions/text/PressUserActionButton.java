@@ -47,7 +47,7 @@ public class PressUserActionButton extends TextAction {
     }
 
     @Override
-    protected Result executeOnUIThread(final View servedView, final InputConnection inputConnection) {
+    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         final Integer imeActionCode;
 
         if (imeActionCodeArgument != null) {
@@ -60,7 +60,7 @@ public class PressUserActionButton extends TextAction {
             KeyboardEnterText keyboardEnterTextAction = new KeyboardEnterText();
             keyboardEnterTextAction.parseArguments("\n");
 
-            return keyboardEnterTextAction.executeOnUIThread(servedView, inputConnection);
+            return keyboardEnterTextAction.executeOnInputThread(servedView, inputConnection);
         } else {
             inputConnection.performEditorAction(imeActionCode);
 

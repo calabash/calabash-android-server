@@ -2,20 +2,14 @@ package sh.calaba.instrumentationbackend.actions.text;
 
 import android.content.Context;
 import android.os.Build;
-import android.text.Editable;
-import android.text.TextUtils;
 import android.view.View;
-import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.TextView;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.utils.SystemPropertiesWrapper;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 public class InfoMethodUtil {
     public static View getServedView() throws UnexpectedInputMethodManagerStructureException {
@@ -72,64 +66,66 @@ public class InfoMethodUtil {
     /*
      Find length of non-formatted text
     */
-    public static int getEditableTextLength(Editable editable) {
-        return TextUtils.substring(editable, 0, editable.length()).length();
+    public static int getTextLength(InputConnection inputConnection) {
+        return getTextLength(TextPosition.BEFORE, inputConnection) +
+                getTextLength(TextPosition.SELECTED, inputConnection) +
+                getTextLength(TextPosition.AFTER, inputConnection);
     }
 
-    public static Editable getEditable(View view, InputConnection inputConnection) {
-        Editable editable = null;
+    public static int getSelectionStart(InputConnection inputConnection) {
+        return getTextLength(TextPosition.BEFORE, inputConnection);
+    }
 
-        if (inputConnection instanceof BaseInputConnection) {
-            editable = ((BaseInputConnection) inputConnection).getEditable();
-        } else if (view instanceof TextView) {
-            editable = ((TextView) view).getEditableText();
-        } else {
-            try {
-                Method m = view.getClass().getMethod("getEditableText");
-                m.setAccessible(true);
-                Object o = m.invoke(view);
+    public static int getSelectionEnd(InputConnection inputConnection) {
+        return getTextLength(inputConnection) - getTextLength(TextPosition.AFTER, inputConnection);
+    }
 
-                if (o instanceof Editable) {
-                    editable = (Editable) o;
-                }
-            } catch (NoSuchMethodException e) {
-            } catch (InvocationTargetException e) {
-            } catch (IllegalAccessException e) {
+    private enum TextPosition {
+        BEFORE, SELECTED, AFTER
+    }
+
+    private static int getTextLength(TextPosition textPosition, InputConnection inputConnection) {
+        int lastLength = 0;
+
+        // We are asked to supply a buffer of size n to hold the characters. Therefore we loop
+        // to find the least buffer size needed.
+        for (int n = 1; n > 0; n *= 10) {
+            CharSequence text;
+
+            switch (textPosition) {
+                case BEFORE:
+                    text = inputConnection.getTextBeforeCursor(n, 0);
+                    break;
+                case AFTER:
+                    text = inputConnection.getTextAfterCursor(n, 0);
+                    break;
+                case SELECTED:
+                    if (Build.VERSION.SDK_INT >= 9) {
+                        text = inputConnection.getSelectedText(0);
+                    } else {
+                        text = "";
+                    }
+
+                    break;
+                default:
+                    text = null;
+            }
+
+            if (text == null) {
+                // We have no text in the current position (or an error has occurred)
+                return 0;
+            }
+
+            int length = text.length();
+
+            if (length == lastLength) {
+                return length;
+            } else {
+                lastLength = length;
             }
         }
 
-        if (editable == null) {
-            throw new IllegalStateException("View '" + view + "' is not editable");
-        } else {
-            return editable;
-        }
-    }
-
-    public static int getTextLength(View servedView, InputConnection inputConnection) {
-        if ("org.chromium.content.browser.input.ThreadedInputConnection".equals(inputConnection.getClass().getName())) {
-            try {
-                Field imeAdapterField = inputConnection.getClass().getDeclaredField("mImeAdapter");
-                imeAdapterField.setAccessible(true);
-                Object imeAdapter = imeAdapterField.get(inputConnection);
-
-                Class<?> imeAdapterClass = inputConnection.getClass().getClassLoader().loadClass("org.chromium.content.browser.input.ImeAdapter");
-                Field inputConnectionField = imeAdapterClass.getDeclaredField("mLastText");
-                inputConnectionField.setAccessible(true);
-
-                return ((String)inputConnectionField.get(imeAdapter)).length();
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            final Editable editable = InfoMethodUtil.getEditable(servedView, inputConnection);
-
-            // Find length of non-formatted text
-            return InfoMethodUtil.getEditableTextLength(editable);
-        }
+        throw new RuntimeException("The text of the current input connection is too big.");
     }
 
     public static class UnexpectedInputMethodManagerStructureException extends Exception {

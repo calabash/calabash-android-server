@@ -28,12 +28,11 @@ public class KeyboardEnterText extends TextAction {
     }
 
     @Override
-    protected Result executeOnUIThread(final View servedView, final InputConnection inputConnection) {
-        final Editable editable = InfoMethodUtil.getEditable(servedView, inputConnection);
+    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+        int start = InfoMethodUtil.getSelectionStart(inputConnection);
+        int end = InfoMethodUtil.getSelectionEnd(inputConnection);
 
         if (Build.VERSION.SDK_INT >= 9) {
-            int start = Selection.getSelectionStart(editable);
-            int end = Selection.getSelectionEnd(editable);
             inputConnection.setComposingRegion(start, end);
         }
 
@@ -42,8 +41,6 @@ public class KeyboardEnterText extends TextAction {
         }
 
         if (Build.VERSION.SDK_INT >= 9) {
-            int start = Selection.getSelectionStart(editable);
-            int end = Selection.getSelectionEnd(editable);
             inputConnection.setComposingRegion(start, end);
         }
 

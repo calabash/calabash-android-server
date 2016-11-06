@@ -38,7 +38,7 @@ public class SetComposingRegion extends TextAction {
         }
 
         // Find length of non-formatted text
-        int textLength = InfoMethodUtil.getTextLength(servedView, inputConnection);
+        int textLength = InfoMethodUtil.getTextLength(inputConnection);
         int from, to;
 
         if (argFrom < 0) {

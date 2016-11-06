@@ -51,7 +51,8 @@ public class DeleteSurroundingText extends TextAction {
         }
 
         if (Build.VERSION.SDK_INT >= 9) {
-            inputConnection.setComposingRegion(-1, -1);
+            inputConnection.setComposingRegion(InfoMethodUtil.getSelectionStart(inputConnection),
+                    InfoMethodUtil.getSelectionEnd(inputConnection));
         }
 
         inputConnection.deleteSurroundingText(beforeLength, afterLength);

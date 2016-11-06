@@ -280,7 +280,19 @@ public class UIQueryUtils {
         if(view.getHandler() == null || view.getHandler().getLooper() == null || view.getHandler().getLooper().getThread() == Thread.currentThread()) {
             runnable.run();
         } else {
+            view.post(runnable);
+        }
+    }
 
+    public static void postOnViewHandlerOrUiThread(View view, Runnable runnable) {
+        if (view.getHandler() != null
+                && view.getHandler().getLooper() != null) {
+            if (view.getHandler().getLooper().getThread() != Thread.currentThread()) {
+                view.getHandler().post(runnable);
+            } else {
+                runnable.run();
+            }
+        } else {
             view.post(runnable);
         }
     }

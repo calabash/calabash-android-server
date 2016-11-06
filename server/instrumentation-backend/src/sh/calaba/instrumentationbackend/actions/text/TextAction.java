@@ -1,18 +1,16 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
+import android.os.Handler;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
@@ -28,7 +26,6 @@ public abstract class TextAction implements Action {
         }
 
         final View servedView;
-        InputConnection inputConnectionT;
         final InputConnection inputConnection;
 
         try {
@@ -49,26 +46,20 @@ public abstract class TextAction implements Action {
         FutureTask<Result> futureResult = new FutureTask<Result>(new Callable<Result>() {
             @Override
             public Result call() throws Exception {
-                return executeOnUIThread(servedView, inputConnection);
+                return executeOnInputThread(servedView, inputConnection);
             }
         });
 
-        // HACK: ThreadedInputConnection should only be used while not on the
-        // UI-thread.
-        if ("org.chromium.content.browser.input.ThreadedInputConnection".equals(inputConnection.getClass().getName())) {
-            return executeOnUIThread(servedView, inputConnection);
-        } else {
-            UIQueryUtils.runOnViewThread(servedView, futureResult);
+        UIQueryUtils.postOnViewHandlerOrUiThread(servedView, futureResult);
 
-            try {
-                return futureResult.get(10, TimeUnit.SECONDS);
-            } catch (ExecutionException executionException) {
-                throw new RuntimeException(executionException.getCause());
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (TimeoutException e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            return futureResult.get(10, TimeUnit.SECONDS);
+        } catch (ExecutionException executionException) {
+            throw new RuntimeException(executionException.getCause());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -78,5 +69,5 @@ public abstract class TextAction implements Action {
     /*
         This method is run on the main thread.
      */
-    protected abstract Result executeOnUIThread(final View servedView, final InputConnection inputConnection);
+    protected abstract Result executeOnInputThread(final View servedView, final InputConnection inputConnection);
 }

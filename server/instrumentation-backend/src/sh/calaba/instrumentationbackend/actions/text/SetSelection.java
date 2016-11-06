@@ -30,7 +30,7 @@ public class SetSelection extends TextAction {
     }
 
     @Override
-    protected Result executeOnUIThread(final View servedView, final InputConnection inputConnection) {
+    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         // Find length of non-formatted text
         int textLength = InfoMethodUtil.getTextLength(inputConnection);
         int from, to;

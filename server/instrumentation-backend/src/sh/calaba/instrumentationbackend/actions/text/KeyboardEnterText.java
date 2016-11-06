@@ -28,7 +28,7 @@ public class KeyboardEnterText extends TextAction {
     }
 
     @Override
-    protected Result executeOnUIThread(final View servedView, final InputConnection inputConnection) {
+    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         int start = InfoMethodUtil.getSelectionStart(inputConnection);
         int end = InfoMethodUtil.getSelectionEnd(inputConnection);
 

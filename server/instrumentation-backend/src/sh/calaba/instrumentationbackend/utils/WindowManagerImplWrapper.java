@@ -7,6 +7,7 @@ import android.view.WindowManager;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,8 +42,13 @@ public class WindowManagerImplWrapper extends   WindowManagerWrapper {
             try {
                 Field viewsField = windowManagerImplClass.getDeclaredField("mViews");
                 viewsField.setAccessible(true);
+                Object views = viewsField.get(windowManager);
 
-                return Arrays.asList((View[]) viewsField.get(windowManager));
+                if (views == null) {
+                    return new ArrayList<View>();
+                }
+
+                return Arrays.asList((View[]) views);
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             } catch (NoSuchFieldException e) {

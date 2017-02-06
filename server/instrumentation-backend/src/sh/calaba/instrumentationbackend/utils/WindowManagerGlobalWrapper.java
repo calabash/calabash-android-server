@@ -7,6 +7,7 @@ import android.view.WindowManager;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -51,11 +52,16 @@ public class WindowManagerGlobalWrapper extends WindowManagerWrapper {
         try {
             Field viewsField = Class.forName("android.view.WindowManagerGlobal").getDeclaredField("mViews");
             viewsField.setAccessible(true);
+            Object views = viewsField.get(windowManagerGlobal);
+
+            if (views == null) {
+                return new ArrayList<View>();
+            }
 
             if (Build.VERSION.SDK_INT < 19) {
-                return Arrays.asList((View[]) viewsField.get(windowManagerGlobal));
+                return Arrays.asList((View[]) views);
             } else {
-                return (List) viewsField.get(windowManagerGlobal);
+                return (List) views;
             }
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);

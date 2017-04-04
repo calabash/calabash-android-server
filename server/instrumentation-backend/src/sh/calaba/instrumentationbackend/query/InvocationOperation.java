@@ -90,14 +90,18 @@ public class InvocationOperation implements Operation {
 	}
 
 	public MethodWithArguments findCompatibleMethod(Object object) {
+	    return findCompatibleMethod(object.getClass());
+    }
+
+    public MethodWithArguments findCompatibleMethod(Class<?> forClass) {
 		// Fast path
 		try {
-            return new MethodWithArguments(object.getClass().getMethod(methodName, argumentTypes), 
+            return new MethodWithArguments(forClass.getMethod(methodName, argumentTypes),
                     new ArrayList<Object>(arguments));
 		} catch (NoSuchMethodException e) {
 			// No immediate method found
 
-            for (Method method : object.getClass().getMethods()) {
+            for (Method method : forClass.getMethods()) {
                 if (!method.getName().equals(methodName)) {
                     continue;
                 }

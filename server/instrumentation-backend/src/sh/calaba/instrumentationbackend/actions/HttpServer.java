@@ -13,14 +13,9 @@ import java.io.StringWriter;
 import java.lang.InterruptedException;
 import java.lang.Override;
 import java.lang.Runnable;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -74,7 +69,7 @@ public class HttpServer extends NanoHTTPD {
 
 	private static HttpServer instance;
     private ApplicationStarter applicationStarter;
-
+    private Collection<Class<?>> dynamicallyLoadedClasses = new ArrayList<Class<?>>();
 
     /**
 	 * Creates and returns the singleton instance for HttpServer.
@@ -750,7 +745,11 @@ public class HttpServer extends NanoHTTPD {
 
                 for (String className : classes) {
                     dexClassLoader.loadClass(className);
-                    Class.forName(className, true, dexClassLoader);
+
+                    // Load the class, which also fires static initializers
+                    Class loadedClass = Class.forName(className, true, dexClassLoader);
+
+                    dynamicallyLoadedClasses.add(loadedClass);
                 }
 
                 return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", FranklyResult.emptyResult().asJson());
@@ -760,6 +759,50 @@ public class HttpServer extends NanoHTTPD {
             }
 
             return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", errorResult.asJson());
+        } else if (uri.endsWith("/invoke-method-on-dyloaded-classes")) {
+		    try {
+                String json = params.getProperty("json");
+                ObjectMapper mapper = new ObjectMapper();
+                Map data = mapper.readValue(json, Map.class);
+
+                final String className = (String) data.get("className");
+                final String methodName = (String) data.get("methodName");
+                final List<?> arguments = (List<?>) data.get("arguments");
+
+                InvocationOperation invocationOperation =
+                        new InvocationOperation(methodName, arguments);
+
+                for (Class<?> dynamicallyLoadedClass : dynamicallyLoadedClasses) {
+                    if (dynamicallyLoadedClass.getName().equals(className)) {
+                        System.out.println("Invoking on " + dynamicallyLoadedClass);
+
+                        InvocationOperation.MethodWithArguments foundMethod =
+                                invocationOperation.findCompatibleMethod(dynamicallyLoadedClass);
+
+                        Map<String, String> result = new HashMap<String, String>();
+
+                        if (foundMethod == null) {
+                            result.put("outcome", "ERROR");
+                            result.put("result", "No such method '" + methodName + "' for '" + dynamicallyLoadedClass + "'");
+                            result.put("details", "");
+                        } else {
+                            result.put("outcome", "SUCCESS");
+                            result.put("result", String.valueOf(foundMethod.invoke(null)));
+                        }
+
+                        ObjectMapper resultMapper = new ObjectMapper();
+
+                        return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", resultMapper.writeValueAsString(result));
+                    }
+                }
+
+                throw new RuntimeException("No such class '" + className + "'");
+            } catch (Exception e) {
+                e.printStackTrace();
+
+                return new NanoHTTPD.Response(HTTP_OK, "application/json;charset=utf-8", FranklyResult.fromThrowable(e).asJson());
+            }
+
         }
 
 		System.out.println("header: " + header);

@@ -26,6 +26,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import android.os.Build;
 import android.os.Bundle;
 import dalvik.system.DexClassLoader;
 import sh.calaba.instrumentationbackend.*;
@@ -694,16 +695,31 @@ public class HttpServer extends NanoHTTPD {
                 ContextWrapper contextWrapper = new ContextWrapper(InstrumentationBackend.instrumentation.getTargetContext());
 
                 FileInputStream fileInputStream = new FileInputStream(new File(from));
-                FileOutputStream fileOutputStream = contextWrapper.openFileOutput(name, Context.MODE_WORLD_READABLE);
 
-                Utils.copyContents(fileInputStream, fileOutputStream);
+                FileOutputStream fileOutputStream;
+
+                File resultingFile = new File(contextWrapper.getFilesDir(), name);
+
+                if (Build.VERSION.SDK_INT < 23) {
+                    fileOutputStream = contextWrapper.openFileOutput(name, Context.MODE_WORLD_READABLE);
+                    Utils.copyContents(fileInputStream, fileOutputStream);
+                } else {
+                    // Marshmallow removed MODE_WORLD_READABLE
+                    fileOutputStream = contextWrapper.openFileOutput(name, Context.MODE_PRIVATE);
+                    Utils.copyContents(fileInputStream, fileOutputStream);
+
+                    // Instead, we modify the file permissions using the Java file API
+                    if (!resultingFile.setReadable(true, false)) {
+                        throw new RuntimeException("Failed to set file to world readable");
+                    }
+                }
 
                 fileInputStream.close();
                 fileOutputStream.close();
 
                 new File(from).delete();
 
-                return new Response(HTTP_OK, "application/octet-stream", new File(contextWrapper.getFilesDir(), name).getAbsolutePath());
+                return new Response(HTTP_OK, "application/octet-stream", resultingFile.getAbsolutePath());
             } catch (Exception e) {
                 e.printStackTrace();
                 errorResult = FranklyResult.fromThrowable(e);

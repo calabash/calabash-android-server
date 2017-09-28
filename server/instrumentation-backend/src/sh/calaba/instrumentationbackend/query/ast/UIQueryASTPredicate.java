@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -165,7 +166,7 @@ public class UIQueryASTPredicate implements UIQueryAST {
 	}
 
 	private static UIQueryASTPredicateRelation parseRelation(CommonTree rel) {
-		String relText = rel.getText().toUpperCase();
+		String relText = rel.getText().toUpperCase(Locale.ENGLISH);
 		boolean caseSensitive = true;
 		final String CASE_INSENSITIVE_SPEC = "[C]";
 		if (relText.endsWith(CASE_INSENSITIVE_SPEC)) {

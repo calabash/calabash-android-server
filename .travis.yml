@@ -1,8 +1,12 @@
 language: android
 
+before_install:
+    - sudo apt-get -qq update
+    - sudo apt-get install ant
+
 script:
   - bin/ci/travis/run.sh
-  
+
 android:
   components:
     # The BuildTools version used by your project
@@ -20,7 +24,6 @@ notifications:
   email:
     recipients:
       - joshua.moody@xamarin.com
-      - chris.fuentes@xamarin.com
-      - tobias.roikjer@xamarin.com
+      - v-ownibl@microsoft.com
     on_success: change
     on_failure: always

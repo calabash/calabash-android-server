@@ -1,2 +1,3 @@
-# Build test-sserver
+#!/usr/bin/env bash
+
 bin/build.sh

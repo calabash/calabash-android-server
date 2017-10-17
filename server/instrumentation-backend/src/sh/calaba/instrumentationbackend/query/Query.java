@@ -3,6 +3,7 @@ package sh.calaba.instrumentationbackend.query;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.antlr.runtime.ANTLRStringStream;
@@ -158,7 +159,7 @@ public class Query {
 		case UIQueryParser.BEGINPRED:
 			return UIQueryASTPredicate.newPredicateFromAST(step);
 		case UIQueryParser.DIRECTION:
-			return UIQueryDirection.valueOf(step.getText().toUpperCase());			
+			return UIQueryDirection.valueOf(step.getText().toUpperCase(Locale.ENGLISH));
 			
 		default:
 			throw new InvalidUIQueryException("Unknown query: " + stepType

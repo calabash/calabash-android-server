@@ -53,6 +53,10 @@ public class ActivityLaunchedWaiter implements Runnable {
                     continue;
                 }
 
+                if (idleHandler == null) {
+                    continue;
+                }
+
                 if (idleHandler.getClass().isAssignableFrom(activityGoingClass)) {
                     // We have found the right idleHandler.
                     Object activityWaiter = getActivityWaiterOfActivityGoing(idleHandler);

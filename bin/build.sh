@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CALABASH_ANDROID_SERVER_VERSION=$(cat version)
+CALABASH_ANDROID_SERVER_VERSION=$(cat version | tr -d "\n")
 ANDROID_API_LEVEL=19
 
 function verify_tool {

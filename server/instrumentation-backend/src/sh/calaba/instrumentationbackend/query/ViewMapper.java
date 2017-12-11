@@ -77,8 +77,11 @@ public class ViewMapper {
 		return v.getClass().getName();
 	}
 
-    public static String getIdForView(View v) {
+  public static String getIdForView(View v) {
         int id = v.getId();
+        if(id == -1) {
+            return null;
+        }
         try {
             if(v.getResources() != null) {
                 return v.getResources().getResourceEntryName(id);
@@ -86,15 +89,11 @@ public class ViewMapper {
                 return InstrumentationBackend.instrumentation.getTargetContext().getResources().getResourceEntryName(id);
             }
         } catch (Resources.NotFoundException e) {
-            if(id == -1) {
-                return null;
-            }
             return "NoResourceEntry-" + Integer.toString(id);
         }
     }
 
-
-    public static String getTagForView(View v) {
+	public static String getTagForView(View v) {
 		if (v.getTag() instanceof String || v.getTag() instanceof Integer) {
 			return v.getTag().toString();
 		}

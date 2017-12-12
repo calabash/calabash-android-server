@@ -2,6 +2,7 @@
 *.apk
 *.ap_
 server/staging
+server/bin
 
 # Files for the Dalvik VM
 *.dex

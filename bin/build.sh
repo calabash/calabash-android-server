@@ -121,8 +121,10 @@ elif [ ! -d "${ANDROID_TOOLS_DIR}" ]; then
   exit 1
 fi
 
-CMD="ant clean package -debug -Dtools.dir=${ANDROID_TOOLS_DIR}\
-  -Dandroid.api.level=${ANDROID_API_LEVEL} -Dversion=${CALABASH_ANDROID_SERVER_VERSION}"
+CMD="ant clean package -debug \
+  -Dtools.dir=${ANDROID_TOOLS_DIR} \
+  -Dandroid.api.level=${ANDROID_API_LEVEL} \
+  -Dversion=${CALABASH_ANDROID_SERVER_VERSION}"
 
 shell "${CMD}"
 
@@ -133,6 +135,8 @@ banner "Done"
 info "Built server ${CALABASH_ANDROID_SERVER_VERSION} with command:"
 
 shell "${CMD}"
+
+info "using ${ANDROID_TOOLS_DIR}"
 
 info "android:targetSdkVersion=${SERVER_API_LEVEL}"
 info "   android:minSdkVersion=${SERVER_MIN_VERSION}"

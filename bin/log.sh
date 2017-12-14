@@ -8,17 +8,25 @@
 
 function info {
   if [ "${TERM}" = "dumb" ]; then
-    echo "INFO: $1"
+    echo -e "INFO: $1"
   else
-    echo "$(tput setaf 2)INFO: $1$(tput sgr0)"
+    echo -e "$(tput setaf 2)INFO: $1$(tput sgr0)"
+  fi
+}
+
+function shell {
+  if [ "${TERM}" = "dumb" ]; then
+    echo -e "SHELL: $1"
+  else
+    echo -e "$(tput setaf 6)SHELL: $1$(tput sgr0)"
   fi
 }
 
 function error {
   if [ "${TERM}" = "dumb" ]; then
-    echo "ERROR: $1"
+    echo -e "ERROR: $1"
   else
-    echo "$(tput setaf 1)ERROR: $1$(tput sgr0)"
+    echo -e "$(tput setaf 1)ERROR: $1$(tput sgr0)"
   fi
 }
 

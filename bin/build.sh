@@ -104,7 +104,7 @@ if [ -z ${ANDROID_TOOLS_DIR+x} ]; then
   fi
 
   if [ -d "${ANDROID_HOME}/build-tools" ]; then
-    first=$(ls -c1 "${ANDROID_HOME}/build-tools" | head -n 1)
+    first=$(ls -c1 "${ANDROID_HOME}/build-tools" | sort -r | head -n 1)
     export ANDROID_TOOLS_DIR="${ANDROID_HOME}/build-tools/${first}"
   elif [ -d "${ANDROID_HOME}/platform-tools" ]; then
     export ANDROID_TOOLS_DIR="${ANDROID_HOME}/platform-tools"

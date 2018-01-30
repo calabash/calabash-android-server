@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+set -e
+
 rm -rf "./tmp"
 mkdir "./tmp"
 

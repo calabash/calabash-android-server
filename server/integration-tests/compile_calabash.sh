@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+set -e
+
 mkdir -p "libs/build"
 cd ..
 cd "instrumentation-backend"

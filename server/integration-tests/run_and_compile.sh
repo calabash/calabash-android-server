@@ -8,4 +8,5 @@ set -e
 ./setup_unit_tests.sh
 
 cd calabash-test-suite
+bundle install
 bundle exec calabash-android run unittest.apk

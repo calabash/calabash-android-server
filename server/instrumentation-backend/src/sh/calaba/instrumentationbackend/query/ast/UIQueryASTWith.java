@@ -234,6 +234,10 @@ public class UIQueryASTWith implements UIQueryAST {
 			return false;
 		}
 		View view = (View) o;
+		if (view.getId() == -1)
+		{
+			return false;
+		}
 		String expected = (String) expectedValue;
 		String id = UIQueryUtils.getId(view);
 		return (id != null && id.equals(expected));

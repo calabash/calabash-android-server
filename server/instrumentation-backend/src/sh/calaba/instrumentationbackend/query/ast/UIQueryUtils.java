@@ -34,6 +34,7 @@ import sh.calaba.org.codehaus.jackson.type.TypeReference;
 
 import android.text.InputType;
 import android.util.Log;
+import android.util.LruCache;
 import android.view.View;
 import android.view.ViewParent;
 import android.widget.Button;
@@ -43,7 +44,8 @@ import android.widget.TextView;
 public class UIQueryUtils {
 
 	private static final Set<String> DOM_TEXT_TYPES;
-	private static Map<Class<?>, Map<String, Method>> properties = new HashMap<Class<?>, Map<String, Method>>();
+
+	private static final LruCache<Class<?>, Map<String, Method>> properties = new LruCache<Class<?>, Map<String, Method>>(1000);
 
 	private static class ChildMethods {
 		final Method childAt;
@@ -55,7 +57,31 @@ public class UIQueryUtils {
 		}
 	}
 
-	private static IdentityHashMap<Class<?>, ChildMethods> childMethodsForClass = new IdentityHashMap<Class<?>, ChildMethods>();
+	private static class ChildMethodsCache extends LruCache<Class<?>, ChildMethods> {
+
+		// LruCache does not support null, so use NO_VALUE to handle negative caching
+		static ChildMethods NO_VALUE = new ChildMethods(null, null);
+
+		ChildMethodsCache(int maxSize) {
+			super(maxSize);
+		}
+
+		@Override
+		protected ChildMethods create(Class<?> key) {
+			try {
+				Method getChildAt = key.getMethod("getChildAt", int.class);
+				getChildAt.setAccessible(true);
+				Method getChildCount = key.getMethod("getChildCount");
+				getChildCount.setAccessible(true);
+
+				return new ChildMethods(getChildAt, getChildCount);
+			} catch (NoSuchMethodException e) {
+				return NO_VALUE;
+			}
+		}
+	}
+
+	private static ChildMethodsCache childMethodsCache = new ChildMethodsCache(1000);
 
 	static {
 		DOM_TEXT_TYPES = new HashSet<String>();
@@ -64,33 +90,12 @@ public class UIQueryUtils {
 		DOM_TEXT_TYPES.add("");
 	}
 
-
-	private static ChildMethods getChildMethodsForClass(Class<?> clazz) {
-		if (childMethodsForClass.containsKey(clazz)) {
-			return childMethodsForClass.get(clazz);
-		} else {
-			try {
-				Method getChildAt = clazz.getMethod("getChildAt", int.class);
-				getChildAt.setAccessible(true);
-				Method getChildCount = clazz.getMethod("getChildCount");
-				getChildCount.setAccessible(true);
-
-				ChildMethods childMethods = new ChildMethods(getChildAt, getChildCount);
-				childMethodsForClass.put(clazz, childMethods);
-				return childMethods;
-			} catch (NoSuchMethodException e) {
-				childMethodsForClass.put(clazz, null);
-				return null;
-			}
-		}
-	}
-
 	public static List<View> subviews(Object o) {
 		Class<?> clazz = o.getClass();
-		ChildMethods childMethods = getChildMethodsForClass(clazz);
+		ChildMethods childMethods = childMethodsCache.get(clazz);
 
-		if(childMethods == null) {
-			return Collections.EMPTY_LIST;
+		if(childMethods == ChildMethodsCache.NO_VALUE) {
+			return Collections.emptyList();
 		} else {
 			try {
 				List<View> result = new ArrayList<View>();
@@ -104,9 +109,9 @@ public class UIQueryUtils {
 				}
 				return result;
 			} catch (IllegalAccessException e) {
-				return  Collections.EMPTY_LIST;
+				return  Collections.emptyList();
 			} catch (InvocationTargetException e) {
-				return Collections.EMPTY_LIST;
+				return Collections.emptyList();
 			}
 		}
 	}

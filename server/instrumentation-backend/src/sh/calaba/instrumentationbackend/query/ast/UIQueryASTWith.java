@@ -3,8 +3,8 @@ package sh.calaba.instrumentationbackend.query.ast;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -15,6 +15,7 @@ import org.antlr.runtime.tree.CommonTree;
 import sh.calaba.instrumentationbackend.actions.webview.CalabashChromeClient;
 import sh.calaba.instrumentationbackend.actions.webview.QueryHelper;
 
+import android.util.LruCache;
 import android.view.View;
 
 import sh.calaba.instrumentationbackend.query.WebContainer;
@@ -26,15 +27,29 @@ public class UIQueryASTWith implements UIQueryAST {
 	public final String propertyName;
 	public final Object value;
 
-	private static final ArrayList<String> textMethodNames;
-	private static final Map<Class<?>, List<Method>> textMethodsForClass = new HashMap<Class<?>, List<Method>>();
+	private static final List<String> textMethodNames = Arrays.asList("getText", "getHint");
 
-	static {
-		textMethodNames = new ArrayList<String>(2);
-		textMethodNames.add("getText");
-		textMethodNames.add("getHint");
+	private static class TextMethodsCache extends LruCache<Class<?>, List<Method>> {
+
+		TextMethodsCache(int maxSize) {
+			super(maxSize);
+		}
+
+		@Override
+		protected List<Method> create(Class<?> key) {
+			List<Method> textMethods = new ArrayList<Method>(2);
+			for (String methodName : textMethodNames) {
+				try {
+					textMethods.add(key.getMethod(methodName));
+				} catch (NoSuchMethodException e) {
+					continue;
+				}
+			}
+			return textMethods;
+		}
 	}
 
+	private static final TextMethodsCache textMethodsForClass = new TextMethodsCache(1000);
 
 	public UIQueryASTWith(String property, Object value) {
 		if (property == null) {
@@ -271,11 +286,10 @@ public class UIQueryASTWith implements UIQueryAST {
 			return true;
 		}
 
-		List<Method> methods = textMethodsFor(view.getClass());
+		List<Method> methods = textMethodsForClass.get(view.getClass());
 		for (Method	method : methods) {
 			try {
-				Object text = null;
-				text = method.invoke(view);
+				Object text = method.invoke(view);
 				if (text != null && text.toString().equals(expected)) {
 					return true;
 				}
@@ -286,24 +300,6 @@ public class UIQueryASTWith implements UIQueryAST {
 			}
 		}
 		return false;
-	}
-
-
-	private List<Method> textMethodsFor(Class<? extends View> clazz) {
-		if (textMethodsForClass.containsKey(clazz)) {
-			return textMethodsForClass.get(clazz);
-		} else {
-			List<Method> textMethods = new ArrayList<Method>(2);
-			for (String methodName : textMethodNames) {
-				try {
-					textMethods.add(clazz.getMethod(methodName));
-				} catch (NoSuchMethodException e) {
-					continue;
-				}
-			}
-			textMethodsForClass.put(clazz, textMethods);
-			return textMethods;
-		}
 	}
 
 	public static UIQueryASTWith fromAST(CommonTree step) {

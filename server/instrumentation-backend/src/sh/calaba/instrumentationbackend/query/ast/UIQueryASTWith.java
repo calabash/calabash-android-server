@@ -1,8 +1,10 @@
 package sh.calaba.instrumentationbackend.query.ast;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -23,6 +25,16 @@ import sh.calaba.instrumentationbackend.query.ui.UIObjectWebResult;
 public class UIQueryASTWith implements UIQueryAST {
 	public final String propertyName;
 	public final Object value;
+
+	private static final ArrayList<String> textMethodNames;
+	private static final Map<Class<?>, List<Method>> textMethodsForClass = new HashMap<Class<?>, List<Method>>();
+
+	static {
+		textMethodNames = new ArrayList<String>(2);
+		textMethodNames.add("getText");
+		textMethodNames.add("getHint");
+	}
+
 
 	public UIQueryASTWith(String property, Object value) {
 		if (property == null) {
@@ -259,23 +271,39 @@ public class UIQueryASTWith implements UIQueryAST {
 			return true;
 		}
 
-		ArrayList<String> getTextMethods = new ArrayList<String>();
-		getTextMethods.add("getText");
-		getTextMethods.add("getHint");
-
-		for (String methodName : getTextMethods) {
+		List<Method> methods = textMethodsFor(view.getClass());
+		for (Method	method : methods) {
 			try {
-				Method getTextM = view.getClass().getMethod(methodName);
-				Object text = getTextM.invoke(view);
+				Object text = null;
+				text = method.invoke(view);
 				if (text != null && text.toString().equals(expected)) {
 					return true;
 				}
-			} catch (Exception e) {
+			} catch (IllegalAccessException e) {
+				continue;
+			} catch (InvocationTargetException e) {
 				continue;
 			}
 		}
-
 		return false;
+	}
+
+
+	private List<Method> textMethodsFor(Class<? extends View> clazz) {
+		if (textMethodsForClass.containsKey(clazz)) {
+			return textMethodsForClass.get(clazz);
+		} else {
+			List<Method> textMethods = new ArrayList<Method>(2);
+			for (String methodName : textMethodNames) {
+				try {
+					textMethods.add(clazz.getMethod(methodName));
+				} catch (NoSuchMethodException e) {
+					continue;
+				}
+			}
+			textMethodsForClass.put(clazz, textMethods);
+			return textMethods;
+		}
 	}
 
 	public static UIQueryASTWith fromAST(CommonTree step) {

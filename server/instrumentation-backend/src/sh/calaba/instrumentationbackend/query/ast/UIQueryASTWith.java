@@ -1,7 +1,9 @@
 package sh.calaba.instrumentationbackend.query.ast;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,7 @@ import org.antlr.runtime.tree.CommonTree;
 import sh.calaba.instrumentationbackend.actions.webview.CalabashChromeClient;
 import sh.calaba.instrumentationbackend.actions.webview.QueryHelper;
 
+import android.util.LruCache;
 import android.view.View;
 
 import sh.calaba.instrumentationbackend.query.WebContainer;
@@ -23,6 +26,30 @@ import sh.calaba.instrumentationbackend.query.ui.UIObjectWebResult;
 public class UIQueryASTWith implements UIQueryAST {
 	public final String propertyName;
 	public final Object value;
+
+	private static final List<String> textMethodNames = Arrays.asList("getText", "getHint");
+
+	private static class TextMethodsCache extends LruCache<Class<?>, List<Method>> {
+
+		TextMethodsCache(int maxSize) {
+			super(maxSize);
+		}
+
+		@Override
+		protected List<Method> create(Class<?> key) {
+			List<Method> textMethods = new ArrayList<Method>(2);
+			for (String methodName : textMethodNames) {
+				try {
+					textMethods.add(key.getMethod(methodName));
+				} catch (NoSuchMethodException e) {
+					continue;
+				}
+			}
+			return textMethods;
+		}
+	}
+
+	private static final TextMethodsCache textMethodsForClass = new TextMethodsCache(1000);
 
 	public UIQueryASTWith(String property, Object value) {
 		if (property == null) {
@@ -263,22 +290,19 @@ public class UIQueryASTWith implements UIQueryAST {
 			return true;
 		}
 
-		ArrayList<String> getTextMethods = new ArrayList<String>();
-		getTextMethods.add("getText");
-		getTextMethods.add("getHint");
-
-		for (String methodName : getTextMethods) {
+		List<Method> methods = textMethodsForClass.get(view.getClass());
+		for (Method	method : methods) {
 			try {
-				Method getTextM = view.getClass().getMethod(methodName);
-				Object text = getTextM.invoke(view);
+				Object text = method.invoke(view);
 				if (text != null && text.toString().equals(expected)) {
 					return true;
 				}
-			} catch (Exception e) {
+			} catch (IllegalAccessException e) {
+				continue;
+			} catch (InvocationTargetException e) {
 				continue;
 			}
 		}
-
 		return false;
 	}
 

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,7 @@ import java.util.Set;
 import java.util.concurrent.*;
 
 import android.app.Activity;
-import android.view.Window;
+
 import org.antlr.runtime.tree.CommonTree;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
@@ -33,6 +34,7 @@ import sh.calaba.org.codehaus.jackson.type.TypeReference;
 
 import android.text.InputType;
 import android.util.Log;
+import android.util.LruCache;
 import android.view.View;
 import android.view.ViewParent;
 import android.widget.Button;
@@ -42,6 +44,45 @@ import android.widget.TextView;
 public class UIQueryUtils {
 
 	private static final Set<String> DOM_TEXT_TYPES;
+
+	private static final LruCache<Class<?>, Map<String, Method>> properties = new LruCache<Class<?>, Map<String, Method>>(1000);
+
+	private static class ChildMethods {
+		final Method childAt;
+		final Method childCount;
+
+		private ChildMethods(Method childAt, Method childCount) {
+			this.childAt = childAt;
+			this.childCount = childCount;
+		}
+	}
+
+	private static class ChildMethodsCache extends LruCache<Class<?>, ChildMethods> {
+
+		// LruCache does not support null, so use NO_VALUE to handle negative caching
+		static ChildMethods NO_VALUE = new ChildMethods(null, null);
+
+		ChildMethodsCache(int maxSize) {
+			super(maxSize);
+		}
+
+		@Override
+		protected ChildMethods create(Class<?> key) {
+			try {
+				Method getChildAt = key.getMethod("getChildAt", int.class);
+				getChildAt.setAccessible(true);
+				Method getChildCount = key.getMethod("getChildCount");
+				getChildCount.setAccessible(true);
+
+				return new ChildMethods(getChildAt, getChildCount);
+			} catch (NoSuchMethodException e) {
+				return NO_VALUE;
+			}
+		}
+	}
+
+	private static ChildMethodsCache childMethodsCache = new ChildMethodsCache(1000);
+
 	static {
 		DOM_TEXT_TYPES = new HashSet<String>();
 		DOM_TEXT_TYPES.add("email");
@@ -50,33 +91,29 @@ public class UIQueryUtils {
 	}
 
 	public static List<View> subviews(Object o) {
-		try {
-			Method getChild = o.getClass().getMethod("getChildAt", int.class);
-			getChild.setAccessible(true);
-			Method getChildCount = o.getClass().getMethod("getChildCount");
-			getChildCount.setAccessible(true);
-			List<View> result = new ArrayList<View>();
-			int childCount = (Integer) getChildCount.invoke(o);
+		Class<?> clazz = o.getClass();
+		ChildMethods childMethods = childMethodsCache.get(clazz);
 
-			for (int i = 0; i < childCount; i++) {
-                Object child = getChild.invoke(o, i);
+		if(childMethods == ChildMethodsCache.NO_VALUE) {
+			return Collections.emptyList();
+		} else {
+			try {
+				List<View> result = new ArrayList<View>();
+				int childCount = (Integer) childMethods.childCount.invoke(o);
+				for (int i = 0; i < childCount; i++) {
+					Object child = childMethods.childAt.invoke(o, i);
 
-                if (child instanceof View) {
-                    result.add((View)getChild.invoke(o, i));
-                }
+					if (child instanceof View) {
+						result.add((View) child);
+					}
+				}
+				return result;
+			} catch (IllegalAccessException e) {
+				return  Collections.emptyList();
+			} catch (InvocationTargetException e) {
+				return Collections.emptyList();
 			}
-
-			return result;
-		} catch (NoSuchMethodException e) {
-			return new ArrayList<View>(0);
-		} catch (IllegalArgumentException e) {
-            return new ArrayList<View>(0);
-		} catch (IllegalAccessException e) {
-            return new ArrayList<View>(0);
-		} catch (InvocationTargetException e) {
-            return new ArrayList<View>(0);
 		}
-
 	}
 
 	@SuppressWarnings({ "rawtypes" })
@@ -127,10 +164,32 @@ public class UIQueryUtils {
 		}
 	}
 
+
 	@SuppressWarnings({ "rawtypes" })
 	public static Method hasProperty(Object o, String propertyName) {
-
 		Class c = o.getClass();
+
+		final Map<String, Method> propForClass = properties.get(c);
+
+		if(propForClass == null) {
+			Method method = hasNonCachedProperty(c, propertyName);
+			Map firstEntry = new HashMap();
+			firstEntry.put(propertyName, method);
+			properties.put(c, firstEntry);
+			return method;
+		} else if (propForClass.containsKey(propertyName)) {
+			return propForClass.get(propertyName);
+		} else {
+			Method method = hasNonCachedProperty(c, propertyName);
+			propForClass.put(propertyName, method);
+			return method;
+		}
+	}
+
+
+	@SuppressWarnings({ "rawtypes" })
+	private  static Method hasNonCachedProperty(Class c, String propertyName) {
+
 		Method method = methodOrNull(c, propertyName);
 		if (method != null) {
 			return method;
@@ -141,13 +200,6 @@ public class UIQueryUtils {
 		}
 		method = methodOrNull(c, "is" + captitalize(propertyName));
 		return method;
-
-		/*
-		 * for (Method m : methods) { String methodName = m.getName(); if
-		 * (methodName.equals(propertyName) ||
-		 * methodName.equals("is"+captitalize(propertyName)) ||
-		 * methodName.equals("get"+captitalize(propertyName))) { return m; } }
-		 */
 
 	}
 

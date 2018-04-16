@@ -55,11 +55,10 @@ function min_sdk {
 }
 
 function verify_tool {
-  command -v $1 > /dev/null
-  if [ $? -ne 0 ]; then
+  hash "${1}" 2>/dev/null || {
     echo "Error: Command '${1}' not found"
     exit 1
-  fi
+  }
 }
 
 banner "Inspecting Manifest Versions"

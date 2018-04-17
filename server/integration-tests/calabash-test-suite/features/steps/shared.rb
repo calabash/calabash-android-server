@@ -3,6 +3,7 @@ Then(/^I install the app$/) do
 end
 
 Then(/^I start the app$/) do
+  shutdown_test_server
   start_test_server_in_background
   backdoor('startTest')
 end

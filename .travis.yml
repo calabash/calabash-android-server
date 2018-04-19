@@ -9,7 +9,7 @@ before_install:
     - sudo apt-get install ant
 
 script:
-  - bin/ci/travis/run.sh
+  - bin/ci/travis.sh
 
 android:
   components:

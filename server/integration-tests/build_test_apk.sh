@@ -17,10 +17,10 @@ cd "jars"
 cp "../../../../libs/build/robotium-solo-4.3.1.jar" "1_robotium-solo-4.3.1.jar"
 cp "../../../../libs/build/maps.jar" "2_maps.jar"
 cp "../../../../libs/build/InstrumentationExposed.jar" "3_InstrumentationExposed.jar"
-JAVA_HOME=`/usr/libexec/java_home -v 1.8` $ANDROID_HOME/build-tools/26.0.2/dx --dex --output "4_Calabash.jar"  "../../../../libs/build/Calabash.jar"
-JAVA_HOME=`/usr/libexec/java_home -v 1.8` $ANDROID_HOME/build-tools/26.0.2/dx --dex --output "5_hamcrest-core-1.3.jar"  "../../../../libs/hamcrest-core-1.3.jar"
-JAVA_HOME=`/usr/libexec/java_home -v 1.8` $ANDROID_HOME/build-tools/26.0.2/dx --dex --output "6_junit-4.12.jar"  "../../../../libs/junit-4.12.jar"
-JAVA_HOME=`/usr/libexec/java_home -v 1.8` $ANDROID_HOME/build-tools/26.0.2/dx --dex --output "7_CalabashIntegrationTests.jar"  "../../../../out/CalabashIntegrationTests.jar"
+$ANDROID_HOME/build-tools/26.0.2/dx --dex --output "4_Calabash.jar"  "../../../../libs/build/Calabash.jar"
+$ANDROID_HOME/build-tools/26.0.2/dx --dex --output "5_hamcrest-core-1.3.jar"  "../../../../libs/hamcrest-core-1.3.jar"
+$ANDROID_HOME/build-tools/26.0.2/dx --dex --output "6_junit-4.12.jar"  "../../../../libs/junit-4.12.jar"
+$ANDROID_HOME/build-tools/26.0.2/dx --dex --output "7_CalabashIntegrationTests.jar"  "../../../../out/CalabashIntegrationTests.jar"
 cd ..
 cd ..
 zip unittest_new.apk -r .

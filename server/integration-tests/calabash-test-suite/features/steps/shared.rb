@@ -4,7 +4,7 @@ end
 
 Then(/^I start the app$/) do
   shutdown_test_server
-  start_test_server_in_background
+  start_test_server_in_background(:timeout => 600)
   backdoor('startTest')
 end
 

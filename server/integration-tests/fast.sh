@@ -2,6 +2,7 @@
 
 set -e
 
+. switch_java_version.sh
 ./compile_calabash.sh
 ./compile_tests.sh
 ./build_test_apk_fast.sh

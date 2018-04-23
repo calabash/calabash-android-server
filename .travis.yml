@@ -38,7 +38,7 @@ notifications:
   email:
     recipients:
       - josmoo@microsoft.com
-      - v-ownibl@microsoft.com
+      - owen.niblock@microsoft.com
       - v-anmits@microsoft.com
     on_success: change
     on_failure: always

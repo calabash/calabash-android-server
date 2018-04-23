@@ -10,5 +10,7 @@ set -e
 ./build_test_apk_fast.sh
 ./setup_unit_tests_fast.sh
 
-cd "calabash-test-suite-fast"
-bundle exec calabash-android run unittest.apk
+(
+  cd calabash-test-suite-fast
+  bundle exec calabash-android run unittest.apk
+)

@@ -27,6 +27,5 @@ proguard/
 # Log Files
 *.log
 
-server/.idea/
-/.idea/
+.idea/
 *.iml

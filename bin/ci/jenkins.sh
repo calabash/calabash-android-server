@@ -2,5 +2,8 @@
 
 bin/build.sh
 bin/start_emulator.sh
-cd server/integration-tests
-./run_and_compile.sh
+
+(
+  cd server/integration-tests
+  ./run_and_compile.sh
+)

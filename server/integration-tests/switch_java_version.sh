@@ -1,7 +1,5 @@
 #! /usr/bin/env bash
 
-set -e
-
 if [ "$(uname -s)" == "Darwin" ]; then
     export JAVA_HOME=`/usr/libexec/java_home -v 1.8`
 elif [ "$(uname -s)" == "Linux" ]; then

@@ -1,3 +1,8 @@
+| master  | develop |
+|---------|---------|
+|[![Build Status](http://calabash-ci.xyz:8081/job/Calabash%20android%20server%20master/badge/icon)](http://calabash-ci.xyz:8081/job/Calabash%20android%20server%20master/) | [![Build Status](http://calabash-ci.xyz:8081/job/Calabash%20android%20server%20develop/badge/icon)](http://calabash-ci.xyz:8081/job/Calabash%20android%20server%20develop/)
+|[![Build Status](https://travis-ci.org/calabash/calabash-android-server.svg?branch=master)](https://travis-ci.org/calabash/calabash-android-server) | [![Build Status](https://travis-ci.org/calabash/calabash-android-server.svg?branch=develop)](https://travis-ci.org/calabash/calabash-android-server)
+
 # calabash-android-server
 The test-server for Calabash-Android
 

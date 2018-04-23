@@ -2,7 +2,9 @@
 
 set -e
 
+# Switch Java to v8 in runtime from current context
 . switch_java_version.sh
+
 ./compile_calabash.sh
 ./compile_tests.sh
 ./build_test_apk_fast.sh

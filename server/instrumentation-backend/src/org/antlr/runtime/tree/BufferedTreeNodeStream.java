@@ -58,7 +58,7 @@ public class BufferedTreeNodeStream implements TreeNodeStream {
 	public static final int DEFAULT_INITIAL_BUFFER_SIZE = 100;
 	public static final int INITIAL_CALL_STACK_SIZE = 10;
 
-	private static final String TAG = "ANTLR:TREE:BufferedTreeNodeStream";
+	private static final String TAG = "ANTLR:TREE:BuffStream";
 
     protected class StreamIterator implements Iterator {
 		int i = 0;

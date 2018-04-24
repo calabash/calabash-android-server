@@ -46,12 +46,6 @@ public class FakeGPSLocation implements Action {
             return Result.failedResult(e.getMessage());
         }
 
-        if (Build.VERSION.SDK_INT <= 22) {
-            if (context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_MOCK_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return Result.failedResult("The application does not have access mock location permission. Add the permission '" + Manifest.permission.ACCESS_MOCK_LOCATION + "' to your manifest");
-            }
-        }
-
         if (t != null) {
             t.finish();
             t.interrupt();

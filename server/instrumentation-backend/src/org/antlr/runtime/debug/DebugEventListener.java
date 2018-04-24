@@ -300,8 +300,6 @@ public interface DebugEventListener {
 	 * 
 	 *  If you are receiving this event over a socket via
 	 *  RemoteDebugEventSocketListener then only IDs are set.
-	 *
-	 *  @see org.antlr.runtime.tree.TreeAdaptor.becomeRoot()
 	 */
 	public void becomeRoot(Object newRoot, Object oldRoot);
 
@@ -309,8 +307,6 @@ public interface DebugEventListener {
 	 *
 	 *  If you are receiving this event over a socket via
 	 *  RemoteDebugEventSocketListener then only IDs are set.
-	 * 
-	 *  @see org.antlr.runtime.tree.TreeAdaptor.addChild()
 	 */
 	public void addChild(Object root, Object child);
 

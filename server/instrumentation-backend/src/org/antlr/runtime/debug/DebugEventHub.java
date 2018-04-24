@@ -36,6 +36,8 @@ import java.util.ArrayList;
 /** Broadcast debug events to multiple listeners.  Lets you debug and still
  *  use the event mechanism to build parse trees etc...  Not thread-safe.
  *  Don't add events in one thread while parser fires events in another.
+ * 
+ *  @see also DebugEventRepeater
  */
 public class DebugEventHub implements DebugEventListener {
 	protected List listeners = new ArrayList();

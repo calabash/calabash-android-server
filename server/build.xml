@@ -71,11 +71,11 @@
       <copy todir="${staging.dir}/assets">
         <fileset dir="${calabashjs.dir}"/>
       </copy>
-      <replace file="${staging.dir}/src/sh/calaba/instrumentationbackend/actions/version/Version.java" token="####VERSION####" value="${version}" failOnNoReplacements="true" />
+      <replace file="${staging.dir}/src/main/java/sh/calaba/instrumentationbackend/actions/version/Version.java" token="####VERSION####" value="${version}" failOnNoReplacements="true" />
 
       <property name="src.dir.absolute" location="${staging.dir}/src" />
       <pathconvert property="testserver.actions" pathsep="${line.separator}" dirsep=".">
-        <fileset dir="${src.dir.absolute}" includes="sh/calaba/instrumentationbackend/actions/**/*.java" />
+        <fileset dir="${src.dir.absolute}" includes="main/java/sh/calaba/instrumentationbackend/actions/**/*.java" />
         <globmapper from="${src.dir.absolute}/*.java" to="*" handledirsep="true" />
       </pathconvert>
       <echo file="${staging.dir}/assets/actions" message="${testserver.actions}${line.separator}" />

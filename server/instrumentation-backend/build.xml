@@ -26,8 +26,8 @@
             classpathref="classpath"
             includeantruntime="false"
 			destdir="${build.dir}" >
-			    <include name="sh/calaba/instrumentationbackend/query/**/*.java"/>
-			    <exclude name="sh/calaba/instrumentationbackend/query/*.java"/> 
+			    <include name="main/java/sh/calaba/instrumentationbackend/query/**/*.java"/>
+			    <exclude name="main/java/sh/calaba/instrumentationbackend/query/*.java"/> 
 			  </javac>
     </target>
 
@@ -39,7 +39,7 @@
             classpathref="classpath"
             includeantruntime="false"
 			destdir="${build.dir}" >
-			    <include name="sh/calaba/instrumentationbackend/query/**/*.java"/>
+			    <include name="main/java/sh/calaba/instrumentationbackend/query/**/*.java"/>
 			     
 			  </javac>
         <junit showoutput="true" >

@@ -7,7 +7,7 @@ source bin/log.sh
 CALABASH_ANDROID_SERVER_VERSION=$(cat version | tr -d "\n")
 
 SERVER_MANIFEST="server/AndroidManifest.xml"
-BACKEND_MANIFEST="server/instrumentation-backend/AndroidManifest.xml"
+BACKEND_MANIFEST="server/instrumentation-backend/src/main/AndroidManifest.xml"
 
 
 # $1 is a path to an AndroidManifest.xml

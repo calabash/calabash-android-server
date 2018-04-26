@@ -1,7 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'application'
-
-mainClassName = 'sh.calaba.instrumentationbackend'
 
 def env_ANDROID_HOME = System.getenv('ANDROID_HOME')
 
@@ -21,15 +18,7 @@ def test_app_unsigned = "${bin_dir}/Test_unsigned.apk"
 def actions_dir = "${staging_dir}/src/main/java/sh/calaba/instrumentationbackend/actions"
 def version_file = "${actions_dir}/version/Version.java"
 
-def android_lib = "${env_ANDROID_HOME}/platforms/android-${android_api_level}/android.jar"
-
-sourceSets {
-    generated {
-        java {
-            srcDir "$projectDir/src"
-        }
-    }
-}
+def android_lib = "${env_ANDROID_HOME}/platforms/android-${android_api_level}"
 
 repositories {
     jcenter()
@@ -106,7 +95,6 @@ task pathToActionList {
                  * Transform action path, e.g. change .../src/main/java/sh/calaba/instrumentationbackend/actions/Action.java
                  * to main.java.sh.calaba.instrumentationbackend.actions.Action
                  */
-
                 actionPath = actionPath.replaceAll(regex, "main.java.sh.calaba.instrumentationbackend.actions.");
                 actionPath = actionPath.replaceAll(".java", "");
                 actionPath = actionPath.replaceAll("/", ".");
@@ -121,14 +109,17 @@ task pathToActionList {
 }
 
 compileJava {
-    options.compilerArgs << "-s"
-    options.compilerArgs << "${bin_dir}"
+    options.verbose = true
+    options.sourcepath = fileTree("${staging_dir}/src")
+    options.compilerArgs.addAll(["-d", "${bin_dir}"])
+    options.compilerArgs.addAll(["-source", "1.8"])
+    options.compilerArgs.addAll(["-target", "1.8"])
 }
 
 task aapt(type: Exec) {
     workingDir "${tools_dir}"
     executable "aapt"
-    args "package", "-f", "-F", "${test_app_aapt}", "-I", "${android_lib}", "-A", "${staging_dir}/assets", "-m", "-J", "gen"
+    args "package", "-f", "-F", "${test_app_aapt}", "-I", "${android_lib}/android.jar", "-A", "${staging_dir}/assets", "-m", "-J", "gen"
 }
 
 task copyLib(type: Copy) {
@@ -151,7 +142,6 @@ task createApk(type: Exec) {
  * Task order: preparePackage -> prepareStage -> prepareTestServer -> prepareAssets ->
  * replaceVersion -> pathToActionList -> compileJava -> aapt -> copyLib -> dex -> createApk.
  */
-
 preparePackage.dependsOn createApk
 createApk.dependsOn dex
 dex.dependsOn copyLib
@@ -163,19 +153,7 @@ replaceVersion.dependsOn prepareAssets
 prepareAssets.dependsOn prepareTestServer
 prepareTestServer.dependsOn prepareStage
 
-/*jar {
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-
-    manifest {
-        attributes 'Main-Class': 'sh.calaba.instrumentationbackend'
-    }
-}*/
-
-/*tasks.withType(Jar) {
-    destinationDir = file("$rootDir")
-}*/
-
 dependencies {
-    compile fileTree(dir: 'lib', include: '*.jar')
-    implementation 'com.google.android.gms:play-services-maps:12.0.1'
+    compile fileTree(dir: "${staging_dir}/libs", include: '*.jar')
+    compile fileTree(dir: "${android_lib}", include: '*.jar')
 }

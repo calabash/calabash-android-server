@@ -92,6 +92,7 @@ banner "Expecting ANDROID env variables"
 
 cd server
 
+# TODO: gradle
 verify_tool ant
 
 if [ -z ${ANDROID_TOOLS_DIR+x} ]; then
@@ -120,6 +121,7 @@ elif [ ! -d "${ANDROID_TOOLS_DIR}" ]; then
   exit 1
 fi
 
+# TODO: gradle preparePackage ... -Dorg.gradle.java.home=/JDK_PATH
 CMD="ant clean package -debug \
   -Dtools.dir=${ANDROID_TOOLS_DIR} \
   -Dandroid.api.level=${ANDROID_API_LEVEL} \

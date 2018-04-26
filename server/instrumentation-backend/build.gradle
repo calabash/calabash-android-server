@@ -1,12 +1,11 @@
 apply plugin: 'java'
 apply plugin: 'application'
 
-// gradle build -Dorg.gradle.java.home=/JDK_PATH
-
 mainClassName = 'sh.calaba.instrumentationbackend'
 
 def env_ANDROID_HOME = System.getenv('ANDROID_HOME')
 
+// TODO: remove hardcoded data after tests
 def android_api_level = "22"
 def tools_dir = "${env_ANDROID_HOME}/build-tools/27.0.3"
 def version = "0.9.2"
@@ -39,6 +38,7 @@ repositories {
 
 task customClean(type: Delete) {
     delete "${staging_dir}"
+    delete "${bin_dir}"
 }
 clean.dependsOn customClean
 
@@ -75,7 +75,6 @@ task prepareAssets(type: Copy) {
     into "${staging_dir}/assets"
 }
 
-// TODO: version replacement
 task replaceVersion(type: Copy) {
     from "${version_file}"
     into "${actions_dir}"
@@ -86,24 +85,34 @@ task replaceVersion(type: Copy) {
     }
 }
 
-task pathconvert {
+task pathToActionList {
     doLast {
-        FileTree files = fileTree("${staging_dir}/src").matching {
-            include 'main/java/sh/calaba/instrumentationbackend/actions/**/*.java'
+        FileTree files = fileTree("${actions_dir}").matching {
+            include '/**/*.java'
         }
-
-        //def args = [files.asPath]
-        //println(files)
 
         File outputFile = new File("${staging_dir}/assets", "actions");
         File outputDirectory = outputFile.getParentFile();
         outputFile.createNewFile();
 
-        FileWriter writer = new FileWriter(outputFile, true)
+        String regex = ".+?(main\\/java\\/sh\\/calaba\\/instrumentationbackend\\/actions\\/)";
+        FileWriter writer = new FileWriter(outputFile)
 
         try {
-            for(def file : files) {
-                writer.write(file.getPath() + "\n");
+            for(File file : files) {
+                String actionPath = file.getPath();
+
+                /* 
+                 * Transform action path, e.g. change .../src/main/java/sh/calaba/instrumentationbackend/actions/Action.java
+                 * to main.java.sh.calaba.instrumentationbackend.actions.Action
+                 */
+
+                actionPath = actionPath.replaceAll(regex, "main.java.sh.calaba.instrumentationbackend.actions.");
+                actionPath = actionPath.replaceAll(".java", "");
+                actionPath = actionPath.replaceAll("/", ".");
+
+                println(actionPath)
+                writer.write(actionPath + "\n");
             }
         } finally {
             writer.close()
@@ -140,7 +149,7 @@ task createApk(type: Exec) {
 
 /*
  * Task order: preparePackage -> prepareStage -> prepareTestServer -> prepareAssets ->
- * replaceVersion -> pathconvert -> compileJava -> aapt -> copyLib -> dex -> createApk.
+ * replaceVersion -> pathToActionList -> compileJava -> aapt -> copyLib -> dex -> createApk.
  */
 
 preparePackage.dependsOn createApk
@@ -148,8 +157,8 @@ createApk.dependsOn dex
 dex.dependsOn copyLib
 copyLib.dependsOn aapt
 aapt.dependsOn compileJava
-compileJava.dependsOn pathconvert
-pathconvert.dependsOn replaceVersion
+compileJava.dependsOn pathToActionList
+pathToActionList.dependsOn replaceVersion
 replaceVersion.dependsOn prepareAssets
 prepareAssets.dependsOn prepareTestServer
 prepareTestServer.dependsOn prepareStage

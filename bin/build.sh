@@ -90,10 +90,9 @@ info "   android:minSdkVersion=${SERVER_MIN_VERSION}"
 
 banner "Expecting ANDROID env variables"
 
-cd server
+cd server/instrumentation-backend
 
-# TODO: gradle
-verify_tool ant
+verify_tool gradle
 
 if [ -z ${ANDROID_TOOLS_DIR+x} ]; then
   if [ -z ${ANDROID_HOME+x} ]; then
@@ -121,11 +120,10 @@ elif [ ! -d "${ANDROID_TOOLS_DIR}" ]; then
   exit 1
 fi
 
-# TODO: gradle preparePackage ... -Dorg.gradle.java.home=/JDK_PATH
-CMD="ant clean package -debug \
-  -Dtools.dir=${ANDROID_TOOLS_DIR} \
-  -Dandroid.api.level=${ANDROID_API_LEVEL} \
-  -Dversion=${CALABASH_ANDROID_SERVER_VERSION}"
+CMD="gradle clean preparePackage \
+  -Ptools_dir=${ANDROID_TOOLS_DIR} \
+  -Pandroid_api_level=${ANDROID_API_LEVEL} \
+  -Pversion=${CALABASH_ANDROID_SERVER_VERSION}"
 
 shell "${CMD}"
 

@@ -2,11 +2,6 @@ apply plugin: 'java'
 
 def env_ANDROID_HOME = System.getenv('ANDROID_HOME')
 
-// TODO: remove hardcoded data after tests
-def android_api_level = "22"
-def tools_dir = "${env_ANDROID_HOME}/build-tools/27.0.3"
-def version = "0.9.2"
-
 def root_folder = "../instrumentation-backend"
 def staging_dir = "../staging"
 def bin_dir = "../bin"
@@ -31,20 +26,28 @@ task customClean(type: Delete) {
 }
 clean.dependsOn customClean
 
-task preparePackage(type: JavaExec) {
-    /*if (!project.hasProperty('tools_dir')) {
-        throw new GradleException('"tools_dir" parameter should be provided!')
+task preparePackage {
+    doLast {
+        println("Build finished.")
     }
+}
 
-    if (!project.hasProperty('android_api_level')) {
-        throw new GradleException('"android_api_level" parameter should be provided!')
+task verifyInputParameters {
+    doLast {
+        if (!project.hasProperty('tools_dir')) {
+            throw new GradleException('"tools_dir" parameter should be provided!')
+        }
+
+        if (!project.hasProperty('android_api_level')) {
+            throw new GradleException('"android_api_level" parameter should be provided!')
+        }
+
+        if (!project.hasProperty('version')) {
+            throw new GradleException('"version" parameter should be provided!')
+        }
+
+        println("Build started...")
     }
-
-    if (!project.hasProperty('version')) {
-        throw new GradleException('"version" parameter should be provided!')
-    }*/
-
-    println("Build started...")
 }
 
 task prepareStage {
@@ -117,32 +120,28 @@ compileJava {
 }
 
 task aapt(type: Exec) {
-    workingDir "${tools_dir}"
-    executable "aapt"
-    args "package", "-f", "-F", "${test_app_aapt}", "-I", "${android_lib}/android.jar", "-A", "${staging_dir}/assets", "-m", "-J", "gen"
+    commandLine "${tools_dir}/aapt", "package", "-f", "-F", "${test_app_aapt}", "-I", "${android_lib}/android.jar", "-A", "${staging_dir}/assets", "-m", "-J", "gen"
 }
 
 task copyLib(type: Copy) {
-    from "instrumentation-backend/libs"
+    from "libs"
     into "${bin_dir}/libs"
 }
 
 task dex(type: Exec) {
-    workingDir "${tools_dir}"
-    executable "dx"
-    args "--dex", "--output", "${dex_file}", "${bin_dir}"
+    commandLine "${tools_dir}/dx", "--dex", "--output", "${dex_file}", "${bin_dir}"
 }
 
 task createApk(type: Exec) {
-    executable "java"
-    args "-jar", "${staging_dir}/CalabashApkBuilder.jar", "${test_app_unsigned}", "${test_app_aapt}", "${dex_file}"
+    commandLine "java", "-jar", "${staging_dir}/CalabashApkBuilder.jar", "${test_app_unsigned}", "${test_app_aapt}", "${dex_file}"
 }
 
 /*
- * Task order: preparePackage -> prepareStage -> prepareTestServer -> prepareAssets ->
+ * Task order: verifyInputParameters -> prepareStage -> prepareTestServer -> prepareAssets ->
  * replaceVersion -> pathToActionList -> compileJava -> aapt -> copyLib -> dex -> createApk.
  */
-preparePackage.dependsOn createApk
+preparePackage.dependsOn verifyInputParameters
+verifyInputParameters.dependsOn createApk
 createApk.dependsOn dex
 dex.dependsOn copyLib
 copyLib.dependsOn aapt

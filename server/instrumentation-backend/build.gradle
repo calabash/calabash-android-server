@@ -17,7 +17,6 @@ def android_lib = "${env_ANDROID_HOME}/platforms/android-${android_api_level}"
 
 repositories {
     jcenter()
-    google()
 }
 
 task customClean(type: Delete) {

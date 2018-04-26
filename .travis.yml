@@ -4,10 +4,6 @@ sudo: required
 dist: trusty
 group: edge
 
-before_install:
-    - sudo apt-get -qq update
-    - sudo apt-get install ant
-
 script:
   - bin/ci/travis.sh
 

@@ -97,7 +97,7 @@ task pathToActionList {
                  * Transform action path, e.g. change .../src/main/java/sh/calaba/instrumentationbackend/actions/Action.java
                  * to main.java.sh.calaba.instrumentationbackend.actions.Action
                  */
-                actionPath = actionPath.replaceAll(regex, "main.java.sh.calaba.instrumentationbackend.actions.");
+                actionPath = actionPath.replaceAll(regex, "sh.calaba.instrumentationbackend.actions.");
                 actionPath = actionPath.replaceAll(".java", "");
                 actionPath = actionPath.replaceAll("/", ".");
 
@@ -111,6 +111,7 @@ task pathToActionList {
 }
 
 compileJava {
+    options.debug = true
     options.verbose = true
     options.sourcepath = fileTree("${staging_dir}/src")
     options.compilerArgs.addAll(["-d", "${bin_dir}"])

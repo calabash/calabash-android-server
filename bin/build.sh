@@ -120,7 +120,7 @@ elif [ ! -d "${ANDROID_TOOLS_DIR}" ]; then
   exit 1
 fi
 
-CMD="gradle clean preparePackage \
+CMD="./gradlew clean preparePackage \
   -Ptools_dir=${ANDROID_TOOLS_DIR} \
   -Pandroid_api_level=${ANDROID_API_LEVEL} \
   -Pversion=${CALABASH_ANDROID_SERVER_VERSION}"

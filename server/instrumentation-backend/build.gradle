@@ -79,7 +79,7 @@ task replaceVersion(type: Copy) {
 task pathToActionList {
     doLast {
         FileTree files = fileTree("${actions_dir}").matching {
-            include '/**/*.java'
+            include '**/*.java'
         }
 
         File outputFile = new File("${staging_dir}/assets", "actions");

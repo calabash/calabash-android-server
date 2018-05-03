@@ -37,7 +37,7 @@ public class DebugTreeParser extends TreeParser {
 	/** Who to notify when events in the parser occur. */
 	protected DebugEventListener dbg = null;
 
-	private static final String TAG = "ANTLR:DEBUG:DebugTreeParser";
+	private static final String TAG = "ANTLR:DEBUG:TreeParser";
 
 	/** Used to differentiate between fixed lookahead and cyclic DFA decisions
 	 *  while profiling.

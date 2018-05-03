@@ -1,39 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="#testPackage#"
-      android:versionCode="3"
-      android:versionName="0.3.0">
+    package="#testPackage#"
+    android:versionCode="4"
+    android:versionName="0.4.0">
+
     <application android:label="instrumentation_backend"
         android:largeHeap="true">
 
+      <uses-sdk android:minSdkVersion="8"
+          android:targetSdkVersion="22"/>
+
       <uses-library android:name="android.test.runner" />
       <uses-library android:name="com.google.android.maps" android:required="false" />
+
       <activity
-              android:name="sh.calaba.instrumentationbackend.WakeUp"
-              android:label="WakeUp"
-              android:exported="true"
-              android:launchMode="singleInstance"
-              android:finishOnTaskLaunch="true"
-              android:stateNotNeeded="true"
-              android:noHistory="false"
-              android:excludeFromRecents="true"/>
-        <activity
-            android:name="sh.calaba.instrumentationbackend.StatusReporterActivity"
-            android:label="StatusReporterActivity"
-            android:exported="true"
-            android:finishOnTaskLaunch="true"
-            android:stateNotNeeded="true"
-            android:noHistory="true"
-            android:excludeFromRecents="true"/>
-        <activity
-            android:name="sh.calaba.instrumentationbackend.ResumeTaskActivity"
-            android:label="ResumeTaskActivity"
-            android:exported="true"
-            android:finishOnTaskLaunch="true"
-            android:stateNotNeeded="true"
-            android:noHistory="true"
-            android:excludeFromRecents="true"/>
-    <activity
+        android:name="sh.calaba.instrumentationbackend.WakeUp"
+        android:label="WakeUp"
+        android:exported="true"
+        android:launchMode="singleInstance"
+        android:finishOnTaskLaunch="true"
+        android:stateNotNeeded="true"
+        android:noHistory="false"
+        android:excludeFromRecents="true"/>
+      <activity
+        android:name="sh.calaba.instrumentationbackend.StatusReporterActivity"
+        android:label="StatusReporterActivity"
+        android:exported="true"
+        android:finishOnTaskLaunch="true"
+        android:stateNotNeeded="true"
+        android:noHistory="true"
+        android:excludeFromRecents="true"/>
+      <activity
+        android:name="sh.calaba.instrumentationbackend.ResumeTaskActivity"
+        android:label="ResumeTaskActivity"
+        android:exported="true"
+        android:finishOnTaskLaunch="true"
+        android:stateNotNeeded="true"
+        android:noHistory="true"
+        android:excludeFromRecents="true"/>
+      <activity
         android:name="sh.calaba.instrumentationbackend.FakeCameraActivity"
         android:label="FakeCameraActivity"
         android:exported="true"
@@ -42,7 +47,7 @@
         android:noHistory="true"
         android:excludeFromRecents="true"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
-    <activity
+      <activity
         android:name="sh.calaba.instrumentationbackend.FakePickerActivity"
         android:label="FakePickerActivity"
         android:exported="true"
@@ -50,9 +55,9 @@
         android:stateNotNeeded="true"
         android:noHistory="true"
         android:excludeFromRecents="true"/>
+
     </application>
-    <uses-sdk android:minSdkVersion="8"
-        android:targetSdkVersion="22"/>
+
     <instrumentation android:targetPackage="#targetPackage#" android:name="sh.calaba.instrumentationbackend.CalabashInstrumentationTestRunner" />
     <instrumentation android:targetPackage="#targetPackage#" android:name="sh.calaba.instrumentationbackend.ClearAppData" />
     <instrumentation android:targetPackage="#targetPackage#" android:name="sh.calaba.instrumentationbackend.ClearAppData2" />
@@ -68,5 +73,8 @@
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
 
 </manifest>

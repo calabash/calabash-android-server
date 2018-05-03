@@ -34,7 +34,7 @@ import org.antlr.runtime.tree.TreeAdaptor;
 public class TraceDebugEventListener extends BlankDebugEventListener {
 	TreeAdaptor adaptor;
 
-	private static final String TAG = "ANTLR:DEBUG:TraceDebugEventListener";
+	private static final String TAG = "ANTLR:DEBUG:TrcListener";
 
 	public TraceDebugEventListener(TreeAdaptor adaptor) {
 		this.adaptor = adaptor;

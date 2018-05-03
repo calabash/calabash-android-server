@@ -7,7 +7,7 @@ source bin/log.sh
 CALABASH_ANDROID_SERVER_VERSION=$(cat version | tr -d "\n")
 
 SERVER_MANIFEST="server/AndroidManifest.xml"
-BACKEND_MANIFEST="server/instrumentation-backend/AndroidManifest.xml"
+BACKEND_MANIFEST="server/instrumentation-backend/src/main/AndroidManifest.xml"
 
 
 # $1 is a path to an AndroidManifest.xml
@@ -90,9 +90,9 @@ info "   android:minSdkVersion=${SERVER_MIN_VERSION}"
 
 banner "Expecting ANDROID env variables"
 
-cd server
+cd server/instrumentation-backend
 
-verify_tool ant
+verify_tool gradle
 
 if [ -z ${ANDROID_TOOLS_DIR+x} ]; then
   if [ -z ${ANDROID_HOME+x} ]; then
@@ -120,10 +120,10 @@ elif [ ! -d "${ANDROID_TOOLS_DIR}" ]; then
   exit 1
 fi
 
-CMD="ant clean package -debug \
-  -Dtools.dir=${ANDROID_TOOLS_DIR} \
-  -Dandroid.api.level=${ANDROID_API_LEVEL} \
-  -Dversion=${CALABASH_ANDROID_SERVER_VERSION}"
+CMD="./gradlew clean preparePackage \
+  -Ptools_dir=${ANDROID_TOOLS_DIR} \
+  -Pandroid_api_level=${ANDROID_API_LEVEL} \
+  -Pversion=${CALABASH_ANDROID_SERVER_VERSION}"
 
 shell "${CMD}"
 

@@ -1,0 +1,158 @@
+apply plugin: 'java'
+
+def env_ANDROID_HOME = System.getenv('ANDROID_HOME')
+
+def root_folder = "../instrumentation-backend"
+def staging_dir = "../staging"
+def bin_dir = "../bin"
+def calabashjs_dir = "../calabash-js/src"
+
+def test_app_aapt = "${bin_dir}/Test_aapt.apk"
+def dex_file = "${bin_dir}/classes.dex"
+def test_app_unsigned = "${bin_dir}/Test_unsigned.apk"
+def actions_dir = "${staging_dir}/src/main/java/sh/calaba/instrumentationbackend/actions"
+def version_file = "${actions_dir}/version/Version.java"
+
+def android_lib = "${env_ANDROID_HOME}/platforms/android-${android_api_level}"
+
+repositories {
+    jcenter()
+}
+
+task customClean(type: Delete) {
+    delete "${staging_dir}"
+    delete "${bin_dir}"
+}
+clean.dependsOn customClean
+
+task preparePackage {
+    doLast {
+        println("Build finished.")
+    }
+}
+
+task verifyInputParameters {
+    doLast {
+        if (!project.hasProperty('tools_dir')) {
+            throw new GradleException('"tools_dir" parameter should be provided!')
+        }
+
+        if (!project.hasProperty('android_api_level')) {
+            throw new GradleException('"android_api_level" parameter should be provided!')
+        }
+
+        if (!project.hasProperty('version')) {
+            throw new GradleException('"version" parameter should be provided!')
+        }
+
+        println("Build started...")
+    }
+}
+
+task prepareStage {
+    doLast {
+        mkdir "${staging_dir}"
+        mkdir "${bin_dir}"
+    }
+}
+
+task prepareTestServer(type: Copy) {
+    from "${root_folder}"
+    into "${staging_dir}"
+}
+
+task prepareAssets(type: Copy) {
+    from "${calabashjs_dir}"
+    into "${staging_dir}/assets"
+}
+
+task replaceVersion(type: Copy) {
+    from "${version_file}"
+    into "${actions_dir}"
+    filter { line -> line.replaceAll("####VERSION####", "${version}") }
+
+    doLast {
+        file("${actions_dir}/Version.java").renameTo(file("${version_file}"))
+    }
+}
+
+task pathToActionList {
+    doLast {
+        FileTree files = fileTree("${actions_dir}").matching {
+            include '**/*.java'
+        }
+
+        File outputFile = new File("${staging_dir}/assets", "actions");
+        File outputDirectory = outputFile.getParentFile();
+        outputFile.createNewFile();
+
+        String regex = ".+?(main\\/java\\/sh\\/calaba\\/instrumentationbackend\\/actions\\/)";
+        FileWriter writer = new FileWriter(outputFile)
+
+        try {
+            for(File file : files) {
+                String actionPath = file.getPath();
+
+                /* 
+                 * Transform action path, e.g. change .../src/main/java/sh/calaba/instrumentationbackend/actions/Action.java
+                 * to main.java.sh.calaba.instrumentationbackend.actions.Action
+                 */
+                actionPath = actionPath.replaceAll(regex, "sh.calaba.instrumentationbackend.actions.");
+                actionPath = actionPath.replaceAll(".java", "");
+                actionPath = actionPath.replaceAll("/", ".");
+
+                println(actionPath)
+                writer.write(actionPath + "\n");
+            }
+        } finally {
+            writer.close()
+        }
+    }
+}
+
+compileJava {
+    options.debug = true
+    options.verbose = true
+    options.sourcepath = fileTree("${staging_dir}/src")
+    options.compilerArgs.addAll(["-d", "${bin_dir}"])
+    options.compilerArgs.addAll(["-source", "1.8"])
+    options.compilerArgs.addAll(["-target", "1.8"])
+}
+
+task aapt(type: Exec) {
+    commandLine "${tools_dir}/aapt", "package", "-f", "-F", "${test_app_aapt}", "-I", "${android_lib}/android.jar", "-A", "${staging_dir}/assets", "-m", "-J", "gen"
+}
+
+task copyLib(type: Copy) {
+    from "libs"
+    into "${bin_dir}/libs"
+}
+
+task dex(type: Exec) {
+    commandLine "${tools_dir}/dx", "--dex", "--output", "${dex_file}", "${bin_dir}"
+}
+
+task createApk(type: Exec) {
+    commandLine "java", "-jar", "${staging_dir}/CalabashApkBuilder.jar", "${test_app_unsigned}", "${test_app_aapt}", "${dex_file}"
+}
+
+/*
+ * Task order: verifyInputParameters -> prepareStage -> prepareTestServer -> prepareAssets ->
+ * replaceVersion -> pathToActionList -> compileJava -> aapt -> copyLib -> dex -> createApk.
+ */
+preparePackage.dependsOn verifyInputParameters
+verifyInputParameters.dependsOn createApk
+createApk.dependsOn dex
+dex.dependsOn copyLib
+copyLib.dependsOn aapt
+aapt.dependsOn compileJava
+compileJava.dependsOn pathToActionList
+pathToActionList.dependsOn replaceVersion
+replaceVersion.dependsOn prepareAssets
+prepareAssets.dependsOn prepareTestServer
+prepareTestServer.dependsOn prepareStage
+
+dependencies {
+    compile fileTree(dir: "${staging_dir}/libs", include: '*.jar')
+    compile fileTree(dir: "${android_lib}", include: '*.jar')
+}

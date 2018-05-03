@@ -51,7 +51,7 @@ public class DebugEventSocketProxy extends BlankDebugEventListener {
 	protected PrintWriter out;
 	protected BufferedReader in;
 
-	private static final String TAG = "ANTLR:DEBUG:DebugEventSocketProxy";
+	private static final String TAG = "ANTLR:DEBUG:SocketProxy";
 
 	/** Who am i debugging? */
 	protected BaseRecognizer recognizer;

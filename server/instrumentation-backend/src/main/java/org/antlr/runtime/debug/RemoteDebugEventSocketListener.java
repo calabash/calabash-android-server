@@ -56,7 +56,7 @@ public class RemoteDebugEventSocketListener implements Runnable {
 	int previousTokenIndex = -1;
 	boolean tokenIndexesInvalid = false;
 
-	private static final String TAG = "ANTLR:DEBUG:RemoteDebugEventSocketListener";
+	private static final String TAG = "ANTLR:DEBUG:RemListener";
 
 	public static class ProxyToken implements Token {
 		int index;

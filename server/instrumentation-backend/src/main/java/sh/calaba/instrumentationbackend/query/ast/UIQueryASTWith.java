@@ -15,7 +15,7 @@ import org.antlr.runtime.tree.CommonTree;
 import sh.calaba.instrumentationbackend.actions.webview.CalabashChromeClient;
 import sh.calaba.instrumentationbackend.actions.webview.QueryHelper;
 
-import android.util.LruCache;
+import android.support.v4.util.LruCache;
 import android.view.View;
 
 import sh.calaba.instrumentationbackend.query.WebContainer;

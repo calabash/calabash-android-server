@@ -4,18 +4,12 @@ set -e
 
 mkdir -p "libs/build"
 cd ..
-cd "instrumentation-backend"
-rm -rf "./tmp"
-mkdir "./tmp"
-find ./src -name "*.java" | \
-  javac -cp "$ANDROID_HOME/platforms/android-22/android.jar:libs/robotium-solo-4.3.1.jar:libs/InstrumentationExposed.jar:libs/maps.jar"  -d tmp @/dev/stdin
-cd "tmp"
+cd "bin"
 find . -name "*.class" | \
   jar cvf Calabash.jar @/dev/stdin
 cd ..
-mv tmp/Calabash.jar Calabash.jar
-mv Calabash.jar "../integration-tests/libs/build"
-rm -rf "./tmp"
+mv bin/Calabash.jar integration-tests/libs/build
+cd "instrumentation-backend"
 cp "libs/robotium-solo-4.3.1.jar" "../integration-tests/libs/build/"
 cp "libs/InstrumentationExposed.jar" "../integration-tests/libs/build/"
 cp "libs/maps.jar" "../integration-tests/libs/build/"

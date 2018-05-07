@@ -3,10 +3,17 @@ pipeline {
   stages {
     stage('Execute build script') {
       steps {
-        sh '''#!/usr/bin/env bash
-
-bin/ci/jenkins.sh'''
+        sh 'bin/ci/jenkins.sh'
       }
     }
+  }
+  post {
+    always {
+      junit 'server/integration-tests/calabash-test-suite/test_report/*.xml'
+    }
+  }
+  options {
+    disableConcurrentBuilds()
+    timestamps()
   }
 }

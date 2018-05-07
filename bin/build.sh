@@ -54,13 +54,6 @@ function min_sdk {
   echo -n $version
 }
 
-function verify_tool {
-  hash "${1}" 2>/dev/null || {
-    echo "Error: Command '${1}' not found"
-    exit 1
-  }
-}
-
 banner "Inspecting Manifest Versions"
 
 SERVER_API_LEVEL=$(target_sdk "${SERVER_MANIFEST}")
@@ -91,8 +84,6 @@ info "   android:minSdkVersion=${SERVER_MIN_VERSION}"
 banner "Expecting ANDROID env variables"
 
 cd server/instrumentation-backend
-
-verify_tool gradle
 
 if [ -z ${ANDROID_TOOLS_DIR+x} ]; then
   if [ -z ${ANDROID_HOME+x} ]; then

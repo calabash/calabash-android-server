@@ -6,6 +6,8 @@ pipeline {
     SLACK_COLOR_INFO    = '#6ECADC'
     SLACK_COLOR_WARNING = '#FFC300'
     SLACK_COLOR_GOOD    = '#3EB991'
+
+    PROJECT_NAME = 'Calabash android server'
   }
 
   stages {
@@ -13,7 +15,7 @@ pipeline {
       steps {
         wrap([$class: 'BuildUser']) { script { env.USER_ID = "${BUILD_USER_ID}" } }
         slackSend (color: "${env.SLACK_COLOR_INFO}",
-                   message: "${env.JOB_NAME} [${env.GIT_BRANCH}] ${env.BUILD_NUMBER} *Started* by ${env.USER_ID} (<${env.BUILD_URL}|Open>)")
+                   message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Started* by ${env.USER_ID} (<${env.BUILD_URL}|Open>)")
       }
     }
     stage('Build') {
@@ -39,6 +41,7 @@ cd server/integration-tests
       }
     }
   }
+
   post {
     always {
       junit 'server/integration-tests/calabash-test-suite/test_report/*.xml'
@@ -46,22 +49,23 @@ cd server/integration-tests
 
     aborted {
       echo "Sending 'aborted' message to Slack"
-      slackSend (color: "${env.SLACK_COLOR_GOOD}",
-                 message: "${env.JOB_NAME} [${env.GIT_BRANCH}] ${env.BUILD_NUMBER} *Aborted* after ${currentBuild.durationString} (<${env.BUILD_URL}|Open>)")
+      slackSend (color: "${env.SLACK_COLOR_WARNING}",
+                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Aborted* after ${currentBuild.durationString} (<${env.BUILD_URL}|Open>)")
     }
 
     failure {
       echo "Sending 'failed' message to Slack"
-      slackSend (color: "${env.SLACK_COLOR_GOOD}",
-                 message: "${env.JOB_NAME} [${env.GIT_BRANCH}] ${env.BUILD_NUMBER} *Failed* after ${currentBuild.durationString} (<${env.BUILD_URL}|Open>)")
+      slackSend (color: "${env.SLACK_COLOR_DANGER}",
+                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Failed* after ${currentBuild.durationString} (<${env.BUILD_URL}|Open>)")
     }
 
     success {
       echo "Sending 'success' message to Slack"
       slackSend (color: "${env.SLACK_COLOR_GOOD}",
-                 message: "${env.JOB_NAME} [${env.GIT_BRANCH}] ${env.BUILD_NUMBER} *Success* after ${currentBuild.durationString} (<${env.BUILD_URL}|Open>)")
+                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Success* after ${currentBuild.durationString} (<${env.BUILD_URL}|Open>)")
     }
   }
+
   options {
     disableConcurrentBuilds()
     timeout(time: 30, unit: 'MINUTES')

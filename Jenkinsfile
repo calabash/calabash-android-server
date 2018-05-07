@@ -1,5 +1,5 @@
 pipeline {
-  agent any
+  agent { label 'android-agent' }
   stages {
     stage('Build') {
       steps {

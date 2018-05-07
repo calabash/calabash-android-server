@@ -15,8 +15,10 @@ pipeline {
         }
         stage('Compile and execute tests') {
           steps {
-            sh 'cd server/integration-tests'
-            sh './run_and_compile.sh'
+            sh '''
+cd server/integration-tests
+./run_and_compile.sh
+'''
           }
         }
       }

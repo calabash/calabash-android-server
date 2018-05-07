@@ -1,9 +1,24 @@
 pipeline {
   agent any
   stages {
-    stage('Execute build script') {
+    stage('Build') {
       steps {
-        sh 'bin/ci/jenkins.sh'
+        sh 'bin/build.sh'
+      }
+    }
+    stage('Test') {
+      parallel {
+        stage('Run emulator') {
+          steps {
+            sh 'bin/start_emulator.sh'
+          }
+        }
+        stage('Compile and execute tests') {
+          steps {
+            sh 'cd server/integration-tests'
+            sh './run_and_compile.sh'
+          }
+        }
       }
     }
   }

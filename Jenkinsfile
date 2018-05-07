@@ -13,9 +13,8 @@ pipeline {
   stages {
     stage('Prepare') {
       steps {
-        wrap([$class: 'BuildUser']) { script { env.USER_ID = "${BUILD_USER_ID}" } }
         slackSend (color: "${env.SLACK_COLOR_INFO}",
-                   message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Started* by ${env.USER_ID} (<${env.BUILD_URL}|Open>)")
+                   message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Started* (<${env.BUILD_URL}|Open>)")
       }
     }
     stage('Build') {

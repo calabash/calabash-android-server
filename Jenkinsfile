@@ -55,7 +55,7 @@ pipeline {
     failure {
       echo "Sending 'failed' message to Slack"
       slackSend (color: "${env.SLACK_COLOR_DANGER}",
-                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Failed* after $${currentBuild.durationString.replace('and counting', '')}(<${env.BUILD_URL}|Open>)")
+                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Failed* after ${currentBuild.durationString.replace('and counting', '')}(<${env.BUILD_URL}|Open>)")
     }
 
     success {

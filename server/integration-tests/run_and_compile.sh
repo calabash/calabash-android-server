@@ -12,5 +12,5 @@ set -e
 
 (
   cd calabash-test-suite
-  bundle exec calabash-android run unittest.apk
+  bundle exec calabash-android run unittest.apk --format junit --out test_report
 )

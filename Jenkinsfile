@@ -32,9 +32,9 @@ pipeline {
         stage('Compile and execute tests') {
           steps {
             sh '''
-cd server/integration-tests
-./run_and_compile.sh
-'''
+              cd server/integration-tests
+              ./run_and_compile.sh
+            '''
           }
         }
       }
@@ -49,19 +49,19 @@ cd server/integration-tests
     aborted {
       echo "Sending 'aborted' message to Slack"
       slackSend (color: "${env.SLACK_COLOR_WARNING}",
-                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Aborted* after ${currentBuild.durationString} (<${env.BUILD_URL}|Open>)")
+                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Aborted* after ${currentBuild.durationString.replace('and counting', '')}(<${env.BUILD_URL}|Open>)")
     }
 
     failure {
       echo "Sending 'failed' message to Slack"
       slackSend (color: "${env.SLACK_COLOR_DANGER}",
-                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Failed* after ${currentBuild.durationString} (<${env.BUILD_URL}|Open>)")
+                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Failed* after $${currentBuild.durationString.replace('and counting', '')}(<${env.BUILD_URL}|Open>)")
     }
 
     success {
       echo "Sending 'success' message to Slack"
       slackSend (color: "${env.SLACK_COLOR_GOOD}",
-                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Success* after ${currentBuild.durationString} (<${env.BUILD_URL}|Open>)")
+                 message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Success* after ${currentBuild.durationString.replace('and counting', '')}(<${env.BUILD_URL}|Open>)")
     }
   }
 

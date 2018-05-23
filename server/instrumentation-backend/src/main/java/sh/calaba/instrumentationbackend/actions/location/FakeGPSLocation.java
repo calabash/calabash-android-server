@@ -142,16 +142,8 @@ public class FakeGPSLocation implements Action {
             location.setLongitude(longitude);
             location.setAccuracy(1);
             location.setTime(System.currentTimeMillis());
-
-            try {
-                Method makeComplete = Location.class.getMethod("makeComplete");
-                if (makeComplete != null) {
-                    makeComplete.invoke(location);
-                }
-            } catch (Exception e) {
-                //Method only available in Jelly Bean
-            }
-
+            location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+            
             locationManager.setTestProviderLocation(locationProvider, location);
         }
 

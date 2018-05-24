@@ -142,8 +142,10 @@ public class FakeGPSLocation implements Action {
             location.setLongitude(longitude);
             location.setAccuracy(1);
             location.setTime(System.currentTimeMillis());
-            location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
-            
+            if Build.VERSION.SDK_INT >= 17 {
+                location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+            }
+
             locationManager.setTestProviderLocation(locationProvider, location);
         }
 

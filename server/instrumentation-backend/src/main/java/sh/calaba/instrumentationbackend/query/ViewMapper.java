@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
 import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
-import sh.calaba.instrumentationbackend.utils.ViewWrapper;
 
 import android.content.res.Resources;
 import android.view.View;

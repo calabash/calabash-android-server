@@ -26,7 +26,6 @@ import sh.calaba.instrumentationbackend.query.WebContainer;
 import sh.calaba.instrumentationbackend.query.antlr.UIQueryParser;
 import sh.calaba.instrumentationbackend.query.ui.UIObject;
 import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
-import sh.calaba.instrumentationbackend.utils.ViewWrapper;
 import sh.calaba.instrumentationbackend.utils.WindowManagerWrapper;
 import sh.calaba.org.codehaus.jackson.JsonProcessingException;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
@@ -310,9 +309,10 @@ public class UIQueryUtils {
 	}
 
 	public static int[] getViewLocationOnScreen(View view) {
-		ViewWrapper viewWrapper = new ViewWrapper(view);
+		int[] location = new int[2];
+		view.getLocationOnScreen(location);
 
-		return viewWrapper.getLocationOnScreen();
+		return location;
 	}
 
 	@SuppressWarnings("rawtypes")

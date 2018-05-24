@@ -33,7 +33,6 @@ import sh.calaba.org.codehaus.jackson.type.TypeReference;
 
 import android.text.InputType;
 import android.util.Log;
-import android.support.v4.util.LruCache;
 import android.view.View;
 import android.view.ViewParent;
 import android.widget.Button;

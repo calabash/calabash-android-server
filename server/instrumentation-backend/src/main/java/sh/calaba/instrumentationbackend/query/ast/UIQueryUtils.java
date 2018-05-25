@@ -310,7 +310,8 @@ public class UIQueryUtils {
 	}
 
 	public static int[] getViewLocationOnScreen(View view) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1 && Build.VERSION.SDK_INT < 28) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1
+				&& Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) {
 			ViewWrapper viewWrapper = new ViewWrapper(view);
 
 			return viewWrapper.getLocationOnScreen();

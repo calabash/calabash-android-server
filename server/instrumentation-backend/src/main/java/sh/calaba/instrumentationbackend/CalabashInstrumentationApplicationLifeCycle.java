@@ -3,7 +3,6 @@ package sh.calaba.instrumentationbackend;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
-import sh.calaba.instrumentationbackend.utils.ActivityLaunchedWaiter;
 
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
@@ -33,15 +32,7 @@ public class CalabashInstrumentationApplicationLifeCycle implements ApplicationL
         startIntentAdded.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         instrumentation.setInTouchMode(true);
 
-        // solves the issue of Android waiting for the message queue of the application
-        // to become idle before continuing from {@link android.app.Instrumentation#startActivitySync}.
-        // See ActivityLaunchedWaiter class for details
-        Thread t = new Thread(new ActivityLaunchedWaiter(getInstrumentation()), "ActivityLaunchedWaiter-Thread");
-        t.start();
-        Activity activity = getInstrumentation().startActivitySync(startIntentAdded);
-        t.interrupt();
-
-        return activity;
+        return getInstrumentation().startActivitySync(startIntentAdded);
     }
 
     @Override

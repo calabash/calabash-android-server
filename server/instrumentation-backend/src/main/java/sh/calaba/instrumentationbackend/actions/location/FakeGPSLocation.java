@@ -2,6 +2,7 @@ package sh.calaba.instrumentationbackend.actions.location;
 
 
 import android.os.Build;
+import android.os.SystemClock;
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
@@ -142,16 +143,9 @@ public class FakeGPSLocation implements Action {
             location.setLongitude(longitude);
             location.setAccuracy(1);
             location.setTime(System.currentTimeMillis());
-
-            try {
-                Method makeComplete = Location.class.getMethod("makeComplete");
-                if (makeComplete != null) {
-                    makeComplete.invoke(location);
-                }
-            } catch (Exception e) {
-                //Method only available in Jelly Bean
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
             }
-
             locationManager.setTestProviderLocation(locationProvider, location);
         }
 

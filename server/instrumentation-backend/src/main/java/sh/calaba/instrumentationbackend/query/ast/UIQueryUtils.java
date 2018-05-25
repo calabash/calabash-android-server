@@ -26,11 +26,13 @@ import sh.calaba.instrumentationbackend.query.WebContainer;
 import sh.calaba.instrumentationbackend.query.antlr.UIQueryParser;
 import sh.calaba.instrumentationbackend.query.ui.UIObject;
 import sh.calaba.instrumentationbackend.query.ui.UIObjectView;
+import sh.calaba.instrumentationbackend.utils.ViewWrapper;
 import sh.calaba.instrumentationbackend.utils.WindowManagerWrapper;
 import sh.calaba.org.codehaus.jackson.JsonProcessingException;
 import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import sh.calaba.org.codehaus.jackson.type.TypeReference;
 
+import android.os.Build;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
@@ -308,6 +310,12 @@ public class UIQueryUtils {
 	}
 
 	public static int[] getViewLocationOnScreen(View view) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1 && Build.VERSION.SDK_INT < 28) {
+			ViewWrapper viewWrapper = new ViewWrapper(view);
+
+			return viewWrapper.getLocationOnScreen();
+		}
+
 		int[] location = new int[2];
 		view.getLocationOnScreen(location);
 

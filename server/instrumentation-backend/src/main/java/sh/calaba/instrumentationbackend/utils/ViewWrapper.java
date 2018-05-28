@@ -112,12 +112,7 @@ public class ViewWrapper {
 
     public int[] getLocationOnScreen() {
         int[] location = new int[2];
-
-        if (Build.VERSION.SDK_INT >= 15) {
-            view.getLocationOnScreen15Plus(location);
-        } else {
-            view.androidView.getLocationOnScreen(location);
-        }
+        view.getLocationOnScreen15Plus(location);
 
         return location;
     }

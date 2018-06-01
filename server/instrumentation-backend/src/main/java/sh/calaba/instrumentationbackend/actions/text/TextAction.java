@@ -39,7 +39,7 @@ public abstract class TextAction implements Action {
             return Result.failedResult(e.getMessage());
         }
 
-        if (servedView == null || inputConnection == null) {
+        if (servedView == null) {
             return Result.failedResult(getNoFocusedViewMessage());
         }
 

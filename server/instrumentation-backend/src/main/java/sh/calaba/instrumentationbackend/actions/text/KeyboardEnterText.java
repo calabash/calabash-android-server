@@ -5,6 +5,8 @@ import android.text.Editable;
 import android.text.Selection;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 
 import java.lang.Character;
 
@@ -12,6 +14,18 @@ import sh.calaba.instrumentationbackend.Result;
 
 public class KeyboardEnterText extends TextAction {
     private String textToEnter;
+
+    private static String webViewInputScript =
+              "var activeElement = document.activeElement;\n" +
+              "var tagName = activeElement.tagName.toLowerCase();\n" +
+              "if (tagName === 'input' || tagName === 'textarea') {\n" +
+              "    activeElement.value = '%1$s';\n" +
+              "} else if (activeElement.contentEditable === 'true') {\n" +
+              "    activeElement.innerHTML = '%1$s';\n" +
+              "} else {\n" +
+              "    activeElement.value = '%1$s';\n" +
+              "    activeElement.innerHTML = '%1$s';\n" +
+              "}\n";
 
     @Override
     protected void parseArguments(String... args) throws IllegalArgumentException {
@@ -29,6 +43,27 @@ public class KeyboardEnterText extends TextAction {
 
     @Override
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+        if (Build.VERSION.SDK_INT >= 27 && servedView instanceof WebView) {
+            WebView webView = (WebView) servedView;
+
+            // Execute JS on the UI thread
+            webView.post(new Runnable() {
+                @Override
+                public void run() {
+                    WebSettings webSettings = webView.getSettings();
+                    webSettings.setJavaScriptEnabled(true);
+
+                    webView.evaluateJavascript(String.format(webViewInputScript, textToEnter), null);
+                }
+            });
+
+            return Result.successResult();
+        }
+
+        if (inputConnection == null) {
+            Result.failedResult(getNoFocusedViewMessage());
+        }
+
         int start = InfoMethodUtil.getSelectionStart(inputConnection);
         int end = InfoMethodUtil.getSelectionEnd(inputConnection);
 

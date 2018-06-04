@@ -36,6 +36,10 @@ public class KeyboardKeyEvent extends TextAction {
 
     @Override
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+        if (inputConnection == null) {
+            Result.failedResult(getNoFocusedViewMessage());
+        }
+
         inputConnection.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, keyCode));
         inputConnection.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, keyCode));
 

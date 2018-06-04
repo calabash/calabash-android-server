@@ -15,18 +15,6 @@ import sh.calaba.instrumentationbackend.Result;
 public class KeyboardEnterText extends TextAction {
     private String textToEnter;
 
-    private static String webViewInputScript =
-              "var activeElement = document.activeElement;\n" +
-              "var tagName = activeElement.tagName.toLowerCase();\n" +
-              "if (tagName === 'input' || tagName === 'textarea') {\n" +
-              "    activeElement.value = '%1$s';\n" +
-              "} else if (activeElement.contentEditable === 'true') {\n" +
-              "    activeElement.innerHTML = '%1$s';\n" +
-              "} else {\n" +
-              "    activeElement.value = '%1$s';\n" +
-              "    activeElement.innerHTML = '%1$s';\n" +
-              "}\n";
-
     @Override
     protected void parseArguments(String... args) throws IllegalArgumentException {
         if (args.length != 1) {
@@ -53,7 +41,7 @@ public class KeyboardEnterText extends TextAction {
                     WebSettings webSettings = webView.getSettings();
                     webSettings.setJavaScriptEnabled(true);
 
-                    webView.evaluateJavascript(String.format(webViewInputScript, textToEnter), null);
+                    webView.evaluateJavascript(String.format(WebViewInputScripts.InputScript, textToEnter), null);
                 }
             });
 

@@ -1,6 +1,5 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
-import android.os.Build;
 import android.text.Editable;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
@@ -35,7 +34,7 @@ public class SetSelection extends TextAction {
 
     @Override
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
-        if (Build.VERSION.SDK_INT >= 27 && servedView instanceof WebView) {
+        if (servedView instanceof WebView) {
             WebView webView = (WebView) servedView;
 
             // Execute JS on the UI thread

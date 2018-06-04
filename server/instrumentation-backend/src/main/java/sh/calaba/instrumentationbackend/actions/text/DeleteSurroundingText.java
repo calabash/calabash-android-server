@@ -38,7 +38,7 @@ public class DeleteSurroundingText extends TextAction {
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         int beforeLength, afterLength;
 
-        if (Build.VERSION.SDK_INT >= 27 && servedView instanceof WebView) {
+        if (servedView instanceof WebView) {
             WebView webView = (WebView) servedView;
 
             // Execute JS on the UI thread

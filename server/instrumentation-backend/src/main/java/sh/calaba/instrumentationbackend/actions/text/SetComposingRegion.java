@@ -4,8 +4,6 @@ import android.os.Build;
 import android.text.Editable;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
 
 import sh.calaba.instrumentationbackend.Result;
 
@@ -35,23 +33,6 @@ public class SetComposingRegion extends TextAction {
 
     @Override
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
-        if (servedView instanceof WebView) {
-            WebView webView = (WebView) servedView;
-
-            // Execute JS on the UI thread
-            webView.post(new Runnable() {
-                @Override
-                public void run() {
-                    WebSettings webSettings = webView.getSettings();
-                    webSettings.setJavaScriptEnabled(true);
-
-                    webView.evaluateJavascript(String.format(WebViewInputScripts.SelectScript, argFrom, argTo), null);
-                }
-            });
-
-            return Result.successResult();
-        }
-
         if (inputConnection == null) {
             Result.failedResult(getNoFocusedViewMessage());
         }

@@ -48,11 +48,7 @@ public class DeleteSurroundingText extends TextAction {
                     WebSettings webSettings = webView.getSettings();
                     webSettings.setJavaScriptEnabled(true);
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        webView.evaluateJavascript(String.format(WebViewInputScripts.DeleteScript, argBeforeLength, argAfterLength), null);
-                    } else {
-                        webView.loadUrl("javascript:" + String.format(WebViewInputScripts.DeleteScript, argBeforeLength, argAfterLength));
-                    }
+                    webView.evaluateJavascript(String.format(WebViewInputScripts.DeleteScript, argBeforeLength, argAfterLength), null);
                 }
             });
 

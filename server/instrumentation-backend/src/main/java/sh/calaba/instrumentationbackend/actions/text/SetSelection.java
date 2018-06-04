@@ -45,11 +45,7 @@ public class SetSelection extends TextAction {
                     WebSettings webSettings = webView.getSettings();
                     webSettings.setJavaScriptEnabled(true);
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        webView.evaluateJavascript(String.format(WebViewInputScripts.SelectScript, argFrom, argTo), null);
-                    } else {
-                        webView.loadUrl("javascript:" + String.format(WebViewInputScripts.SelectScript, argFrom, argTo));
-                    }
+                    webView.evaluateJavascript(String.format(WebViewInputScripts.SelectScript, argFrom, argTo), null);
                 }
             });
 

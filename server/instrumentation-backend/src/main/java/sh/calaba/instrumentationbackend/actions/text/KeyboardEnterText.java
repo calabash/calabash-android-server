@@ -31,7 +31,7 @@ public class KeyboardEnterText extends TextAction {
 
     @Override
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
-        if (servedView instanceof WebView) {
+        if (servedView instanceof WebView && Build.VERSION.SDK_INT >= 27) {
             WebView webView = (WebView) servedView;
 
             // Execute JS on the UI thread
@@ -41,7 +41,11 @@ public class KeyboardEnterText extends TextAction {
                     WebSettings webSettings = webView.getSettings();
                     webSettings.setJavaScriptEnabled(true);
 
-                    webView.evaluateJavascript(String.format(WebViewInputScripts.InputScript, textToEnter), null);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        webView.evaluateJavascript(String.format(WebViewInputScripts.InputScript, textToEnter), null);
+                    } else {
+                        webView.loadUrl("javascript:" + String.format(WebViewInputScripts.InputScript, textToEnter));
+                    }
                 }
             });
 

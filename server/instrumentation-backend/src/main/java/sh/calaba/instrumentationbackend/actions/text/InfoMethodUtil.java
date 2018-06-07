@@ -34,7 +34,7 @@ public class InfoMethodUtil {
         Context context = InstrumentationBackend.instrumentation.getTargetContext();
 
         try {
-            if (Build.VERSION.SDK_INT >= 27) {
+            if (Build.VERSION.SDK_INT > 27) {
                 EditorInfo info = new EditorInfo();
                 InputConnection inputConnection = getServedView().onCreateInputConnection(info);
 

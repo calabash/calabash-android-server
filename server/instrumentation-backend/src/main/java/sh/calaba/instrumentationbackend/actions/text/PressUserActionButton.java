@@ -43,7 +43,7 @@ public class PressUserActionButton extends TextAction {
 
     @Override
     protected String getNoFocusedViewMessage() {
-        return "Could not press user action button, not element has focus.";
+        return "Could not press user action button. Make sure that the input element has focus.";
     }
 
     @Override

@@ -26,30 +26,13 @@ public class KeyboardEnterText extends TextAction {
 
     @Override
     protected String getNoFocusedViewMessage() {
-        return "Could not enter text. No element has focus.";
+        return "Could not enter text. Make sure that the input element has focus.";
     }
 
     @Override
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
-        if (servedView instanceof WebView && Build.VERSION.SDK_INT > 27) {
-            WebView webView = (WebView) servedView;
-
-            // Execute JS on the UI thread
-            webView.post(new Runnable() {
-                @Override
-                public void run() {
-                    WebSettings webSettings = webView.getSettings();
-                    webSettings.setJavaScriptEnabled(true);
-
-                    webView.evaluateJavascript(String.format(WebViewInputScripts.InputScript, textToEnter), null);
-                }
-            });
-
-            return Result.successResult();
-        }
-
-        if (inputConnection == null) {
-            Result.failedResult(getNoFocusedViewMessage());
+        if (requiresWebViewInput(servedView)) {
+            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.InputScript, textToEnter.replaceAll("\'", "\\\\x27"));
         }
 
         int start = InfoMethodUtil.getSelectionStart(inputConnection);

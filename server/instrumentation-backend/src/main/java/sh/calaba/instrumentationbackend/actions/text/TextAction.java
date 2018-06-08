@@ -1,8 +1,11 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
+import android.os.Build;
 import android.os.Handler;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -39,7 +42,7 @@ public abstract class TextAction implements Action {
             return Result.failedResult(e.getMessage());
         }
 
-        if (servedView == null) {
+        if (servedView == null || (inputConnection == null && !requiresWebViewInput(servedView))) {
             return Result.failedResult(getNoFocusedViewMessage());
         }
 
@@ -60,6 +63,36 @@ public abstract class TextAction implements Action {
             throw new RuntimeException(e);
         } catch (TimeoutException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /*
+     * On Android 4 devices we have servedView instanceof WebView and correct input connection, so we don't need to use js logic on old devices.
+     */
+    public static boolean requiresWebViewInput(View view) {
+        return view instanceof WebView && Build.VERSION.SDK_INT > 27;
+    }
+
+    /*
+     * Executes JS to handle WebView input operations.
+     */
+    public static Result evalWebViewInputScript(WebView webView, String script, Object ... scriptParams) {
+        try {
+            // Execute JS on the UI thread
+            webView.post(new Runnable() {
+                @Override
+                public void run() {
+                    WebSettings webSettings = webView.getSettings();
+                    webSettings.setJavaScriptEnabled(true);
+
+                    webView.evaluateJavascript(String.format(script, scriptParams), null);
+                }
+            });
+
+            return Result.successResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.failedResult(e.getMessage());
         }
     }
 

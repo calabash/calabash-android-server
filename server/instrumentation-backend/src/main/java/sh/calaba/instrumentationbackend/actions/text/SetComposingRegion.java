@@ -28,15 +28,11 @@ public class SetComposingRegion extends TextAction {
 
     @Override
     protected String getNoFocusedViewMessage() {
-        return "Unable to set composing region, no element has focus";
+        return "Unable to set composing region. Make sure that the input element has focus.";
     }
 
     @Override
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
-        if (inputConnection == null) {
-            Result.failedResult(getNoFocusedViewMessage());
-        }
-
         if (Build.VERSION.SDK_INT < 9) {
             return Result.failedResult("Cannot set composing region on Android < 9");
         }

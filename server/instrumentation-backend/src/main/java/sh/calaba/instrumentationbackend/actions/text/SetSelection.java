@@ -30,30 +30,13 @@ public class SetSelection extends TextAction {
 
     @Override
     protected String getNoFocusedViewMessage() {
-        return "Unable to set selection, no element has focus";
+        return "Unable to set selection. Make sure that the input element has focus.";
     }
 
     @Override
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
-        if (servedView instanceof WebView && Build.VERSION.SDK_INT > 27) {
-            WebView webView = (WebView) servedView;
-
-            // Execute JS on the UI thread
-            webView.post(new Runnable() {
-                @Override
-                public void run() {
-                    WebSettings webSettings = webView.getSettings();
-                    webSettings.setJavaScriptEnabled(true);
-
-                    webView.evaluateJavascript(String.format(WebViewInputScripts.SelectScript, argFrom, argTo), null);
-                }
-            });
-
-            return Result.successResult();
-        }
-
-        if (inputConnection == null) {
-            Result.failedResult(getNoFocusedViewMessage());
+        if (requiresWebViewInput(servedView)) {
+            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.DeleteScript, argFrom, argTo);
         }
 
         // Find length of non-formatted text

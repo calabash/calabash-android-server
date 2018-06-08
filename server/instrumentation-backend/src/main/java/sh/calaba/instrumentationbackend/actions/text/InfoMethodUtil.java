@@ -2,12 +2,14 @@ package sh.calaba.instrumentationbackend.actions.text;
 
 import android.content.Context;
 import android.os.Build;
+import android.text.InputType;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
+import sh.calaba.instrumentationbackend.utils.SystemPropertiesWrapper;
 
 import java.lang.reflect.Field;
 
@@ -29,12 +31,43 @@ public class InfoMethodUtil {
     }
 
     public static InputConnection getInputConnection() throws UnexpectedInputMethodManagerStructureException {
-        try {
-            EditorInfo info = new EditorInfo();
-            InputConnection inputConnection = getServedView().onCreateInputConnection(info);
+        Context context = InstrumentationBackend.instrumentation.getTargetContext();
 
-            return inputConnection;
-        } catch (Exception e) {
+        try {
+            if (Build.VERSION.SDK_INT > 27) {
+                EditorInfo info = new EditorInfo();
+                InputConnection inputConnection = getServedView().onCreateInputConnection(info);
+
+                return inputConnection;
+            }
+
+            InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+
+            int previewSdkInt = SystemPropertiesWrapper.getInt("ro.build.version.preview_sdk", 0);
+
+            // We support Android N, which has SDK_INT of 22, but PREVIEW_SDK_INT >= 3
+            if (Build.VERSION.SDK_INT > 23
+                    || (Build.VERSION.SDK_INT == 23 && previewSdkInt >= 3)) { // Android N changed its internal structure
+                Field servedInputConnectionWrapperField = inputMethodManager.getClass().getDeclaredField("mServedInputConnectionWrapper");
+                servedInputConnectionWrapperField.setAccessible(true);
+                Object servedInputConnectionWrapper = servedInputConnectionWrapperField.get(inputMethodManager);
+
+                Class iInputConnectionWrapperClass = Class.forName("com.android.internal.view.IInputConnectionWrapper");
+                Field inputConnectionField = iInputConnectionWrapperClass.getDeclaredField("mInputConnection");
+                inputConnectionField.setAccessible(true);
+
+                return (InputConnection) inputConnectionField.get(servedInputConnectionWrapper);
+            } else {
+                Field servedInputConnectionField = InputMethodManager.class.getDeclaredField("mServedInputConnection");
+                servedInputConnectionField.setAccessible(true);
+
+                return (InputConnection) servedInputConnectionField.get(inputMethodManager);
+            }
+        } catch (IllegalAccessException e) {
+            throw new UnexpectedInputMethodManagerStructureException(e);
+        } catch (NoSuchFieldException e) {
+            throw new UnexpectedInputMethodManagerStructureException(e);
+        } catch (ClassNotFoundException e) {
             throw new UnexpectedInputMethodManagerStructureException(e);
         }
     }

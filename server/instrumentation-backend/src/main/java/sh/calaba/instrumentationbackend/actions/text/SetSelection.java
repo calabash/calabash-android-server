@@ -36,7 +36,7 @@ public class SetSelection extends TextAction {
     @Override
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         if (requiresWebViewInput(servedView)) {
-            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.DeleteScript, argFrom, argTo);
+            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.selectTextScript(argFrom, argTo));
         }
 
         // Find length of non-formatted text

@@ -32,7 +32,7 @@ public class KeyboardEnterText extends TextAction {
     @Override
     protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         if (requiresWebViewInput(servedView)) {
-            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.InputScript, textToEnter.replaceAll("\'", "\\\\x27"));
+            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.enterTextScript(textToEnter));
         }
 
         int start = InfoMethodUtil.getSelectionStart(inputConnection);

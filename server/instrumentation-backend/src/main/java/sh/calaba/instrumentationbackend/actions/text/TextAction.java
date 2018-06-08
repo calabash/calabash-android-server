@@ -66,17 +66,23 @@ public abstract class TextAction implements Action {
         }
     }
 
-    /*
+    /**
+     * Verifies is specific WebView input logic required or not.
      * On Android 4 devices we have servedView instanceof WebView and correct input connection, so we don't need to use js logic on old devices.
+     * @param view active view
+     * @return value indicating whether WebView JS input logic required or not
      */
     public static boolean requiresWebViewInput(View view) {
         return view instanceof WebView && Build.VERSION.SDK_INT > 27;
     }
 
-    /*
+    /**
      * Executes JS to handle WebView input operations.
+     * @param webView active WebView
+     * @param script script to execute inside the WebView
+     * @return operation result
      */
-    public static Result evalWebViewInputScript(WebView webView, String script, Object ... scriptParams) {
+    public static Result evalWebViewInputScript(WebView webView, String script) {
         try {
             // Execute JS on the UI thread
             webView.post(new Runnable() {
@@ -85,7 +91,7 @@ public abstract class TextAction implements Action {
                     WebSettings webSettings = webView.getSettings();
                     webSettings.setJavaScriptEnabled(true);
 
-                    webView.evaluateJavascript(String.format(script, scriptParams), null);
+                    webView.evaluateJavascript(script, null);
                 }
             });
 

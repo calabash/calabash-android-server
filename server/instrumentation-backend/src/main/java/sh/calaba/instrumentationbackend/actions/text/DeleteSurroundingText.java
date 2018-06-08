@@ -39,7 +39,7 @@ public class DeleteSurroundingText extends TextAction {
         int beforeLength, afterLength;
 
         if (requiresWebViewInput(servedView)) {
-            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.DeleteScript, argBeforeLength, argAfterLength);
+            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.deleteTextScript(argBeforeLength, argAfterLength));
         }
 
         // Find length of non-formatted text

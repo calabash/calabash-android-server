@@ -2,8 +2,7 @@ package sh.calaba.instrumentationbackend.actions.text;
 
 public class WebViewInputScripts {
 
-    // This script allows to add text according to caret position and selection
-    static final String InputScript =
+    private static final String enterScript =
             "function enterCharacter(activeElement, character) {  \n" +
             "  var from = 0; var to = 0;\n" +
             "  if (activeElement.selectionStart !== null && typeof activeElement.selectionStart !== 'undefined') {\n" +
@@ -57,8 +56,7 @@ public class WebViewInputScripts {
             "}\n" +
             "enterText('%1$s');";
 
-    // This script allows to remove text according to caret position and selection
-    static final String DeleteScript =
+    private static final String deleteScript =
             "function removeCharacter(activeElement, rtl) {  \n" +
             "  var from = 0;\n" +
             "  var value;\n" +
@@ -152,8 +150,7 @@ public class WebViewInputScripts {
             "}\n" +
             "deleteText(%1$s,%2$s);";
 
-    // This script allows to add selection inside active element
-    static final String SelectScript =
+    private static final String selectScript =
             "function selectText(argFrom, argTo) {\n" +
             "  var activeElement = document.activeElement;\n" +
             "  var tagName = activeElement.tagName.toLowerCase();\n" +
@@ -188,4 +185,35 @@ public class WebViewInputScripts {
             "  }\n" +
             "}\n" +
             "selectText(%1$s,%2$s);";
+
+    /**
+     * Allows to add text according to caret position and selection
+     * @param text text to input
+     * @return script to enter text into active WebView field
+     */
+    public static String enterTextScript(String text) {
+        return String.format(enterScript, text.replaceAll("\'", "\\\\x27"));
+    }
+
+
+    /**
+     * Allows to delete text according to caret position and selection
+     * @param beforeLength number of characters before the current cursor position
+     * @param afterLength number of characters after the current cursor position
+     * @return script to remove text into active WebView field
+     */
+    public static String deleteTextScript(int beforeLength, int afterLength) {
+        return String.format(deleteScript, beforeLength, afterLength);
+    }
+
+
+    /**
+     * Allows to add selection inside active element
+     * @param from the character index where the selection should start
+     * @param to the character index where the selection should end
+     * @return script to select text into active WebView field
+     */
+    public static String selectTextScript(int from, int to) {
+        return String.format(selectScript, from, to);
+    }
 }

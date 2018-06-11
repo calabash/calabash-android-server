@@ -53,8 +53,7 @@ public class WebViewInputScripts {
             "      simulateKeyEvent(element, ch);\n" +
             "    }\n" +
             "  }\n" +
-            "}\n" +
-            "enterText('%1$s');";
+            "}\n";
 
     private static final String deleteScript =
             "function removeCharacter(activeElement, rtl) {  \n" +
@@ -147,8 +146,7 @@ public class WebViewInputScripts {
             "    removeCharacter(element, false);\n" +
             "    simulateKeyEvent(element, false);\n" +
             "  }\n" +
-            "}\n" +
-            "deleteText(%1$s,%2$s);";
+            "}\n";
 
     private static final String selectScript =
             "function selectText(argFrom, argTo) {\n" +
@@ -183,8 +181,21 @@ public class WebViewInputScripts {
             "    selection.removeAllRanges();\n" +
             "    selection.addRange(range);\n" +
             "  }\n" +
-            "}\n" +
-            "selectText(%1$s,%2$s);";
+            "}\n";
+
+    private static final String outputStrategyScript =
+            "(function() {\n" +
+            "  try {\n" +
+            "    %1$s\n" +
+            "    return null;\n" +
+            "  } catch (e) {\n" +
+            "    return 'JS exception: ' + e;\n" +
+            "  }\n" +
+            "})();";
+
+    private static String useOutputStrategyScript(String inputScript) {
+        return String.format(outputStrategyScript, inputScript);
+    }
 
     /**
      * Allows to add text according to caret position and selection
@@ -192,7 +203,7 @@ public class WebViewInputScripts {
      * @return script to enter text into active WebView field
      */
     public static String enterTextScript(String text) {
-        return String.format(enterScript, text.replaceAll("\'", "\\\\x27"));
+        return enterScript + useOutputStrategyScript(String.format("enterText('%1$s');", text.replaceAll("\'", "\\\\x27")));
     }
 
 
@@ -203,7 +214,7 @@ public class WebViewInputScripts {
      * @return script to remove text into active WebView field
      */
     public static String deleteTextScript(int beforeLength, int afterLength) {
-        return String.format(deleteScript, beforeLength, afterLength);
+        return deleteScript + useOutputStrategyScript(String.format("deleteText(%1$s,%2$s);", beforeLength, afterLength));
     }
 
 
@@ -214,6 +225,6 @@ public class WebViewInputScripts {
      * @return script to select text into active WebView field
      */
     public static String selectTextScript(int from, int to) {
-        return String.format(selectScript, from, to);
+        return selectScript + useOutputStrategyScript(String.format("selectText(%1$s,%2$s);", from, to));
     }
 }

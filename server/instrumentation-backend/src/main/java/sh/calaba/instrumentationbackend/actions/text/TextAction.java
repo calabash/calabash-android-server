@@ -4,6 +4,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
+import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
@@ -84,16 +85,28 @@ public abstract class TextAction implements Action {
      */
     public static Result evalWebViewInputScript(WebView webView, String script) {
         try {
-            // Execute JS on the UI thread
-            webView.post(new Runnable() {
+            Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
                     WebSettings webSettings = webView.getSettings();
                     webSettings.setJavaScriptEnabled(true);
 
-                    webView.evaluateJavascript(script, null);
+                    webView.evaluateJavascript(script, new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String jsError) {
+                            // Result from JS is string not a Java null
+                            if (jsError.equals("null")) {
+                                System.out.println("JS execution succeeded.");
+                            } else {
+                                System.out.println("JS execution failed: " + jsError);
+                            }
+                        }
+                    });
                 }
-            });
+            };
+
+            // Execute JS on the UI thread
+            webView.post(runnable);
 
             return Result.successResult();
         } catch (Exception e) {

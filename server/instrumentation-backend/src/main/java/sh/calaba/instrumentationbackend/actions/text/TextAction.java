@@ -1,24 +1,19 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
 import android.os.Build;
-import android.os.Handler;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
+import sh.calaba.instrumentationbackend.query.CompletedFuture;
 import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
+import sh.calaba.instrumentationbackend.utils.CompletableFuture;
 
 public abstract class TextAction implements Action {
     @Override
@@ -47,9 +42,9 @@ public abstract class TextAction implements Action {
             return Result.failedResult(getNoFocusedViewMessage());
         }
 
-        FutureTask<Result> futureResult = new FutureTask<Result>(new Callable<Result>() {
+        FutureTask<Future<Result>> futureResult = new FutureTask<>(new Callable<Future<Result>>() {
             @Override
-            public Result call() throws Exception {
+            public Future<Result> call() {
                 return executeOnInputThread(servedView, inputConnection);
             }
         });
@@ -57,7 +52,8 @@ public abstract class TextAction implements Action {
         UIQueryUtils.postOnViewHandlerOrUiThread(servedView, futureResult);
 
         try {
-            return futureResult.get(10, TimeUnit.SECONDS);
+            Future<Result> res = futureResult.get(10, TimeUnit.SECONDS);
+            return res.get(10, TimeUnit.SECONDS);
         } catch (ExecutionException executionException) {
             throw new RuntimeException(executionException.getCause());
         } catch (InterruptedException e) {
@@ -83,8 +79,10 @@ public abstract class TextAction implements Action {
      * @param script script to execute inside the WebView
      * @return operation result
      */
-    public static Result evalWebViewInputScript(WebView webView, String script) {
+    public static Future<Result> evalWebViewInputScript(WebView webView, String script) {
         try {
+            final CompletableFuture<Result> future = new CompletableFuture<>();
+
             Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -96,9 +94,9 @@ public abstract class TextAction implements Action {
                         public void onReceiveValue(String jsError) {
                             // Result from JS is string not a Java null
                             if (jsError.equals("null")) {
-                                System.out.println("JS execution succeeded.");
+                                future.complete(Result.successResult());
                             } else {
-                                System.out.println("JS execution failed: " + jsError);
+                                future.complete(Result.failedResult("JS input injection failed: " + jsError));
                             }
                         }
                     });
@@ -108,10 +106,10 @@ public abstract class TextAction implements Action {
             // Execute JS on the UI thread
             webView.post(runnable);
 
-            return Result.successResult();
+            return future;
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.failedResult(e.getMessage());
+            return new CompletedFuture<>(Result.failedResult(e.getMessage()));
         }
     }
 
@@ -121,5 +119,5 @@ public abstract class TextAction implements Action {
     /*
         This method is run on the main thread.
      */
-    protected abstract Result executeOnInputThread(final View servedView, final InputConnection inputConnection);
+    protected abstract Future<Result> executeOnInputThread(final View servedView, final InputConnection inputConnection);
 }

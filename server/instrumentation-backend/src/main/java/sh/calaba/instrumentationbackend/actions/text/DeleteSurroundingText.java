@@ -1,14 +1,14 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
 import android.os.Build;
-import android.text.Editable;
-import android.text.Selection;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import sh.calaba.instrumentationbackend.Result;
+import sh.calaba.instrumentationbackend.query.CompletedFuture;
+
+import java.util.concurrent.Future;
 
 public class DeleteSurroundingText extends TextAction {
     private static final String USAGE = "This action takes 2 arguments:\n([int] beforeLength, [int] afterLength)";
@@ -35,7 +35,7 @@ public class DeleteSurroundingText extends TextAction {
     }
 
     @Override
-    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+    protected Future<Result> executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         int beforeLength, afterLength;
 
         if (requiresWebViewInput(servedView)) {
@@ -64,7 +64,7 @@ public class DeleteSurroundingText extends TextAction {
 
         inputConnection.deleteSurroundingText(beforeLength, afterLength);
 
-        return Result.successResult();
+        return new CompletedFuture<>(Result.successResult());
     }
 
     @Override

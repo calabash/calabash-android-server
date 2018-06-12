@@ -1,16 +1,15 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
 import android.os.Build;
-import android.text.Editable;
-import android.text.Selection;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import java.lang.Character;
+import java.util.concurrent.Future;
 
 import sh.calaba.instrumentationbackend.Result;
+import sh.calaba.instrumentationbackend.query.CompletedFuture;
 
 public class KeyboardEnterText extends TextAction {
     private String textToEnter;
@@ -30,7 +29,7 @@ public class KeyboardEnterText extends TextAction {
     }
 
     @Override
-    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+    protected Future<Result> executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         if (requiresWebViewInput(servedView)) {
             return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.enterTextScript(textToEnter));
         }
@@ -50,7 +49,7 @@ public class KeyboardEnterText extends TextAction {
             inputConnection.setComposingRegion(start, end);
         }
 
-        return Result.successResult();
+        return new CompletedFuture<>(Result.successResult());
     }
 
     @Override

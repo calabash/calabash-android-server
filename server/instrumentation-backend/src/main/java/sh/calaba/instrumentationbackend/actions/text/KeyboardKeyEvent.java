@@ -6,6 +6,9 @@ import android.view.inputmethod.InputConnection;
 
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.softkey.KeyUtil;
+import sh.calaba.instrumentationbackend.query.CompletedFuture;
+
+import java.util.concurrent.Future;
 
 public class KeyboardKeyEvent extends TextAction {
     private Integer keyCode;
@@ -35,11 +38,11 @@ public class KeyboardKeyEvent extends TextAction {
     }
 
     @Override
-    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+    protected Future<Result> executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         inputConnection.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, keyCode));
         inputConnection.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, keyCode));
 
-        return Result.successResult();
+        return new CompletedFuture<>(Result.successResult());
     }
 
     @Override

@@ -9,8 +9,10 @@ import android.widget.TextView;
 import java.lang.Integer;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.Future;
 
 import sh.calaba.instrumentationbackend.Result;
+import sh.calaba.instrumentationbackend.query.CompletedFuture;
 
 public class PressUserActionButton extends TextAction {
     private static Map<String,Integer> actionCodeMap;
@@ -43,11 +45,11 @@ public class PressUserActionButton extends TextAction {
 
     @Override
     protected String getNoFocusedViewMessage() {
-        return "Could not press user action button, not element has focus.";
+        return "Could not press user action button. Make sure that the input element has focus.";
     }
 
     @Override
-    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+    protected Future<Result> executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         final Integer imeActionCode;
 
         if (imeActionCodeArgument != null) {
@@ -64,7 +66,7 @@ public class PressUserActionButton extends TextAction {
         } else {
             inputConnection.performEditorAction(imeActionCode);
 
-            return Result.successResult();
+            return new CompletedFuture<>(Result.successResult());
         }
     }
 

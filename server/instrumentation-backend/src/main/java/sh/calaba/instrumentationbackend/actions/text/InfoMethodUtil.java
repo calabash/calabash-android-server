@@ -2,7 +2,9 @@ package sh.calaba.instrumentationbackend.actions.text;
 
 import android.content.Context;
 import android.os.Build;
+import android.text.InputType;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 
@@ -32,6 +34,13 @@ public class InfoMethodUtil {
         Context context = InstrumentationBackend.instrumentation.getTargetContext();
 
         try {
+            if (Build.VERSION.SDK_INT > 27) {
+                EditorInfo info = new EditorInfo();
+                InputConnection inputConnection = getServedView().onCreateInputConnection(info);
+
+                return inputConnection;
+            }
+
             InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 
             int previewSdkInt = SystemPropertiesWrapper.getInt("ro.build.version.preview_sdk", 0);

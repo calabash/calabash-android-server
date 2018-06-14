@@ -1,9 +1,13 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
-import android.text.Editable;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
+import android.webkit.WebView;
+
 import sh.calaba.instrumentationbackend.Result;
+import sh.calaba.instrumentationbackend.query.CompletedFuture;
+
+import java.util.concurrent.Future;
 
 public class SetSelection extends TextAction {
     private static final String USAGE = "This action takes 2 arguments:\n([int] start, [int] end)";
@@ -26,11 +30,15 @@ public class SetSelection extends TextAction {
 
     @Override
     protected String getNoFocusedViewMessage() {
-        return "Unable to set selection, no element has focus";
+        return "Unable to set selection. Make sure that the input element has focus.";
     }
 
     @Override
-    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+    protected Future<Result> executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+        if (requiresWebViewInput(servedView)) {
+            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.selectTextScript(argFrom, argTo));
+        }
+
         // Find length of non-formatted text
         int textLength = InfoMethodUtil.getTextLength(inputConnection);
         int from, to;
@@ -49,7 +57,7 @@ public class SetSelection extends TextAction {
 
         inputConnection.setSelection(from, to);
 
-        return Result.successResult();
+        return new CompletedFuture<>(Result.successResult());
     }
 
     @Override

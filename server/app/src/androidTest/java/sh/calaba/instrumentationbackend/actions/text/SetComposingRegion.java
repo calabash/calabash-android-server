@@ -1,11 +1,13 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
 import android.os.Build;
-import android.text.Editable;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
 
 import sh.calaba.instrumentationbackend.Result;
+import sh.calaba.instrumentationbackend.query.CompletedFuture;
+
+import java.util.concurrent.Future;
 
 public class SetComposingRegion extends TextAction {
     private static final String USAGE = "This action takes 2 arguments:\n([int] start, [int] end)";
@@ -28,13 +30,13 @@ public class SetComposingRegion extends TextAction {
 
     @Override
     protected String getNoFocusedViewMessage() {
-        return "Unable to set composing region, no element has focus";
+        return "Unable to set composing region. Make sure that the input element has focus.";
     }
 
     @Override
-    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+    protected Future<Result> executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         if (Build.VERSION.SDK_INT < 9) {
-            return Result.failedResult("Cannot set composing region on Android < 9");
+            return new CompletedFuture<>(Result.failedResult("Cannot set composing region on Android < 9"));
         }
 
         // Find length of non-formatted text
@@ -55,7 +57,7 @@ public class SetComposingRegion extends TextAction {
 
         inputConnection.setComposingRegion(from, to);
 
-        return Result.successResult();
+        return new CompletedFuture<>(Result.successResult());
     }
 
     @Override

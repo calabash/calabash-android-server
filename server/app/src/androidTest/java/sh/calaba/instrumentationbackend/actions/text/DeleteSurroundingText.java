@@ -1,12 +1,14 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
 import android.os.Build;
-import android.text.Editable;
-import android.text.Selection;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
+import android.webkit.WebView;
 
 import sh.calaba.instrumentationbackend.Result;
+import sh.calaba.instrumentationbackend.query.CompletedFuture;
+
+import java.util.concurrent.Future;
 
 public class DeleteSurroundingText extends TextAction {
     private static final String USAGE = "This action takes 2 arguments:\n([int] beforeLength, [int] afterLength)";
@@ -29,14 +31,19 @@ public class DeleteSurroundingText extends TextAction {
 
     @Override
     protected String getNoFocusedViewMessage() {
-        return "Unable to delete surrounding text, no element has focus";
+        return "Unable to delete surrounding text. Make sure that the input element has focus.";
     }
 
     @Override
-    protected Result executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+    protected Future<Result> executeOnInputThread(final View servedView, final InputConnection inputConnection) {
+        int beforeLength, afterLength;
+
+        if (requiresWebViewInput(servedView)) {
+            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.deleteTextScript(argBeforeLength, argAfterLength));
+        }
+
         // Find length of non-formatted text
         int textLength = InfoMethodUtil.getTextLength(inputConnection);
-        int beforeLength, afterLength;
 
         if (argBeforeLength < 0) {
             beforeLength = textLength + argBeforeLength + 1;
@@ -57,7 +64,7 @@ public class DeleteSurroundingText extends TextAction {
 
         inputConnection.deleteSurroundingText(beforeLength, afterLength);
 
-        return Result.successResult();
+        return new CompletedFuture<>(Result.successResult());
     }
 
     @Override

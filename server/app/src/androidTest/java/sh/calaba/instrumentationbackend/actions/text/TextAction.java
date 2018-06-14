@@ -79,7 +79,7 @@ public abstract class TextAction implements Action {
      * @param script script to execute inside the WebView
      * @return operation result
      */
-    public static Future<Result> evalWebViewInputScript(WebView webView, String script) {
+    public static Future<Result> evalWebViewInputScript(final WebView webView, final String script) {
         try {
             final CompletableFuture<Result> future = new CompletableFuture<>();
 

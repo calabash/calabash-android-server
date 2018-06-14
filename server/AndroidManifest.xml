@@ -38,24 +38,6 @@
         android:stateNotNeeded="true"
         android:noHistory="true"
         android:excludeFromRecents="true"/>
-      <activity
-        android:name="sh.calaba.instrumentationbackend.FakeCameraActivity"
-        android:label="FakeCameraActivity"
-        android:exported="true"
-        android:finishOnTaskLaunch="true"
-        android:stateNotNeeded="true"
-        android:noHistory="true"
-        android:excludeFromRecents="true"
-        android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
-      <activity
-        android:name="sh.calaba.instrumentationbackend.FakePickerActivity"
-        android:label="FakePickerActivity"
-        android:exported="true"
-        android:finishOnTaskLaunch="true"
-        android:stateNotNeeded="true"
-        android:noHistory="true"
-        android:excludeFromRecents="true"/>
-
     </application>
 
     <instrumentation android:targetPackage="#targetPackage#" android:name="sh.calaba.instrumentationbackend.CalabashInstrumentationTestRunner" />

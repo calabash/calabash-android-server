@@ -1,0 +1,61 @@
+apply plugin: 'com.android.application'
+
+def actionsDir = "src/androidTest/java/sh/calaba/instrumentationbackend/actions"
+def actionsFile = "${buildDir}/assets/actions"
+
+
+android {
+    compileSdkVersion 24
+    defaultConfig {
+        applicationId "sh.calaba.instrumentationbackend"
+        minSdkVersion 8
+        targetSdkVersion 24
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    sourceSets {
+        androidTestDebug {
+            print assets.getSrcDirs()
+            res.srcDirs += (new File(actionsFile)).getParentFile()
+            print assets.getSrcDirs()
+        }
+    }
+}
+
+task generateActionsList {
+    doLast {
+        FileTree files = fileTree(actionsDir, {
+            include '**/*.java'
+        })
+
+        def actions = files.collect {file -> def name = file.getName(); "sh.calaba.instrumentationbackend.actions." + name.substring(0, name.length()-5)}
+
+        File outputFile = new File(actionsFile)
+        File outputDirectory = outputFile.getParentFile()
+        outputDirectory.mkdirs()
+        outputFile.createNewFile()
+
+        outputFile.withWriter {writer ->
+            actions.each {action -> writer.writeLine action}
+        }
+    }
+}
+
+
+assembleAndroidTest.dependsOn(generateActionsList)
+
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestImplementation 'net.sourceforge.jadex:jadex-android-antlr:2.2'
+    androidTestImplementation 'com.android.support.test:runner:0.4'
+    androidTestImplementation 'com.jayway.android.robotium:robotium-solo:4.3.1'
+}

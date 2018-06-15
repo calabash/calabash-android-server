@@ -8,6 +8,8 @@ CALABASH_ANDROID_SERVER_VERSION=$(cat version | tr -d "\n")
 
 SERVER_MANIFEST="server/AndroidManifest.xml"
 BACKEND_GRADLE_FILE="server/app/build.gradle"
+APK_PATH="app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
+SERVER_APK_PATH="app/build/outputs/apk/androidTest/debug/TestServer.apk"
 
 # $1 is a path to an AndroidManifest.xml
 # $2 is the manifest key to inspect
@@ -97,3 +99,8 @@ shell "${CMD}"
 
 info "android:targetSdkVersion=${SERVER_API_LEVEL}"
 info "   android:minSdkVersion=${SERVER_MIN_VERSION}"
+
+zip -d "${APK_PATH}" META-INF/\*
+zip -d "${APK_PATH}" AndroidManifest.xml
+
+mv "${APK_PATH}" "${SERVER_APK_PATH}"

@@ -1,8 +1,10 @@
 apply plugin: 'com.android.application'
 
 def actionsDir = "${projectDir}/src/androidTest/java/sh/calaba/instrumentationbackend/actions"
+def assetsDir = "${buildDir}/assets"
 def versionFilePath = "${projectDir}/src/androidTest/java/sh/calaba/instrumentationbackend/actions/version/Version.java"
-def actionsFile = "${buildDir}/assets/actions"
+def actionsFile = "${assetsDir}/actions"
+def exampleManifestFile = "${projectDir}/../AndroidManifest.xml"
 
 android {
     compileSdkVersion 24
@@ -75,13 +77,19 @@ task generateActionsList {
     }
 }
 
+task copyExampleManifestFile(type: Copy) {
+    from "${exampleManifestFile}"
+    into "${assetsDir}"
+}
+
 afterEvaluate {
     /*
-     * Task order: verifyInputParameters -> replaceVersion -> generateActionsList -> compileDebugAndroidTestJavaWithJavac
+     * Task order: verifyInputParameters -> replaceVersion -> generateActionsList -> copyExampleManifestFile -> compileDebugAndroidTestJavaWithJavac
      */
     replaceVersion.dependsOn(verifyInputParameters)
     generateActionsList.dependsOn(replaceVersion)
-    compileDebugAndroidTestJavaWithJavac.dependsOn(generateActionsList)
+    copyExampleManifestFile.dependsOn(generateActionsList)
+    compileDebugAndroidTestJavaWithJavac.dependsOn(copyExampleManifestFile)
 }
 
 dependencies {

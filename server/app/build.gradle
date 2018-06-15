@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 def actionsDir = "${projectDir}/src/androidTest/java/sh/calaba/instrumentationbackend/actions"
 def assetsDir = "${buildDir}/assets"
-def versionFilePath = "${projectDir}/src/androidTest/java/sh/calaba/instrumentationbackend/actions/version/Version.java"
+def versionFilePath = "${actionsDir}/version/Version.java"
 def actionsFile = "${assetsDir}/actions"
 def exampleManifestFile = "${projectDir}/../AndroidManifest.xml"
 
@@ -57,10 +57,13 @@ task generateActionsList {
         })
 
         /*
-         * Transform action path, e.g. change .../src/main/java/sh/calaba/instrumentationbackend/actions/Action.java
+         * Transform action path, e.g. change ...java/sh/calaba/instrumentationbackend/actions/Action.java
          * to sh.calaba.instrumentationbackend.actions.Action
          */
-        def actions = files.collect {file -> def name = file.getName(); "sh.calaba.instrumentationbackend.actions." + name.substring(0, name.length() - 5)}
+        String regex = ".+?(androidTest/java/sh/calaba/instrumentationbackend/actions/)"
+        def actions = files.collect {
+            file -> def actionPath = file.getPath(); actionPath.replaceAll(regex, "sh.calaba.instrumentationbackend.actions.").replaceAll(".java", "").replaceAll("/", ".")
+        }
 
         File outputFile = new File(actionsFile)
         File outputDirectory = outputFile.getParentFile()

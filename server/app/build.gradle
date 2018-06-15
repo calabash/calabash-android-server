@@ -1,32 +1,50 @@
 apply plugin: 'com.android.application'
 
-def actionsDir = "src/androidTest/java/sh/calaba/instrumentationbackend/actions"
+def actionsDir = "${projectDir}/src/androidTest/java/sh/calaba/instrumentationbackend/actions"
+def versionFilePath = "${projectDir}/src/androidTest/java/sh/calaba/instrumentationbackend/actions/version/Version.java"
 def actionsFile = "${buildDir}/assets/actions"
-
 
 android {
     compileSdkVersion 24
     defaultConfig {
         applicationId "sh.calaba.instrumentationbackend"
+        //noinspection MinSdkTooLow
         minSdkVersion 8
+        //noinspection OldTargetApi
         targetSdkVersion 24
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        versionCode 4
+        versionName "0.4.0"
     }
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 
     sourceSets {
         androidTestDebug {
-            print assets.getSrcDirs()
-            res.srcDirs += (new File(actionsFile)).getParentFile()
-            print assets.getSrcDirs()
+            assets.srcDirs += (new File(actionsFile)).getParentFile()
         }
+    }
+}
+
+task verifyInputParameters {
+    doLast {
+        if (!project.hasProperty('version')) {
+            throw new GradleException('"version" parameter should be provided!')
+        }
+
+        println("Version: ${version}")
+        println("Build started...")
+    }
+}
+
+task replaceVersion {
+    doLast {
+        File versionFile = new File("${versionFilePath}")
+        String content = versionFile.text
+        content = content.replaceAll("VERSION=\"[\\d.]+\"", "VERSION=\"${version}\"")
+        versionFile.write(content)
     }
 }
 
@@ -36,26 +54,38 @@ task generateActionsList {
             include '**/*.java'
         })
 
-        def actions = files.collect {file -> def name = file.getName(); "sh.calaba.instrumentationbackend.actions." + name.substring(0, name.length()-5)}
+        /*
+         * Transform action path, e.g. change .../src/main/java/sh/calaba/instrumentationbackend/actions/Action.java
+         * to sh.calaba.instrumentationbackend.actions.Action
+         */
+        def actions = files.collect {file -> def name = file.getName(); "sh.calaba.instrumentationbackend.actions." + name.substring(0, name.length() - 5)}
 
         File outputFile = new File(actionsFile)
         File outputDirectory = outputFile.getParentFile()
         outputDirectory.mkdirs()
         outputFile.createNewFile()
 
-        outputFile.withWriter {writer ->
-            actions.each {action -> writer.writeLine action}
+        outputFile.withWriter {
+            writer ->
+                actions.each {
+                    action -> writer.writeLine action
+                    println(action)
+                }
         }
     }
 }
 
-
-assembleAndroidTest.dependsOn(generateActionsList)
-
+afterEvaluate {
+    /*
+     * Task order: verifyInputParameters -> replaceVersion -> generateActionsList -> compileDebugAndroidTestJavaWithJavac
+     */
+    replaceVersion.dependsOn(verifyInputParameters)
+    generateActionsList.dependsOn(replaceVersion)
+    compileDebugAndroidTestJavaWithJavac.dependsOn(generateActionsList)
+}
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     androidTestImplementation 'net.sourceforge.jadex:jadex-android-antlr:2.2'
-    androidTestImplementation 'com.android.support.test:runner:0.4'
     androidTestImplementation 'com.jayway.android.robotium:robotium-solo:4.3.1'
 }

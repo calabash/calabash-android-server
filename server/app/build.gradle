@@ -5,6 +5,7 @@ def assetsDir = "${buildDir}/assets"
 def versionFilePath = "${actionsDir}/version/Version.java"
 def actionsFile = "${assetsDir}/actions"
 def exampleManifestFile = "${projectDir}/../AndroidManifest.xml"
+def calabashJs = "${projectDir}/../calabash-js/src/calabash.js"
 
 android {
     compileSdkVersion 24
@@ -16,6 +17,7 @@ android {
         targetSdkVersion 24
         versionCode 4
         versionName "0.4.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -57,10 +59,10 @@ task generateActionsList {
         })
 
         /*
-         * Transform action path, e.g. change ...java/sh/calaba/instrumentationbackend/actions/Action.java
+         * Transform action path, e.g. change .../java/sh/calaba/instrumentationbackend/actions/Action.java
          * to sh.calaba.instrumentationbackend.actions.Action
          */
-        String regex = ".+?(androidTest/java/sh/calaba/instrumentationbackend/actions/)"
+        String regex = ".+?(java/sh/calaba/instrumentationbackend/actions/)"
         def actions = files.collect {
             file -> def actionPath = file.getPath(); actionPath.replaceAll(regex, "sh.calaba.instrumentationbackend.actions.").replaceAll(".java", "").replaceAll("/", ".")
         }
@@ -80,23 +82,24 @@ task generateActionsList {
     }
 }
 
-task copyExampleManifestFile(type: Copy) {
-    from "${exampleManifestFile}"
+task prepareAssets(type: Copy) {
+    from "${exampleManifestFile}", "${calabashJs}"
     into "${assetsDir}"
 }
 
 afterEvaluate {
     /*
-     * Task order: verifyInputParameters -> replaceVersion -> generateActionsList -> copyExampleManifestFile -> compileDebugAndroidTestJavaWithJavac
+     * Task order: verifyInputParameters -> replaceVersion -> generateActionsList -> prepareAssets -> compileDebugAndroidTestJavaWithJavac
      */
     replaceVersion.dependsOn(verifyInputParameters)
     generateActionsList.dependsOn(replaceVersion)
-    copyExampleManifestFile.dependsOn(generateActionsList)
-    compileDebugAndroidTestJavaWithJavac.dependsOn(copyExampleManifestFile)
+    prepareAssets.dependsOn(generateActionsList)
+    compileDebugAndroidTestJavaWithJavac.dependsOn(prepareAssets)
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     androidTestImplementation 'net.sourceforge.jadex:jadex-android-antlr:2.2'
     androidTestImplementation 'com.jayway.android.robotium:robotium-solo:4.3.1'
+    androidTestImplementation 'com.android.support.test:runner:0.4'
 }

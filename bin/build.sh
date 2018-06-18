@@ -42,7 +42,7 @@ function sdk_version_from_gradle {
   fi
 
   local version=$(
-    grep -o "${2}\s\+\d\+" "${1}" | awk '{ print $2 }'
+    perl -lne "print $& if /${2}\s+\d+/" "${1}" | cut -d ' ' -f2
   )
 
   if [ "${version}" = "" ]; then

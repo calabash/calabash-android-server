@@ -2,8 +2,14 @@
 
 set -e
 
-mkdir -p "libs/build"
-cd ..
+integrationTestsDir=$(pwd)
+calabashServerDir="../app/build/intermediates/classes/androidTest/debug"
 
-mv app/build/intermediates/classes-jar/debug/classes.jar integration-tests/libs/build/Calabash.jar
-cd "../integration-tests"
+mkdir -p "libs/build"
+
+cd "${calabashServerDir}"
+find . -name "*.class" | \
+  jar cvf Calabash.jar @/dev/stdin
+
+cd "${integrationTestsDir}"
+mv "${calabashServerDir}/Calabash.jar" libs/build

@@ -14,15 +14,16 @@ Requirements:
 
 - Java 8.
 - Ruby >= 2.2. The latest ruby release is preferred.
-- Android build-tools v26.0.2.
-- Android Platform v22.
+- Android build-tools and Android Platform (will be installed by gradle).
 - Android device/emulator and ADB for local testing.
 
 ```
 $ git clone https://github.com/calabash/calabash-android-server.git
-$ cd calabash-android-server
-$ bin/build.sh
+$ cd calabash-android-server/server
+$ ./gradlew clean assembleAndroidTest
 ```
+
+The final server apk file can be found in `calabash-android-server/server/app/build/outputs/apk/androidTest/debug/TestServer.apk` folder.
 
 ### Testing
 
@@ -51,14 +52,13 @@ If you have issues with build:
 
 If you have issues with installing/running test apk:
 - Make sure that device/emulator is visible via ADB.
+- Verify that Android Platform 24 is installed properly. If not, install this manually.
 - Enable ADB logs by modifying `run_and_compile.sh`:
 ```
 # Disable "exit immediately" mode
 # set -e
 
 # ...
-
-bundle install
 
 # Add this line to clear logs
 adb logcat -c

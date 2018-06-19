@@ -9,7 +9,7 @@ rm -rf "./out"
 mkdir "./out"
 
 find ./src -name "*.java" | \
-  javac -cp  "$ANDROID_HOME/platforms/android-22/android.jar:libs/build/Calabash.jar:libs/junit-4.12.jar" -d tmp @/dev/stdin
+  javac -cp  "$ANDROID_HOME/platforms/android-24/android.jar:libs/build/Calabash.jar:libs/junit-4.12.jar" -d tmp @/dev/stdin
 
 cd "tmp"
 find . -name "*.class" | \

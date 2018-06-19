@@ -100,7 +100,11 @@ shell "${CMD}"
 info "android:targetSdkVersion=${SERVER_API_LEVEL}"
 info "   android:minSdkVersion=${SERVER_MIN_VERSION}"
 
-zip -d "${APK_PATH}" META-INF/\*
-zip -d "${APK_PATH}" AndroidManifest.xml
+echo "Stripping signature and manifest from server apk..."
+zip -q -d "${APK_PATH}" META-INF/\*
+zip -q -d "${APK_PATH}" AndroidManifest.xml
 
 mv "${APK_PATH}" "${SERVER_APK_PATH}"
+
+info "Build done."
+info "Output ready in: ${SERVER_APK_PATH}"

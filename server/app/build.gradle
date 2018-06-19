@@ -6,6 +6,9 @@ def versionFilePath = "${actionsDir}/version/Version.java"
 def actionsFile = "${assetsDir}/actions"
 def exampleManifestFile = "${projectDir}/../AndroidManifest.xml"
 def calabashJs = "${projectDir}/../calabash-js/src/calabash.js"
+def outputPath = "${buildDir}/outputs/apk/androidTest/debug/"
+def apkName = "app-debug-androidTest.apk"
+def serverApkName = "TestServer.apk"
 
 android {
     compileSdkVersion 24
@@ -32,19 +35,17 @@ android {
     }
 }
 
-task verifyInputParameters {
+task notifyBuildStarted {
     doLast {
-        if (!project.hasProperty('version')) {
-            throw new GradleException('"version" parameter should be provided!')
-        }
-
-        println("Version: ${version}")
         println("Build started...")
     }
 }
 
 task replaceVersion {
     doLast {
+        String version = new File("${projectDir}/../../version").text.replaceAll("\n", "")
+        println("Server version: ${version}")
+
         File versionFile = new File("${versionFilePath}")
         String content = versionFile.text
         content = content.replaceAll("VERSION=\"[\\d.]+\"", "VERSION=\"${version}\"")
@@ -72,6 +73,7 @@ task generateActionsList {
         outputDirectory.mkdirs()
         outputFile.createNewFile()
 
+        println("Generate action list:")
         outputFile.withWriter {
             writer ->
                 actions.each {
@@ -87,11 +89,33 @@ task prepareAssets(type: Copy) {
     into "${assetsDir}"
 }
 
+task prepareApk {
+    doLast {
+        println("Stripping signature and manifest from server apk...")
+
+        exec {
+            commandLine "zip", "-q", "-d", "${outputPath}${apkName}", "META-INF/*"
+        }
+        exec {
+            commandLine "zip", "-q", "-d", "${outputPath}${apkName}", "AndroidManifest.xml"
+        }
+        exec {
+            commandLine "mv", "${outputPath}${apkName}", "${outputPath}${serverApkName}"
+        }
+
+        println("Build done.")
+        println("Output ready in: ${outputPath}${serverApkName}")
+    }
+}
+
+/*
+ * Task order: notifyBuildStarted -> replaceVersion -> generateActionsList ->
+ * -> prepareAssets -> compileDebugAndroidTestJavaWithJavac -> ... -> prepareApk
+ */
+assembleAndroidTest.finalizedBy(prepareApk)
+
 afterEvaluate {
-    /*
-     * Task order: verifyInputParameters -> replaceVersion -> generateActionsList -> prepareAssets -> compileDebugAndroidTestJavaWithJavac
-     */
-    replaceVersion.dependsOn(verifyInputParameters)
+    replaceVersion.dependsOn(notifyBuildStarted)
     generateActionsList.dependsOn(replaceVersion)
     prepareAssets.dependsOn(generateActionsList)
     compileDebugAndroidTestJavaWithJavac.dependsOn(prepareAssets)
@@ -101,5 +125,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     androidTestImplementation 'net.sourceforge.jadex:jadex-android-antlr:2.2'
     androidTestImplementation 'com.jayway.android.robotium:robotium-solo:4.3.1'
+
+    //noinspection GradleDependency
     androidTestImplementation 'com.android.support.test:runner:0.4'
 }

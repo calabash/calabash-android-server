@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 def actionsDir = "${projectDir}/src/androidTest/java/sh/calaba/instrumentationbackend/actions"
 def assetsDir = "${buildDir}/assets"
-def versionFilePath = "${actionsDir}/version/Version.java"
+def versionFilePath = "${projectDir}/../../version"
 def actionsFile = "${assetsDir}/actions"
 def exampleManifestFile = "${projectDir}/../AndroidManifest.xml"
 def calabashJs = "${projectDir}/../calabash-js/src/calabash.js"
@@ -41,18 +41,6 @@ task notifyBuildStarted {
     }
 }
 
-task replaceVersion {
-    doLast {
-        String version = new File("${projectDir}/../../version").text.replaceAll("\n", "")
-        println("Server version: ${version}")
-
-        File versionFile = new File("${versionFilePath}")
-        String content = versionFile.text
-        content = content.replaceAll("VERSION=\"[\\d.]+\"", "VERSION=\"${version}\"")
-        versionFile.write(content)
-    }
-}
-
 task generateActionsList {
     doLast {
         FileTree files = fileTree(actionsDir, {
@@ -85,7 +73,7 @@ task generateActionsList {
 }
 
 task prepareAssets(type: Copy) {
-    from "${exampleManifestFile}", "${calabashJs}"
+    from "${exampleManifestFile}", "${calabashJs}", "${versionFilePath}"
     into "${assetsDir}"
 }
 
@@ -109,14 +97,13 @@ task prepareApk {
 }
 
 /*
- * Task order: notifyBuildStarted -> replaceVersion -> generateActionsList ->
+ * Task order: notifyBuildStarted -> generateActionsList ->
  * -> prepareAssets -> compileDebugAndroidTestJavaWithJavac -> ... -> prepareApk
  */
 assembleAndroidTest.finalizedBy(prepareApk)
 
 afterEvaluate {
-    replaceVersion.dependsOn(notifyBuildStarted)
-    generateActionsList.dependsOn(replaceVersion)
+    generateActionsList.dependsOn(notifyBuildStarted)
     prepareAssets.dependsOn(generateActionsList)
     compileDebugAndroidTestJavaWithJavac.dependsOn(prepareAssets)
 }

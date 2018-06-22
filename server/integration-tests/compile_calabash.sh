@@ -2,15 +2,14 @@
 
 set -e
 
+integrationTestsDir=$(pwd)
+calabashServerDir="../app/build/intermediates/classes/androidTest/debug"
+
 mkdir -p "libs/build"
-cd ..
-cd "bin"
+
+cd "${calabashServerDir}"
 find . -name "*.class" | \
   jar cvf Calabash.jar @/dev/stdin
-cd ..
-mv bin/Calabash.jar integration-tests/libs/build
-cd "instrumentation-backend"
-cp "libs/robotium-solo-4.3.1.jar" "../integration-tests/libs/build/"
-cp "libs/InstrumentationExposed.jar" "../integration-tests/libs/build/"
-cp "libs/maps.jar" "../integration-tests/libs/build/"
-cd "../integration-tests"
+
+cd "${integrationTestsDir}"
+mv "${calabashServerDir}/Calabash.jar" libs/build

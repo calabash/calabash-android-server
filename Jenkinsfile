@@ -22,7 +22,10 @@ pipeline {
     }
     stage('Build') {
       steps {
-        sh 'bin/build.sh'
+        sh '''
+          cd server
+          ./gradlew clean assembleAndroidTest
+        '''
       }
     }
     stage('Test') {

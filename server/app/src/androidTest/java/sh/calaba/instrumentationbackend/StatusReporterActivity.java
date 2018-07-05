@@ -1,13 +1,11 @@
 package sh.calaba.instrumentationbackend;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.ContextWrapper;
-import android.os.Build;
 import android.os.Bundle;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -24,11 +22,8 @@ public class StatusReporterActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         {
-            ContextWrapper contextWrapper = new ContextWrapper(this);
-            File failureFile = new File(contextWrapper.getFilesDir(), FAILURE_FILE_PATH);
-            System.out.println("Failure file: "+ failureFile);
-            File finishedFile = new File(contextWrapper.getFilesDir(), FINISHED_FILE_PATH);
-            System.out.println("Finished file: "+ finishedFile);
+            System.out.println("Failure file: "+ getOutputFile(FAILURE_FILE_PATH));
+            System.out.println("Finished file: "+ getOutputFile(FINISHED_FILE_PATH));
         }
 
         if (getIntent() != null) {
@@ -72,32 +67,7 @@ public class StatusReporterActivity extends Activity {
         System.out.println("Failure state: " + message);
 
         clearFailure();
-        OutputStream fileOutputStream;
-
-        if (Build.VERSION.SDK_INT < 23) {
-            fileOutputStream = openFileOutput(FAILURE_FILE_PATH, Context.MODE_WORLD_READABLE);
-        } else {
-            // Marshmallow removed MODE_WORLD_READABLE
-            fileOutputStream = openFileOutput(FAILURE_FILE_PATH, Context.MODE_PRIVATE);
-        }
-
-        try {
-            fileOutputStream.write(message.getBytes());
-
-            if (Build.VERSION.SDK_INT >= 23) {
-                ContextWrapper contextWrapper = new ContextWrapper(this);
-                File failureFile = new File(contextWrapper.getFilesDir(), FAILURE_FILE_PATH);
-
-                // Instead, we modify the file permissions using the Java file API
-                if (!failureFile.setReadable(true, false)) {
-                    throw new RuntimeException("Failed to set file to world readable");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            fileOutputStream.close();
-        }
+        dumpPublicFile(FAILURE_FILE_PATH, message);
     }
 
     private void clear() {
@@ -106,43 +76,32 @@ public class StatusReporterActivity extends Activity {
     }
 
     private void clearFailure() {
-        ContextWrapper contextWrapper = new ContextWrapper(this);
-        new File(contextWrapper.getFilesDir(), FAILURE_FILE_PATH).delete();
+        getOutputFile(FAILURE_FILE_PATH).delete();
     }
 
     private void clearFinishedStatus() {
-        ContextWrapper contextWrapper = new ContextWrapper(this);
-        new File(contextWrapper.getFilesDir(), FINISHED_FILE_PATH).delete();
+        getOutputFile(FINISHED_FILE_PATH).delete();
     }
 
     private void reportFinished(StatusReporter.FinishedState finishedState) throws IOException {
         System.out.println("Finished state: " + finishedState.toString());
 
-        OutputStream fileOutputStream;
+        dumpPublicFile(FINISHED_FILE_PATH, finishedState.toString());
+    }
 
-        if (Build.VERSION.SDK_INT < 23) {
-            fileOutputStream = openFileOutput(FINISHED_FILE_PATH, Context.MODE_WORLD_READABLE);
-        } else {
-            // Marshmallow removed MODE_WORLD_READABLE
-            fileOutputStream = openFileOutput(FINISHED_FILE_PATH, Context.MODE_PRIVATE);
+    private void dumpPublicFile(String path, String content) throws IOException {
+        File outputFile = getOutputFile(path);
+        try (OutputStream fileOutputStream = new FileOutputStream(outputFile)) {
+            fileOutputStream.write(content.getBytes());
         }
 
-        try {
-            fileOutputStream.write(finishedState.toString().getBytes());
-
-            if (Build.VERSION.SDK_INT >= 23) {
-                ContextWrapper contextWrapper = new ContextWrapper(this);
-                File finishedFile = new File(contextWrapper.getFilesDir(), FINISHED_FILE_PATH);
-
-                // Instead, we modify the file permissions using the Java file API
-                if (!finishedFile.setReadable(true, false)) {
-                    throw new RuntimeException("Failed to set file to world readable");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            fileOutputStream.close();
+        if (!outputFile.setReadable(true, false)) {
+            System.err.println("WARNING: Failed to make file " + outputFile.getAbsolutePath() + " readable!");
         }
+    }
+
+    private File getOutputFile(String path) {
+        ContextWrapper contextWrapper = new ContextWrapper(this);
+        return new File(contextWrapper.getFilesDir(), path);
     }
 }

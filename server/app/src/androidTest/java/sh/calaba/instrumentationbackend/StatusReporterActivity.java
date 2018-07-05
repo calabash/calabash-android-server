@@ -3,6 +3,7 @@ package sh.calaba.instrumentationbackend;
 import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.os.Build;
 import android.os.Bundle;
 
 import java.io.File;
@@ -68,12 +69,32 @@ public class StatusReporterActivity extends Activity {
     }
 
     private void reportFailure(String message) throws IOException {
-        clearFailure();
+        System.out.println("Failure state: " + message);
 
-        OutputStream fileOutputStream = openFileOutput(FAILURE_FILE_PATH, Context.MODE_WORLD_READABLE);
+        clearFailure();
+        OutputStream fileOutputStream;
+
+        if (Build.VERSION.SDK_INT < 23) {
+            fileOutputStream = openFileOutput(FAILURE_FILE_PATH, Context.MODE_WORLD_READABLE);
+        } else {
+            // Marshmallow removed MODE_WORLD_READABLE
+            fileOutputStream = openFileOutput(FAILURE_FILE_PATH, Context.MODE_PRIVATE);
+        }
 
         try {
             fileOutputStream.write(message.getBytes());
+
+            if (Build.VERSION.SDK_INT >= 23) {
+                ContextWrapper contextWrapper = new ContextWrapper(this);
+                File failureFile = new File(contextWrapper.getFilesDir(), FAILURE_FILE_PATH);
+
+                // Instead, we modify the file permissions using the Java file API
+                if (!failureFile.setReadable(true, false)) {
+                    throw new RuntimeException("Failed to set file to world readable");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             fileOutputStream.close();
         }
@@ -97,10 +118,29 @@ public class StatusReporterActivity extends Activity {
     private void reportFinished(StatusReporter.FinishedState finishedState) throws IOException {
         System.out.println("Finished state: " + finishedState.toString());
 
-        OutputStream fileOutputStream = openFileOutput(FINISHED_FILE_PATH, Context.MODE_WORLD_READABLE);
+        OutputStream fileOutputStream;
+
+        if (Build.VERSION.SDK_INT < 23) {
+            fileOutputStream = openFileOutput(FINISHED_FILE_PATH, Context.MODE_WORLD_READABLE);
+        } else {
+            // Marshmallow removed MODE_WORLD_READABLE
+            fileOutputStream = openFileOutput(FINISHED_FILE_PATH, Context.MODE_PRIVATE);
+        }
 
         try {
             fileOutputStream.write(finishedState.toString().getBytes());
+
+            if (Build.VERSION.SDK_INT >= 23) {
+                ContextWrapper contextWrapper = new ContextWrapper(this);
+                File finishedFile = new File(contextWrapper.getFilesDir(), FINISHED_FILE_PATH);
+
+                // Instead, we modify the file permissions using the Java file API
+                if (!finishedFile.setReadable(true, false)) {
+                    throw new RuntimeException("Failed to set file to world readable");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             fileOutputStream.close();
         }

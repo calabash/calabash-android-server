@@ -17,3 +17,4 @@ TAG=$(cat version | tr -d "\n")
 git tag -a "${TAG}" -m"${TAG}"
 git push origin "${TAG}"
 git branch "tag/${TAG}" "${TAG}"
+git checkout "tag/${TAG}"

@@ -21,7 +21,7 @@ android:
 
 env:
   matrix:
-    - ANDROID_TARGET=android-24  ANDROID_ABI=armeabi-v7a
+    - ANDROID_TARGET=android-22  ANDROID_ABI=armeabi-v7a
 
 # Currently integration tests can't be started in Travis, so disable emulator to decrease build time.
 #before_script:

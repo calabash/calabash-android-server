@@ -1,12 +1,11 @@
 package sh.calaba.instrumentationbackend;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.ContextWrapper;
 import android.os.Bundle;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -23,11 +22,8 @@ public class StatusReporterActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         {
-            ContextWrapper contextWrapper = new ContextWrapper(this);
-            File failureFile = new File(contextWrapper.getFilesDir(), FAILURE_FILE_PATH);
-            System.out.println("Failure file: "+ failureFile);
-            File finishedFile = new File(contextWrapper.getFilesDir(), FINISHED_FILE_PATH);
-            System.out.println("Finished file: "+ finishedFile);
+            System.out.println("Failure file: " + getOutputFile(FAILURE_FILE_PATH));
+            System.out.println("Finished file: " + getOutputFile(FINISHED_FILE_PATH));
         }
 
         if (getIntent() != null) {
@@ -68,15 +64,9 @@ public class StatusReporterActivity extends Activity {
     }
 
     private void reportFailure(String message) throws IOException {
-        clearFailure();
+        System.out.println("Failure state: " + message);
 
-        OutputStream fileOutputStream = openFileOutput(FAILURE_FILE_PATH, Context.MODE_WORLD_READABLE);
-
-        try {
-            fileOutputStream.write(message.getBytes());
-        } finally {
-            fileOutputStream.close();
-        }
+        dumpPublicFile(FAILURE_FILE_PATH, message);
     }
 
     private void clear() {
@@ -85,24 +75,32 @@ public class StatusReporterActivity extends Activity {
     }
 
     private void clearFailure() {
-        ContextWrapper contextWrapper = new ContextWrapper(this);
-        new File(contextWrapper.getFilesDir(), FAILURE_FILE_PATH).delete();
+        getOutputFile(FAILURE_FILE_PATH).delete();
     }
 
     private void clearFinishedStatus() {
-        ContextWrapper contextWrapper = new ContextWrapper(this);
-        new File(contextWrapper.getFilesDir(), FINISHED_FILE_PATH).delete();
+        getOutputFile(FINISHED_FILE_PATH).delete();
     }
 
     private void reportFinished(StatusReporter.FinishedState finishedState) throws IOException {
         System.out.println("Finished state: " + finishedState.toString());
 
-        OutputStream fileOutputStream = openFileOutput(FINISHED_FILE_PATH, Context.MODE_WORLD_READABLE);
+        dumpPublicFile(FINISHED_FILE_PATH, finishedState.toString());
+    }
 
-        try {
-            fileOutputStream.write(finishedState.toString().getBytes());
-        } finally {
-            fileOutputStream.close();
+    private void dumpPublicFile(String path, String content) throws IOException {
+        File outputFile = getOutputFile(path);
+        try (OutputStream fileOutputStream = new FileOutputStream(outputFile, false)) {
+            fileOutputStream.write(content.getBytes());
         }
+
+        if (!outputFile.setReadable(true, false)) {
+            System.err.println("WARNING: Failed to make file " + outputFile.getAbsolutePath() + " readable!");
+        }
+    }
+
+    private File getOutputFile(String path) {
+        ContextWrapper contextWrapper = new ContextWrapper(this);
+        return new File(contextWrapper.getFilesDir(), path);
     }
 }

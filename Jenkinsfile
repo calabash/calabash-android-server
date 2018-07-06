@@ -1,4 +1,4 @@
-String cron_string = BRANCH_NAME == "develop" ? "H H(0-8) * * *" : ""
+String cron_string = BRANCH_NAME == "master" ? "H H(0-8) * * *" : ""
 
 pipeline {
   agent { label 'android-agent' }

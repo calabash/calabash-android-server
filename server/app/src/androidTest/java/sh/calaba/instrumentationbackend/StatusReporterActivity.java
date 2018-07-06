@@ -22,8 +22,8 @@ public class StatusReporterActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         {
-            System.out.println("Failure file: "+ getOutputFile(FAILURE_FILE_PATH));
-            System.out.println("Finished file: "+ getOutputFile(FINISHED_FILE_PATH));
+            System.out.println("Failure file: " + getOutputFile(FAILURE_FILE_PATH));
+            System.out.println("Finished file: " + getOutputFile(FINISHED_FILE_PATH));
         }
 
         if (getIntent() != null) {
@@ -66,7 +66,6 @@ public class StatusReporterActivity extends Activity {
     private void reportFailure(String message) throws IOException {
         System.out.println("Failure state: " + message);
 
-        clearFailure();
         dumpPublicFile(FAILURE_FILE_PATH, message);
     }
 
@@ -91,7 +90,7 @@ public class StatusReporterActivity extends Activity {
 
     private void dumpPublicFile(String path, String content) throws IOException {
         File outputFile = getOutputFile(path);
-        try (OutputStream fileOutputStream = new FileOutputStream(outputFile)) {
+        try (OutputStream fileOutputStream = new FileOutputStream(outputFile, false)) {
             fileOutputStream.write(content.getBytes());
         }
 

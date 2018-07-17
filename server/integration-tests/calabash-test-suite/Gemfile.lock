@@ -3,7 +3,7 @@ GEM
   specs:
     awesome_print (1.8.0)
     builder (3.2.3)
-    calabash-android (0.9.3)
+    calabash-android (0.9.5)
       awesome_print (~> 1.2)
       cucumber (~> 2.0)
       escape (~> 0.0.4)

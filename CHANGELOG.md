@@ -1,3 +1,7 @@
+### 0.9.5
+
+This release aligns the server and gem versions.
+
 ### 0.9.3
 
 Added support for Android P (api 28) devices.

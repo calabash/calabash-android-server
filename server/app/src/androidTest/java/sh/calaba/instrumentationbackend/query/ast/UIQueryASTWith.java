@@ -15,7 +15,9 @@ import org.antlr.runtime.tree.CommonTree;
 import sh.calaba.instrumentationbackend.actions.webview.CalabashChromeClient;
 import sh.calaba.instrumentationbackend.actions.webview.QueryHelper;
 
+import android.os.Build;
 import android.view.View;
+import android.widget.TextView;
 
 import sh.calaba.instrumentationbackend.query.WebContainer;
 import sh.calaba.instrumentationbackend.query.ui.UIObject;
@@ -289,6 +291,18 @@ public class UIQueryASTWith implements UIQueryAST {
 			return true;
 		}
 
+		// Workaround for Android 2.3.x: retrieve text and hint manually to resolve issue with AppCompat elements.
+		if (Build.VERSION.SDK_INT <= 10 && view instanceof TextView) {
+			TextView element = (TextView) view;
+			Object text = element.getText();
+			Object hint = element.getHint();
+
+			if ((text != null && text.toString().equals(expected))
+					|| (hint != null && hint.toString().equals(expected))) {
+				return true;
+			}
+		}
+
 		List<Method> methods = textMethodsForClass.get(view.getClass());
 		for (Method	method : methods) {
 			try {
@@ -308,7 +322,7 @@ public class UIQueryASTWith implements UIQueryAST {
 	public static UIQueryASTWith fromAST(CommonTree step) {
 		CommonTree prop = (CommonTree) step.getChild(0);
 		CommonTree val = (CommonTree) step.getChild(1);
-		
+
 		Object parsedVal = UIQueryUtils.parseValue(val);
 		return new UIQueryASTWith(prop.getText(), parsedVal);
 	}

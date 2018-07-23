@@ -2,28 +2,36 @@
 
 set -e
 
+source log.sh
+
 # Switch Java to v8 in runtime from current context
-. switch_java_version.sh
+if [ "$(uname -s)" == "Darwin" ]; then
+  export JAVA_HOME=`/usr/libexec/java_home -v 1.8`
+elif [ "$(uname -s)" == "Linux" ]; then
+  export JAVA_HOME=/usr/lib/jvm/java-8-oracle/
+fi
+
+info "Using $JAVA_HOME path for JAVA_HOME variable"
 
 # Stage calabash-android sources, build the TestServer.apk,
 # and install the new server in the calabash-android sources.
-./install-latest-test-server.sh
+./00-install-latest-test-server.sh
 
 # Create a .jar file from Calabash sources to be used to
 # compile server unit tests.
-./compile_calabash.sh
+./01-compile-calabash.sh
 
 # Create a .jar file from integration test sources.
-./compile_tests.sh
+./02-compile-tests.sh
 
 # Build unittester.apk
-./build_test_apk.sh
+./03-build-test-apk.sh
 
 # Synchronize manifest files and signatures between
 # unittester.apk (AUT) and TestServer.apk
 #
 # Calls `bundle update`
-./prepare-unittest-apk-for-install.sh
+./04-prepare-unittest-apk-for-install.sh
 
 (
   cd calabash-test-suite

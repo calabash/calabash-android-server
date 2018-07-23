@@ -40,7 +40,7 @@ Execute test runner:
 $ cd server/integration-tests
 
 # Execute build for test project and tests
-$ ./run_and_compile.sh
+$ ./run-tests.sh
 ```
 
 ### Troubleshooting
@@ -54,18 +54,24 @@ If you have issues with installing/running test apk:
 - Make sure that device/emulator is visible via ADB.
 - Verify that Android Platform 24 is installed properly. If not, install this manually.
 - Enable ADB logs by modifying `run_and_compile.sh`:
+
 ```
 # Disable "exit immediately" mode
 # set -e
 
 # ...
 
-# Add this line to clear logs
+# Add this line to clear device logs
 adb logcat -c
 
-# Install app and run tests
-bundle exec calabash-android run unittest.apk
+(
+  cd calabash-test-suite
+  SKIP_VERSION_CHECK=1 bundle exec calabash-android run \
+    unittest.apk \
+    --format pretty \
+    --format junit --out test_report
+)
 
-# Add this line to receive logs
+# Add this line to receive device logs
 adb logcat -d
 ```

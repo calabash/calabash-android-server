@@ -291,7 +291,9 @@ public class UIQueryASTWith implements UIQueryAST {
 			return true;
 		}
 
-		// Workaround for Android 2.3.x: retrieve text and hint manually to resolve issue with AppCompat elements.
+		// Workaround for Android 2.3.x: retrieve text and hint without refection
+		// to resolve issue with AppCompat TextView elements, e.g. android.support.v7.widget.AppCompatButton.
+		// getDeclaredMethods() for AppCompat TextView elements triggers NoSuchMethodException exception on android API <= 10.
 		if (Build.VERSION.SDK_INT <= 10 && view instanceof TextView) {
 			TextView element = (TextView) view;
 			Object text = element.getText();

@@ -104,6 +104,8 @@ public class Query {
 
 	@SuppressWarnings("unchecked")
 	public static List<UIQueryAST> parseQuery(String query) {
+		// Replace '\\' with '\\\\' to prevent NoViableAltException ANTLR exception due to incorrect parsing
+		query = query.replaceAll("\\\\", "\\\\\\\\\\\\\\\\");
 		UIQueryLexer lexer = new UIQueryLexer(new ANTLRStringStream(query));
 		UIQueryParser parser = new UIQueryParser(new CommonTokenStream(lexer));
 

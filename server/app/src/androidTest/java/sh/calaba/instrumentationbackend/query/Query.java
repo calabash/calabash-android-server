@@ -106,8 +106,9 @@ public class Query {
 	public static List<UIQueryAST> parseQuery(String query) {
 		// Replace '\\' with '\\\\' to prevent NoViableAltException ANTLR exception due to incorrect parsing:
 		// '\\' is not valid expression for ANTLR but it's valid text value for Android.
-		// Android implicitly escapes this, e.g.: in UI we have "D\A" but the actual text is "D\\A".
-		query = query.replaceAll("\\\\", "\\\\\\\\\\\\\\\\");
+		// Android implicitly escapes this, e.g.: in UI we have "D\A" but the actual text is 'D\\A'.
+		// This replacement ignores single quotes escaping, e.g. '\\' in 'test\\'test' should not be replaced
+		query = query.replaceAll("\\\\(?!')", "\\\\\\\\\\\\\\\\");
 		UIQueryLexer lexer = new UIQueryLexer(new ANTLRStringStream(query));
 		UIQueryParser parser = new UIQueryParser(new CommonTokenStream(lexer));
 

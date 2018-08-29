@@ -1,3 +1,11 @@
+### 0.9.6
+
+* Test: integration tests use latest TestServer.apk #70
+* Added workaround for Android 2.3.x: verify that the element isMarked
+  without reflection #71
+* Fix problem with backslash in query strings #72
+* Fix wrong single quote replacement. #74
+
 ### 0.9.5
 
 This release aligns the server and gem versions.

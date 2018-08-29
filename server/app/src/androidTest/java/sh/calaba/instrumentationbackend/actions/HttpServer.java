@@ -13,7 +13,6 @@ import java.io.StringWriter;
 import java.lang.InterruptedException;
 import java.lang.Override;
 import java.lang.Runnable;
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -22,9 +21,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import android.os.Build;
-import android.os.Bundle;
 import dalvik.system.DexClassLoader;
 import sh.calaba.instrumentationbackend.*;
+import sh.calaba.instrumentationbackend.actions.version.Version;
 import sh.calaba.instrumentationbackend.actions.webview.CalabashChromeClient;
 import sh.calaba.instrumentationbackend.json.JSONUtils;
 import sh.calaba.instrumentationbackend.query.InvocationOperation;
@@ -121,6 +120,12 @@ public class HttpServer extends NanoHTTPD {
 			return new NanoHTTPD.Response(HTTP_OK, MIME_HTML, "pong");
 
 		}
+        else if (uri.endsWith("/version")) {
+            String result = toJson(new Version().execute());
+            System.out.println("result:" + result);
+
+            return new NanoHTTPD.Response(HTTP_OK, MIME_HTML, result);
+        }
         else if (uri.endsWith("/start-application")) {
             try {
                 String json = params.getProperty("json");

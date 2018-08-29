@@ -29,3 +29,7 @@ proguard/
 
 .idea/
 *.iml
+
+# Ruby
+server/integration-tests/**/Gemfile.lock
+server/integration-tests/calabash-android

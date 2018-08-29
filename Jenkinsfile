@@ -39,7 +39,7 @@ pipeline {
           steps {
             sh '''
               cd server/integration-tests
-              ./run_and_compile.sh
+              ./run-tests.sh
             '''
           }
         }

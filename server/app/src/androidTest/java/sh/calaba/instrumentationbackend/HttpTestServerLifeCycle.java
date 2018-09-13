@@ -1,7 +1,9 @@
 package sh.calaba.instrumentationbackend;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Intent;
+import android.support.test.uiautomator.UiDevice;
 
 import com.jayway.android.robotium.solo.SoloEnhanced;
 
@@ -27,10 +29,19 @@ public class HttpTestServerLifeCycle implements TestServerLifeCycle {
 
                 InstrumentationBackend.solo =
                         new SoloEnhanced(InstrumentationBackend.instrumentation, activity);
+
+                InstrumentationBackend.uiDevice = getUiDevice(InstrumentationBackend.instrumentation);
             }
         });
 
         this.httpServer.setReady();
+    }
+
+    public static UiDevice getUiDevice(Instrumentation instrumentation) {
+        if (instrumentation.getUiAutomation() == null) {
+            throw new NullPointerException("uiAutomation==null: did you forget to set '-w' flag for 'am instrument'?");
+        }
+        return UiDevice.getInstance(instrumentation);
     }
 
     public void startAndWaitForKill() {

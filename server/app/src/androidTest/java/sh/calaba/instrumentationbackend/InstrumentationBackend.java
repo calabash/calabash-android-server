@@ -10,6 +10,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import com.jayway.android.robotium.solo.SoloEnhanced;
@@ -33,6 +34,7 @@ public class InstrumentationBackend {
 
     public static SoloEnhanced solo;
     public static Actions actions;
+    public static UiDevice uiDevice;
 
 
     public static synchronized void setDefaultCalabashAutomation(CalabashAutomation calabashAutomation) {

@@ -1,6 +1,8 @@
 # Built application files
 *.apk
 *.ap_
+server/staging
+server/bin
 
 # Files for the Dalvik VM
 *.dex
@@ -9,7 +11,6 @@
 *.class
 
 # Generated files
-bin/
 gen/
 
 # Gradle files
@@ -25,3 +26,10 @@ proguard/
 
 # Log Files
 *.log
+
+.idea/
+*.iml
+
+# Ruby
+server/integration-tests/**/Gemfile.lock
+server/integration-tests/calabash-android

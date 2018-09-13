@@ -1,0 +1,118 @@
+apply plugin: 'com.android.application'
+
+def actionsDir = "${projectDir}/src/androidTest/java/sh/calaba/instrumentationbackend/actions"
+def assetsDir = "${buildDir}/assets"
+def versionFilePath = "${projectDir}/../../version"
+def actionsFile = "${assetsDir}/actions"
+def exampleManifestFile = "${projectDir}/../AndroidManifest.xml"
+def calabashJs = "${projectDir}/../calabash-js/src/calabash.js"
+def outputPath = "${buildDir}/outputs/apk/androidTest/debug/"
+def apkName = "app-debug-androidTest.apk"
+def serverApkName = "TestServer.apk"
+
+android {
+    compileSdkVersion 22
+    defaultConfig {
+        applicationId "sh.calaba.instrumentationbackend"
+        //noinspection MinSdkTooLow
+        minSdkVersion 8
+        //noinspection OldTargetApi
+        targetSdkVersion 22
+        versionCode 4
+        versionName "0.4.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    sourceSets {
+        androidTestDebug {
+            assets.srcDirs += (new File(actionsFile)).getParentFile()
+        }
+    }
+}
+
+task notifyBuildStarted {
+    doLast {
+        println("Build started...")
+    }
+}
+
+task generateActionsList {
+    doLast {
+        FileTree files = fileTree(actionsDir, {
+            include '**/*.java'
+        })
+
+        /*
+         * Transform action path, e.g. change .../java/sh/calaba/instrumentationbackend/actions/Action.java
+         * to sh.calaba.instrumentationbackend.actions.Action
+         */
+        String regex = ".+?(java/sh/calaba/instrumentationbackend/actions/)"
+        def actions = files.collect {
+            file -> def actionPath = file.getPath(); actionPath.replaceAll(regex, "sh.calaba.instrumentationbackend.actions.").replaceAll(".java", "").replaceAll("/", ".")
+        }
+
+        File outputFile = new File(actionsFile)
+        File outputDirectory = outputFile.getParentFile()
+        outputDirectory.mkdirs()
+        outputFile.createNewFile()
+
+        println("Generate action list:")
+        outputFile.withWriter {
+            writer ->
+                actions.each {
+                    action -> writer.writeLine action
+                    println(action)
+                }
+        }
+    }
+}
+
+task prepareAssets(type: Copy) {
+    from "${exampleManifestFile}", "${calabashJs}", "${versionFilePath}"
+    into "${assetsDir}"
+}
+
+task prepareApk {
+    doLast {
+        println("Stripping signature and manifest from server apk...")
+
+        exec {
+            commandLine "zip", "-q", "-d", "${outputPath}${apkName}", "META-INF/*"
+        }
+        exec {
+            commandLine "zip", "-q", "-d", "${outputPath}${apkName}", "AndroidManifest.xml"
+        }
+        exec {
+            commandLine "mv", "${outputPath}${apkName}", "${outputPath}${serverApkName}"
+        }
+
+        println("Build done.")
+        println("Output ready in: ${outputPath}${serverApkName}")
+    }
+}
+
+/*
+ * Task order: notifyBuildStarted -> generateActionsList ->
+ * -> prepareAssets -> compileDebugAndroidTestJavaWithJavac -> ... -> prepareApk
+ */
+assembleAndroidTest.finalizedBy(prepareApk)
+
+afterEvaluate {
+    generateActionsList.dependsOn(notifyBuildStarted)
+    prepareAssets.dependsOn(generateActionsList)
+    compileDebugAndroidTestJavaWithJavac.dependsOn(prepareAssets)
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestImplementation 'net.sourceforge.jadex:jadex-android-antlr:2.2'
+    androidTestImplementation 'com.jayway.android.robotium:robotium-solo:4.3.1'
+
+    //noinspection GradleDependency
+    androidTestImplementation 'com.android.support.test:runner:0.4'
+}

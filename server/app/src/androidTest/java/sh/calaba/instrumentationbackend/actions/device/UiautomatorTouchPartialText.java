@@ -14,7 +14,7 @@ import sh.calaba.instrumentationbackend.actions.Action;
 public class UiautomatorTouchPartialText implements Action {
     @Override
     public Result execute(String... args) {
-        UiObject element = InstrumentationBackend.uiDevice.findObject(new UiSelector().textContains(args[0]));
+        UiObject element = InstrumentationBackend.getUiDevice().findObject(new UiSelector().textContains(args[0]));
         try {
             element.click();
         } catch (UiObjectNotFoundException e) {

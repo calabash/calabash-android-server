@@ -12,7 +12,7 @@ import sh.calaba.instrumentationbackend.actions.Action;
 public class PullNotification implements Action {
     @Override
     public Result execute(String... args) {
-        InstrumentationBackend.uiDevice.openNotification();
+        InstrumentationBackend.getUiDevice().openNotification();
         return new Result(true);
     }
 

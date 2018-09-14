@@ -16,7 +16,7 @@ import sh.calaba.instrumentationbackend.actions.Action;
 public class ClearNotificationPanel implements Action {
     @Override
     public Result execute(String... args) {
-        UiDevice device = InstrumentationBackend.uiDevice;
+        UiDevice device = InstrumentationBackend.getUiDevice();
         UiSelector clearButton = new UiSelector().descriptionContains("clear");
         try {
             if (device.findObject(clearButton).exists()) {

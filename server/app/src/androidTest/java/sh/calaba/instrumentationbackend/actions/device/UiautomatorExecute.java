@@ -20,7 +20,7 @@ import sh.calaba.instrumentationbackend.actions.Action;
 public class UiautomatorExecute implements Action {
     @Override
     public Result execute(String... args) {
-        UiDevice mDevice = InstrumentationBackend.uiDevice;
+        UiDevice mDevice = InstrumentationBackend.getUiDevice();
         String text = null;
         try {
 

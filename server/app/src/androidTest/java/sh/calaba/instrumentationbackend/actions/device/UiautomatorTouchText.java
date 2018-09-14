@@ -15,7 +15,7 @@ import sh.calaba.instrumentationbackend.actions.Action;
 public class UiautomatorTouchText implements Action {
     @Override
     public Result execute(String... args) {
-        UiObject element = InstrumentationBackend.uiDevice.findObject(new UiSelector().text(args[0]));
+        UiObject element = InstrumentationBackend.getUiDevice().findObject(new UiSelector().text(args[0]));
         try {
             element.click();
         } catch (UiObjectNotFoundException e) {

@@ -18,7 +18,7 @@ import sh.calaba.instrumentationbackend.actions.Action;
 public class UiautomatorTextDump implements Action {
     @Override
     public Result execute(String... args) {
-        UiDevice mDevice = InstrumentationBackend.uiDevice;
+        UiDevice mDevice = InstrumentationBackend.getUiDevice();
         BySelector selector = By.clazz("android.widget.TextView");
         List<UiObject2> mList = mDevice.findObjects(selector);
 

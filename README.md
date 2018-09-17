@@ -6,7 +6,7 @@
 # calabash-android-server
 The test-server for Calabash-Android
 
-Automated Functional testing for Android based on cucumber http://calaba.sh 
+Automated Functional testing for Android based on cucumber http://calaba.sh
 
 ### Building
 
@@ -27,7 +27,7 @@ The final server apk file can be found in `calabash-android-server/server/app/bu
 
 ### Testing
 
-Start Android device/emulator and make sure that device is visible via ADB before executing tests: 
+Start Android device/emulator and make sure that device is visible via ADB before executing tests:
 
 ```
 adb devices
@@ -36,10 +36,7 @@ adb devices
 Execute test runner:
 
 ```
-# Go to integration-tests folder
 $ cd server/integration-tests
-
-# Execute build for test project and tests
 $ ./run-tests.sh
 ```
 

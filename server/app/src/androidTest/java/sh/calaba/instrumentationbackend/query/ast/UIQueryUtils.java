@@ -314,13 +314,7 @@ public class UIQueryUtils {
 				&& Build.VERSION.SDK_INT < 28) {
 			ViewWrapper viewWrapper = new ViewWrapper(view);
 
-			return viewWrapper.getLocationOnScreen();
-		}
-
-		int[] location = new int[2];
-		view.getLocationOnScreen(location);
-
-		return location;
+		return viewWrapper.getLocationOnScreen();
 	}
 
 	@SuppressWarnings("rawtypes")

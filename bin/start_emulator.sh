@@ -6,6 +6,6 @@ if adb devices | grep -q "emulator"; then
     echo "Emulator is running"
 else
     echo "Starting emulator..."
-    emulator -avd calabash_test22 | echo -ne '\n' &
+    emulator -avd calabash_test22 -no-snapshot | echo -ne '\n' &
     adb wait-for-device
 fi

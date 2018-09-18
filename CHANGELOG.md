@@ -1,3 +1,8 @@
+### 0.9.7
+
+* Support instrumentation registry #77
+* Fix regression by changing maximum SDK version for ViewWrapper #79
+
 ### 0.9.6
 
 * Test: integration tests use latest TestServer.apk #70

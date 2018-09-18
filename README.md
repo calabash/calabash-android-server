@@ -1,9 +1,10 @@
 | master  | develop |
 |---------|---------|
-|[![Build Status](http://calabash-ci.xyz:8081/job/calabash-android-server/job/master/badge/icon)](http://calabash-ci.xyz:8081/job/calabash-android-server/job/master/) | [![Build Status](http://calabash-ci.xyz:8081/job/calabash-android-server/job/develop/badge/icon)](http://calabash-ci.xyz:8081/job/calabash-android-server/job/develop/)
+|[![Build Status](https://calabash-ci.xyz/job/calabash-android-server/job/master/badge/icon)](https://calabash-ci.xyz/job/calabash-android-server/job/master/) | [![Build Status](https://calabash-ci.xyz/job/calabash-android-server/job/develop/badge/icon)](https://calabash-ci.xyz/job/calabash-android-server/job/develop/)
 |[![Build Status](https://travis-ci.org/calabash/calabash-android-server.svg?branch=master)](https://travis-ci.org/calabash/calabash-android-server) | [![Build Status](https://travis-ci.org/calabash/calabash-android-server.svg?branch=develop)](https://travis-ci.org/calabash/calabash-android-server)
 
-# calabash-android-server
+## calabash-android-server
+
 The test-server for Calabash-Android
 
 Automated Functional testing for Android based on cucumber http://calaba.sh
@@ -13,7 +14,7 @@ Automated Functional testing for Android based on cucumber http://calaba.sh
 Requirements:
 
 - Java 8.
-- Ruby >= 2.2. The latest ruby release is preferred.
+- Ruby 2.3.*; ruby > 2.4 is not supported.
 - Android build-tools and Android Platform (will be installed by gradle).
 - Android device/emulator and ADB for local testing.
 

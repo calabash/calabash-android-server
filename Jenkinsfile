@@ -1,8 +1,6 @@
-String cron_string = BRANCH_NAME == "master" ? "H H(0-8) * * *" : ""
 
 pipeline {
   agent { label 'android-agent' }
-  triggers { cron(cron_string) }
 
   environment {
     SLACK_COLOR_DANGER  = '#E01563'

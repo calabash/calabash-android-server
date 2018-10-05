@@ -1,3 +1,4 @@
+#!/usr/bin/env groovy
 
 pipeline {
   agent { label 'android-agent' }
@@ -9,6 +10,11 @@ pipeline {
     SLACK_COLOR_GOOD    = '#3EB991'
 
     PROJECT_NAME = 'Calabash android server'
+  }
+
+  options {
+    disableConcurrentBuilds()
+    timeout(time: 30, unit: 'MINUTES')
   }
 
   stages {
@@ -67,11 +73,5 @@ pipeline {
       slackSend (color: "${env.SLACK_COLOR_GOOD}",
                  message: "${env.PROJECT_NAME} [${env.GIT_BRANCH}] #${env.BUILD_NUMBER} *Success* after ${currentBuild.durationString.replace('and counting', '')}(<${env.BUILD_URL}|Open>)")
     }
-  }
-
-  options {
-    disableConcurrentBuilds()
-    timeout(time: 30, unit: 'MINUTES')
-    timestamps()
   }
 }

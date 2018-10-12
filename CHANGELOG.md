@@ -1,3 +1,8 @@
+### 0.9.8
+
+No behavior changes.  Advancing the version to release the
+calabash-android gem.
+
 ### 0.9.7
 
 * Support instrumentation registry #77

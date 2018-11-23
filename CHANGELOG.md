@@ -1,3 +1,7 @@
+### 0.9.9
+
+Register activity monitor earlier, so that all activies are guaranteed to be tracked. Fixes issue where drag coordinates would never return (stuck waiting for activity)
+
 ### 0.9.8
 
 No behavior changes.  Advancing the version to release the

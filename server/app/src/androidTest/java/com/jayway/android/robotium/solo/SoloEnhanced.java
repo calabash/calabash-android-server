@@ -7,10 +7,10 @@ import android.app.Instrumentation;
 import android.graphics.PointF;
 
 public class SoloEnhanced extends Solo {
-
-	public SoloEnhanced(Instrumentation instrumentation, Activity activity) {
-		super(instrumentation, activity);
+	public SoloEnhanced(Instrumentation instrumentation) {
+		super(instrumentation);
 	}
+
     public ActivityUtils getActivityUtils() {
         return activityUtils;
     }

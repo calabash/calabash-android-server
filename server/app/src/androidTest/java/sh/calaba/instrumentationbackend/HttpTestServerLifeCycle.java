@@ -22,11 +22,12 @@ public class HttpTestServerLifeCycle implements TestServerLifeCycle {
         httpServer.setApplicationStarter(new HttpServer.ApplicationStarter() {
             @Override
             public void startApplication(Intent startIntent) {
-                Activity activity =
-                        HttpTestServerLifeCycle.this.applicationLifeCycle.start(startIntent);
-
+                // Make sure Solo has had a chance to register for Activity tracking before starting any
+                // activities
                 InstrumentationBackend.solo =
-                        new SoloEnhanced(InstrumentationBackend.instrumentation, activity);
+                        new SoloEnhanced(InstrumentationBackend.instrumentation);
+                HttpTestServerLifeCycle.this.applicationLifeCycle.start(startIntent);
+
             }
         });
 

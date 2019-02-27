@@ -1,3 +1,17 @@
+### 0.9.9
+
+Register activity monitor earlier, so that all activies are guaranteed to be tracked. Fixes issue where drag coordinates would never return (stuck waiting for activity)
+
+### 0.9.8
+
+No behavior changes.  Advancing the version to release the
+calabash-android gem.
+
+### 0.9.7
+
+* Support instrumentation registry #77
+* Fix regression by changing maximum SDK version for ViewWrapper #79
+
 ### 0.9.6
 
 * Test: integration tests use latest TestServer.apk #70

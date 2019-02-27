@@ -7,6 +7,8 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.test.InstrumentationRegistry;
+
 import sh.calaba.instrumentationbackend.*;
 import sh.calaba.instrumentationbackend.actions.Actions;
 import sh.calaba.instrumentationbackend.actions.HttpServer;
@@ -32,6 +34,7 @@ public class AndroidInstrumentationStartup implements EntryPoint {
     }
 
     private AndroidInstrumentationStartup(CalabashInstrumentation instrumentation, Bundle arguments) {
+        InstrumentationRegistry.registerInstance(instrumentation, arguments);
         this.instrumentation = instrumentation;
         this.arguments = arguments;
     }

@@ -309,12 +309,24 @@ public class UIQueryUtils {
 		return futureTask;
 	}
 
-	public static int[] getViewLocationOnScreen(View view) {
+	public static int[] getViewLocationOnScreen(final View view) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1
 				&& Build.VERSION.SDK_INT < 28) {
 			ViewWrapper viewWrapper = new ViewWrapper(view);
 
 		return viewWrapper.getLocationOnScreen();
+	}
+
+		final int[] location = new int[2];
+
+		InstrumentationBackend.instrumentation.runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                view.getLocationOnScreen(location);
+            }
+        });
+
+		return location;
 	}
 
 	@SuppressWarnings("rawtypes")

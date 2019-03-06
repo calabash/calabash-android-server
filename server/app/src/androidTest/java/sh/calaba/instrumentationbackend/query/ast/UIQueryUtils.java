@@ -33,6 +33,7 @@ import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import sh.calaba.org.codehaus.jackson.type.TypeReference;
 
 import android.os.Build;
+import android.os.Looper;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
@@ -319,17 +320,24 @@ public class UIQueryUtils {
 
 		final int[] location = new int[2];
 
-		InstrumentationBackend.instrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                view.getLocationOnScreen(location);
-            }
-        });
-
+		if (isMainThread()) {
+			view.getLocationOnScreen(location);
+		} else {
+			InstrumentationBackend.instrumentation.runOnMainSync(new Runnable() {
+				@Override
+				public void run() {
+					view.getLocationOnScreen(location);
+				}
+			});
+		}
 		return location;
 	}
 
-	@SuppressWarnings("rawtypes")
+    private static boolean isMainThread() {
+        return Looper.myLooper() == Looper.getMainLooper();
+    }
+
+    @SuppressWarnings("rawtypes")
 	public static Object evaluateSyncInMainThread(Callable callable) {
 		try {
 			return evaluateAsyncInMainThread(callable)

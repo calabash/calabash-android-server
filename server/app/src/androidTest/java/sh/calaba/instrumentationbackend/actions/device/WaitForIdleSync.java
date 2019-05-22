@@ -25,7 +25,7 @@ public class WaitForIdleSync implements Action {
             }
         });
         try {
-            latch.await(5, TimeUnit.SECONDS);
+            latch.await(Integer.parseInt(args[0]), TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

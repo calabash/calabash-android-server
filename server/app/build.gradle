@@ -11,13 +11,13 @@ def apkName = "app-debug-androidTest.apk"
 def serverApkName = "TestServer.apk"
 
 android {
-    compileSdkVersion 22
+    compileSdkVersion 23
     defaultConfig {
         applicationId "sh.calaba.instrumentationbackend"
         //noinspection MinSdkTooLow
         minSdkVersion 8
-        //noinspection OldTargetApi
-        targetSdkVersion 28
+        //noinspection ExpiredTargetSdkVersion,OldTargetApi
+        targetSdkVersion 23
         versionCode 9
         versionName "0.9.9"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

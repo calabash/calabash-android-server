@@ -17,7 +17,7 @@ jobs:
   steps:
   - task: Gradle@2
     inputs:
-      workingDirectory: '/server/'
+      workingDirectory: 'server/'
       gradleWrapperFile: 'gradlew'
       gradleOptions: '-Xmx3072m'
       javaHomeOption: 'JDKVersion'

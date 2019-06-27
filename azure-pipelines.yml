@@ -18,7 +18,7 @@ jobs:
   - task: Gradle@2
     inputs:
       workingDirectory: 'server/'
-      gradleWrapperFile: 'gradlew'
+      gradleWrapperFile: 'server/gradlew/'
       gradleOptions: '-Xmx3072m'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.11'

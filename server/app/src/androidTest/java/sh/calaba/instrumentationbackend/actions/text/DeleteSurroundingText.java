@@ -38,10 +38,6 @@ public class DeleteSurroundingText extends TextAction {
     protected Future<Result> executeOnInputThread(final View servedView, final InputConnection inputConnection) {
         int beforeLength, afterLength;
 
-        if (requiresWebViewInput(servedView)) {
-            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.deleteTextScript(argBeforeLength, argAfterLength));
-        }
-
         // Find length of non-formatted text
         int textLength = InfoMethodUtil.getTextLength(inputConnection);
 

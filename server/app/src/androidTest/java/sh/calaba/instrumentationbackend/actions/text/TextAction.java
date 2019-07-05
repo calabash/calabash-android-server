@@ -24,36 +24,24 @@ public abstract class TextAction implements Action {
             return Result.failedResult(e.getMessage());
         }
 
-        final View servedView;
-        final InputConnection inputConnection;
-
         try {
-            servedView = InfoMethodUtil.getServedView();
+            final View servedView = InfoMethodUtil.getServedView();
+            FutureTask<Future<Result>> futureResult = new FutureTask<>(new Callable<Future<Result>>() {
+                @Override
+                public Future<Result> call() throws InfoMethodUtil.UnexpectedInputMethodManagerStructureException {
+                    final InputConnection inputConnection = InfoMethodUtil.getInputConnection();
+                    if (inputConnection == null || servedView == null) {
+                        return new CompletedFuture<>(Result.failedResult(getNoFocusedViewMessage()));
+                    }
+                    return executeOnInputThread(servedView, inputConnection);
+                }
+            });
 
-            // There is a small race condition here, as the input connection may have changed after
-            // we have gotten the servedView.
-            inputConnection = InfoMethodUtil.getInputConnection();
-        } catch (InfoMethodUtil.UnexpectedInputMethodManagerStructureException e) {
-            e.printStackTrace();
-            return Result.failedResult(e.getMessage());
-        }
-
-        if (servedView == null || (inputConnection == null && !requiresWebViewInput(servedView))) {
-            return Result.failedResult(getNoFocusedViewMessage());
-        }
-
-        FutureTask<Future<Result>> futureResult = new FutureTask<>(new Callable<Future<Result>>() {
-            @Override
-            public Future<Result> call() {
-                return executeOnInputThread(servedView, inputConnection);
-            }
-        });
-
-        UIQueryUtils.postOnViewHandlerOrUiThread(servedView, futureResult);
-
-        try {
+            UIQueryUtils.postOnViewHandlerOrUiThread(servedView, futureResult);
             Future<Result> res = futureResult.get(10, TimeUnit.SECONDS);
             return res.get(10, TimeUnit.SECONDS);
+        } catch (InfoMethodUtil.UnexpectedInputMethodManagerStructureException e) {
+            throw new RuntimeException(e);
         } catch (ExecutionException executionException) {
             throw new RuntimeException(executionException.getCause());
         } catch (InterruptedException e) {
@@ -61,16 +49,6 @@ public abstract class TextAction implements Action {
         } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * Verifies is specific WebView input logic required or not.
-     * On Android 4 devices we have servedView instanceof WebView and correct input connection, so we don't need to use js logic on old devices.
-     * @param view active view
-     * @return value indicating whether WebView JS input logic required or not
-     */
-    public static boolean requiresWebViewInput(View view) {
-        return view instanceof WebView && Build.VERSION.SDK_INT > 27;
     }
 
     /**

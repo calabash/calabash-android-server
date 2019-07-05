@@ -7,6 +7,7 @@ import java.util.List;
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Activity;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -68,6 +69,7 @@ public class ClearAppData2 extends InstrumentationTestRunner {
         }
 
         statusReporter.reportFinished(StatusReporter.FinishedState.SUCCESSFUL);
+        finish(Activity.RESULT_OK, null);
     }
 
     private void removeOwnAccountTypes() {

@@ -1,3 +1,10 @@
+
+### 0.9.10
+
+* Do not trigger an "build for older version of Android" popup
+* Fix location mocking on Android Q
+* Fix entertext and friends to work on webview on newer version of Android (9+)
+
 ### 0.9.9
 
 Register activity monitor earlier, so that all activies are guaranteed to be tracked. Fixes issue where drag coordinates would never return (stuck waiting for activity)

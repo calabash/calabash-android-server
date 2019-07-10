@@ -11,15 +11,21 @@ def apkName = "app-debug-androidTest.apk"
 def serverApkName = "TestServer.apk"
 
 android {
+
+    // > 23, results in build errors:
+    //  package android.test does not exist
     compileSdkVersion 23
     defaultConfig {
         applicationId "sh.calaba.instrumentationbackend"
         //noinspection MinSdkTooLow
         minSdkVersion 8
         //noinspection ExpiredTargetSdkVersion,OldTargetApi
+        // Keep this sync'd with compileSdkVersion
         targetSdkVersion 23
-        versionCode 9
-        versionName "0.9.9"
+        // Keep this in step with the ../../version file
+        // versionCode is the patch version
+        versionCode 11
+        versionName "0.9.11"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

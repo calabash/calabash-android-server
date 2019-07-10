@@ -36,7 +36,7 @@ android {
 
     sourceSets {
         androidTestDebug {
-            assets.srcDirs += (new File(actionsFile)).getParentFile()
+            assets.srcDirs += assetsDir
         }
     }
 }
@@ -54,7 +54,7 @@ task generateActionsList {
         })
 
         /*
-         * Transform action path, e.g. change .../java/sh/calaba/instrumentationbackend/actions/Action.java
+         * Transform action path, e.g. change ../java/sh/calaba/instrumentationbackend/actions/Action.java
          * to sh.calaba.instrumentationbackend.actions.Action
          */
         String regex = ".+?(java/sh/calaba/instrumentationbackend/actions/)"
@@ -85,6 +85,11 @@ task prepareAssets(type: Copy) {
 
 task prepareApk {
     doLast {
+        println(assetsDir)
+        new File(assetsDir).eachFile() {
+            file -> println file.getAbsolutePath()
+        }
+
         println("Stripping signature and manifest from server apk...")
 
         exec {

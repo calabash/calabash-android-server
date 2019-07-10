@@ -18,8 +18,63 @@ jobs:
       publishJUnitResults: false
       tasks: 'assembleAndroidTest'
 
-  -script: bin/build.sh --verify-only
-   displayName: "$(IMAGE_POOL) - Verify TestServer.apk"
+  - script: |
+      #!/usr/bin/env bash
+      echo $PWD
+      bin/build.sh --verify-only
+    displayName: "$(IMAGE_POOL) - Verify TestServer.apk"
+
+  - bash: |
+      #!/usr/bin/env bash
+
+      uname -a
+      $ANDROID_HOME/tools/bin/sdkmanager --version
+    displayName: Environment info
+
+  - bash: |
+      #!/usr/bin/env bash
+      cd $ANDROID_HOME/tools
+
+      # Install all required sdk packages
+      echo "y" | bin/sdkmanager --update
+      echo "y" | bin/sdkmanager --install tools
+      echo "y" | bin/sdkmanager --install platform-tools
+      echo "y" | bin/sdkmanager --install emulator
+      echo "y" | bin/sdkmanager --install 'platforms;android-28'
+      echo "y" | bin/sdkmanager --install 'build-tools;27.0.3'
+      echo "y" | bin/sdkmanager --install 'system-images;android-28;google_apis;x86'
+    displayName: Install Android Sdk
+
+  - bash: |
+      #!/usr/bin/env bash
+
+      # Kill emulator
+      $ANDROID_HOME/platform-tools/adb devices | grep emulator | cut -f1 | while read line; do adb -s $line emu kill || true; done
+    displayName: Kill old emulators
+
+  - bash: |
+      #!/usr/bin/env bash
+
+      # Create emulator
+      echo "no" | $ANDROID_HOME/tools/bin/avdmanager create avd -n xamarin_android_emulator -k 'system-images;android-28;google_apis;x86' --force
+
+      $ANDROID_HOME/emulator/emulator -list-avds
+
+      echo "Starting emulator"
+
+      # Start emulator in background
+      nohup $ANDROID_HOME/emulator/emulator -avd xamarin_android_emulator -no-snapshot > /dev/null 2>&1 &
+      $ANDROID_HOME/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'
+
+      echo "Disabling animations on emulator"
+
+      adb shell settings put global window_animation_scale 0
+      adb shell settings put global transition_animation_scale 0
+      adb shell settings put global animator_duration_scale 0
+
+      echo "Emulator started"
+    displayName: Create and start android emulator
+
 
   # TODO: publish cucumber report
   # - server/integration-tests/test-report/*.xml

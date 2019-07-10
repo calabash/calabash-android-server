@@ -17,3 +17,13 @@ jobs:
       gradleOptions: '-Xmx3072m'
       publishJUnitResults: false
       tasks: 'assembleAndroidTest'
+
+  -script: bin/build.sh --verify-only
+   displayName: "$(IMAGE_POOL) - Verify TestServer.apk"
+
+  # TODO: publish cucumber report
+  # - server/integration-tests/test-report/*.xml
+  - script: |
+      cd server/integration-tests
+      ./test.sh --skip-build
+    displayName: "$(IMAGE_POOL) - Integration Tests"

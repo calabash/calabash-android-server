@@ -41,13 +41,7 @@ android {
     }
 }
 
-task notifyBuildStarted {
-    doLast {
-        println("Build started...")
-    }
-}
-
-task generateActionsList {
+task addFilesToAssets {
     doLast {
         FileTree files = fileTree(actionsDir, {
             include '**/*.java'
@@ -67,7 +61,7 @@ task generateActionsList {
         outputDirectory.mkdirs()
         outputFile.createNewFile()
 
-        println("Generate action list:")
+        println("=== Generating Action List ===")
         outputFile.withWriter {
             writer ->
                 actions.each {
@@ -75,12 +69,21 @@ task generateActionsList {
                     println(action)
                 }
         }
-    }
-}
 
-task prepareAssets(type: Copy) {
-    from "${exampleManifestFile}", "${calabashJs}", "${versionFilePath}"
-    into "${assetsDir}"
+        println("=== Adding Additional Assets ===")
+        println("Adding ${exampleManifestFile}")
+        exec {
+            commandLine "cp", "${exampleManifestFile}", "${assetsDir}"
+        }
+        println("Adding ${calabashJs}")
+        exec {
+            commandLine "cp", "${calabashJs}", "${assetsDir}"
+        }
+        println("Adding ${versionFilePath}")
+        exec {
+            commandLine "cp", "${versionFilePath}", "${assetsDir}"
+        }
+    }
 }
 
 task prepareApk {
@@ -107,17 +110,14 @@ task prepareApk {
     }
 }
 
-/*
- * Task order: notifyBuildStarted -> generateActionsList ->
- * -> prepareAssets -> compileDebugAndroidTestJavaWithJavac -> ... -> prepareApk
- */
-assembleAndroidTest.finalizedBy(prepareApk)
-
-afterEvaluate {
-    generateActionsList.dependsOn(notifyBuildStarted)
-    prepareAssets.dependsOn(generateActionsList)
-    compileDebugAndroidTestJavaWithJavac.dependsOn(prepareAssets)
+tasks.matching { task ->
+    task.name.startsWith('compile')
+}.all { task ->
+    task.dependsOn(["addFilesToAssets"])
 }
+
+
+assembleAndroidTest.finalizedBy(prepareApk)
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])

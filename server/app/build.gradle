@@ -19,8 +19,8 @@ android {
         applicationId "sh.calaba.instrumentationbackend"
         //noinspection MinSdkTooLow
         minSdkVersion 8
-        //noinspection ExpiredTargetSdkVersion,OldTargetApi
         // Keep this sync'd with compileSdkVersion
+        //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 23
         // Keep this in step with the ../../version file
         // versionCode is the patch version
@@ -88,25 +88,79 @@ task addFilesToAssets {
 
 task prepareApk {
     doLast {
-        println(assetsDir)
-        new File(assetsDir).eachFile() {
-            file -> println file.getAbsolutePath()
-        }
+        def apk = "${outputPath}${apkName}"
+        def server = "${outputPath}${serverApkName}"
 
         println("Stripping signature and manifest from server apk...")
 
         exec {
-            commandLine "zip", "-q", "-d", "${outputPath}${apkName}", "META-INF/*"
+            commandLine "zip", "-q", "-d", "${apk}", "META-INF/*"
         }
         exec {
-            commandLine "zip", "-q", "-d", "${outputPath}${apkName}", "AndroidManifest.xml"
-        }
-        exec {
-            commandLine "mv", "${outputPath}${apkName}", "${outputPath}${serverApkName}"
+            commandLine "zip", "-q", "-d", "${apk}", "AndroidManifest.xml"
         }
 
-        println("Build done.")
-        println("Output ready in: ${outputPath}${serverApkName}")
+        exec {
+            commandLine "rm", "-f", "${server}"
+        }
+
+        exec {
+            commandLine "cp", "${apk}", "${server}"
+        }
+
+
+        println("Done building.")
+        println("Verifying the apk...")
+
+
+        def tmpDir = new File("../../tmp/verify-apk")
+        tmpDir.delete()
+        tmpDir.mkdirs()
+
+        ant.unzip(src: "${server}", dest: tmpDir.absolutePath)
+        def files = []
+
+        // 'it' is a string until it is added to files, then it is a File
+        tmpDir.traverse(type: groovy.io.FileType.FILES) { files.add(it) }
+        files = files.collect { it.path }
+
+        def counter = 0
+        println "=== Files in APK =="
+        files.each {
+            println "${it}"
+            counter = counter + 1
+        }
+        println "=== END =="
+
+        if (counter != 10) {
+            def message = "Expected 10 files in ${serverApkName} - found ${files.count}"
+
+            throw new GradleException(message)
+        }
+
+        ["resources.arsc",
+         "junit/runner/logo.gif",
+         "junit/runner/smalllogo.gif",
+         "classes.dex",
+         "LICENSE-junit.txt",
+         "assets/calabash.js",
+         "assets/AndroidManifest.xml",
+         "assets/version",
+         "assets/actions",
+         "com/jayway/android/robotium/solo/RobotiumWeb.js"].collect {
+            "${tmpDir.path}/${it}".toString()
+        }.each {
+            if (!files.contains(it)) {
+                println("${it.class}")
+                throw new GradleException("Expected to find ${it} in apk")
+            }
+        }
+
+        exec {
+            commandLine "cp", "${server}", "../.."
+        }
+        println("Done verifying!")
+        println("Staged a copy of TestServer.apk to the root directory of this repository")
     }
 }
 
@@ -115,7 +169,6 @@ tasks.matching { task ->
 }.all { task ->
     task.dependsOn(["addFilesToAssets"])
 }
-
 
 assembleAndroidTest.finalizedBy(prepareApk)
 

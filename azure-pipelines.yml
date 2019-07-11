@@ -19,21 +19,12 @@ jobs:
       publishJUnitResults: false
       tasks: 'assembleAndroidTest'
 
-  - script: |
-      #!/usr/bin/env bash
-      echo $PWD
-      bin/build.sh --verify-only
-    displayName: "$(IMAGE_POOL) - Verify TestServer.apk"
-
   - bash: |
       #!/usr/bin/env bash
 
       uname -a
       $ANDROID_HOME/tools/bin/sdkmanager --version
-    displayName: Environment info
 
-  - bash: |
-      #!/usr/bin/env bash
       cd $ANDROID_HOME/tools
 
       # Install all required sdk packages

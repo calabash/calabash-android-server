@@ -1,8 +1,3 @@
-# Built application files
-*.apk
-*.ap_
-server/staging
-server/bin
 
 # Files for the Dalvik VM
 *.dex
@@ -17,6 +12,8 @@ gen/
 .gradle/
 build/
 /*/build/
+server/staging
+server/bin
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -33,3 +30,9 @@ proguard/
 # Ruby
 server/integration-tests/**/Gemfile.lock
 server/integration-tests/calabash-android
+
+# Test
+server/integration-tests/calabash-test-suite/test_servers
+server/integration-tests/calabash-test-suite/unit-tester.apk
+server/integration-tests/unit-tester.apk
+server/integration-tests/unit-tester-new.apk

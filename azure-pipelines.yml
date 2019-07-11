@@ -4,8 +4,9 @@ jobs:
     matrix:
       Mojave:
         IMAGE_POOL: 'macOS-10.14'
-      Ubuntu-16:
-        IMAGE_POOL: 'ubuntu-16.04'
+      # Android Emulator is not available on Ubuntu
+      # Ubuntu-16:
+      # IMAGE_POOL: 'ubuntu-16.04'
   pool:
     vmImage: $(IMAGE_POOL)
 

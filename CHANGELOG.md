@@ -1,3 +1,12 @@
+### 0.9.11
+
+No changes to the server.  The purpose of this release is to sync with the
+calabash-android gem version (to fix a bad release of the TestServer.apk).
+
+The build system has been improved and the TestServer.apk and
+AndroidManifest.xml are not validated as part of the build.
+
+The TestServer.apk and AndroidManifest.xml are now in the git index.
 
 ### 0.9.10
 

@@ -1,15 +1,18 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 set -e
+source ./log.sh
 
-integrationTestsDir=$(pwd)
-calabashServerDir="../app/build/intermediates/classes/androidTest/debug"
+banner "Creating and Installing Calabash.jar"
 
+rm -rf "libs/build"
 mkdir -p "libs/build"
 
-cd "${calabashServerDir}"
-find . -name "*.class" | \
-  jar cvf Calabash.jar @/dev/stdin
+SERVER_DIR="../app/build/intermediates/javac/debugAndroidTest/compileDebugAndroidTestJavaWithJavac/classes"
+info "Creating Calabash.jar from *.class files"
+pushd "${SERVER_DIR}" > /dev/null
+  find . -name "*.class" | jar cf Calabash.jar @/dev/stdin
+popd > /dev/null
 
-cd "${integrationTestsDir}"
-mv "${calabashServerDir}/Calabash.jar" libs/build
+mv "${SERVER_DIR}/Calabash.jar" "libs/build"
+info "Installed libs/build/Calabash.jar"

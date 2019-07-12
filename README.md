@@ -14,7 +14,7 @@ Automated Functional testing for Android based on cucumber http://calaba.sh
 Requirements:
 
 - Java 8.
-- Ruby 2.3.*; ruby > 2.4 is not supported.
+- Ruby >= 2.3.*
 - Android build-tools and Android Platform (will be installed by gradle).
 - Android device/emulator and ADB for local testing.
 
@@ -24,34 +24,35 @@ $ cd calabash-android-server/server
 $ ./gradlew clean assembleAndroidTest
 ```
 
-The final server apk file can be found in `calabash-android-server/server/app/build/outputs/apk/androidTest/debug/TestServer.apk` folder.
+The gradle task will stage the TestServer.apk and the AndroidManifest.xml to the
+root directory of this repository.
 
 ### Testing
 
 Start Android device/emulator and make sure that device is visible via ADB before executing tests:
 
 ```
-adb devices
+$ adb devices
 ```
 
 Execute test runner:
 
 ```
 $ cd server/integration-tests
-$ ./run-tests.sh
+$ ./test.sh
 ```
 
 ### Troubleshooting
 
 If you have issues with build:
 - Make sure that you have correct version of required dev tools/SDKs.
-
 - Verify environment variables on your machine.
 
 If you have issues with installing/running test apk:
 - Make sure that device/emulator is visible via ADB.
-- Verify that Android Platform 24 is installed properly. If not, install this manually.
-- Enable ADB logs by modifying `run_and_compile.sh`:
+
+Modify the server/integration-tests/04-run-tests.sh as follows to emit
+adb logcat logs after the tests.
 
 ```
 # Disable "exit immediately" mode

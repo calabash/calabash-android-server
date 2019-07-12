@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="#testPackage#"
-    android:versionCode="10"
-    android:versionName="0.9.10">
+    android:versionCode="TEST_SERVER_VERSION_CODE"
+    android:versionName="TEST_SERVER_VERSION_NAME">
 
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="28" />
 

@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- Keep version info synced with ../version-->
-<!-- versionCode is the minor version -->
-<!-- versionName is the full version -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="#testPackage#"
-    android:versionCode="9"
-    android:versionName="0.9.11">
+    android:versionCode="TEST_SERVER_VERSION_CODE"
+    android:versionName="TEST_SERVER_VERSION_NAME">
 
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="28" />
 

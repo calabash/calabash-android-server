@@ -2,18 +2,20 @@ apply plugin: 'com.android.application'
 
 def actionsDir = "${projectDir}/src/androidTest/java/sh/calaba/instrumentationbackend/actions"
 def assetsDir = "${buildDir}/assets"
-def versionFilePath = "${projectDir}/../../version"
 def actionsFile = "${assetsDir}/actions"
-def exampleManifestFile = "${projectDir}/../AndroidManifest.xml"
+def exampleManifestFile = "${projectDir}/../AndroidManifest.xml.template"
 def calabashJs = "${projectDir}/../calabash-js/src/calabash.js"
 def outputPath = "${buildDir}/outputs/apk/androidTest/debug/"
 def apkName = "app-debug-androidTest.apk"
 def serverApkName = "TestServer.apk"
+def versionFilePath = "${projectDir}/../../version"
+def version = new File(versionFilePath).text.replaceAll("\\s","")
+def patchVersion = version.split("\\.")[2].toInteger()
 
 android {
 
-    // > 23, results in build errors:
-    //  package android.test does not exist
+    // setting this > 23, results in build errors:
+    // package android.test does not exist
     compileSdkVersion 23
     defaultConfig {
         applicationId "sh.calaba.instrumentationbackend"
@@ -22,10 +24,8 @@ android {
         // Keep this sync'd with compileSdkVersion
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 23
-        // Keep this in step with the ../../version file
-        // versionCode is the patch version
-        versionCode 11
-        versionName "0.9.11"
+        versionCode patchVersion
+        versionName "${version}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -71,10 +71,16 @@ task addFilesToAssets {
         }
 
         println("=== Adding Additional Assets ===")
+
         println("Adding ${exampleManifestFile}")
-        exec {
-            commandLine "cp", "${exampleManifestFile}", "${assetsDir}"
-        }
+        def manifestContents = new File(exampleManifestFile).text
+        manifestContents = manifestContents.replaceAll("TEST_SERVER_VERSION_CODE", "${patchVersion}")
+        manifestContents = manifestContents.replaceAll("TEST_SERVER_VERSION_NAME", version)
+        outputFile = new File("${assetsDir}/AndroidManifest.xml")
+        outputFile.createNewFile()
+        outputFile.write(manifestContents)
+
+
         println("Adding ${calabashJs}")
         exec {
             commandLine "cp", "${calabashJs}", "${assetsDir}"
@@ -120,9 +126,7 @@ task prepareApk {
         ant.unzip(src: "${server}", dest: tmpDir.absolutePath)
         def files = []
 
-        // 'it' is a string until it is added to files, then it is a File
-        tmpDir.traverse(type: groovy.io.FileType.FILES) { files.add(it) }
-        files = files.collect { it.path }
+        tmpDir.traverse(type: groovy.io.FileType.FILES) { files.add(it.path) }
 
         def counter = 0
         println "=== Files in APK =="
@@ -134,7 +138,6 @@ task prepareApk {
 
         if (counter != 10) {
             def message = "Expected 10 files in ${serverApkName} - found ${files.count}"
-
             throw new GradleException(message)
         }
 
@@ -156,11 +159,28 @@ task prepareApk {
             }
         }
 
+        def manifestContents = new File("${tmpDir.path}/assets/AndroidManifest.xml").text
+        if (!manifestContents.contains("android:versionCode=\"${patchVersion}\"")) {
+            throw new GradleException("Expected to find correct android:versionCode (${patchVersion}) in AndroidManifest.xml")
+        }
+
+        if (!manifestContents.contains("android:versionName=\"${version}\"")) {
+            throw new GradleException("Expected to find correct android:versionName (${version}) in AndroidManifest.xml")
+        }
+
+
+        println("Done verifying!")
+
         exec {
             commandLine "cp", "${server}", "../.."
         }
-        println("Done verifying!")
+
         println("Staged a copy of TestServer.apk to the root directory of this repository")
+
+        exec {
+            commandLine "cp", "${assetsDir}/AndroidManifest.xml", "../.."
+        }
+        println("Staged a copy of AndroidManifest.xml to the root directory of this repository")
     }
 }
 

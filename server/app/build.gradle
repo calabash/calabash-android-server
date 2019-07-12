@@ -16,6 +16,9 @@ android {
 
     // setting this > 23, results in build errors:
     // package android.test does not exist
+    //
+    // Attempted to use androidx.test.espresso:espresso-core:3.1.0 -
+    // this forces the midSdkVersion to be at least 14
     compileSdkVersion 23
     defaultConfig {
         applicationId "sh.calaba.instrumentationbackend"

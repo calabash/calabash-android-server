@@ -83,7 +83,6 @@ task addFilesToAssets {
         outputFile.createNewFile()
         outputFile.write(manifestContents)
 
-
         println("Adding ${calabashJs}")
         exec {
             commandLine "cp", "${calabashJs}", "${assetsDir}"
@@ -117,10 +116,8 @@ task prepareApk {
             commandLine "cp", "${apk}", "${server}"
         }
 
-
         println("Done building.")
         println("Verifying the apk...")
-
 
         def tmpDir = new File("../../tmp/verify-apk")
         tmpDir.delete()
@@ -170,7 +167,6 @@ task prepareApk {
         if (!manifestContents.contains("android:versionName=\"${version}\"")) {
             throw new GradleException("Expected to find correct android:versionName (${version}) in AndroidManifest.xml")
         }
-
 
         println("Done verifying!")
 

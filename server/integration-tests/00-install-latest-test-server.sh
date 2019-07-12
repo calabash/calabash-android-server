@@ -16,8 +16,8 @@ else
   (cd .. && ./gradlew clean assembleAndroidTest)
 fi
 
-TEST_SERVER_APK="../app/build/outputs/apk/androidTest/debug/TestServer.apk"
-TEST_SERVER_MANIFEST="../AndroidManifest.xml"
+TEST_SERVER_APK="../../TestServer.apk"
+TEST_SERVER_MANIFEST="../../AndroidManifest.xml"
 
 if [ -e "${TEST_SERVER_APK}" ]; then
   info "Will install new TestServer.apk in calabash-android gem"

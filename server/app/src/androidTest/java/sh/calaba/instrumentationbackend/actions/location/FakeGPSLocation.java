@@ -30,12 +30,14 @@ public class FakeGPSLocation implements Action {
     private static final String ACCESS_MOCK_LOCATION = "android.permission.ACCESS_MOCK_LOCATION";
     private static final String TEST_PROVIDER = "calabashTestProvider";
     private static final ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1);
-    private static ScheduledFuture<?> task;
+    private volatile static ScheduledFuture<?> task;
 
     public static void stopLocationMocking() {
         executorService.shutdownNow();
-        LocationManager locationManager = (LocationManager) InstrumentationBackend.instrumentation.getTargetContext().getSystemService(Context.LOCATION_SERVICE);
-        locationManager.removeTestProvider(TEST_PROVIDER);
+        if (task != null) {
+            LocationManager locationManager = (LocationManager) InstrumentationBackend.instrumentation.getTargetContext().getSystemService(Context.LOCATION_SERVICE);
+            locationManager.removeTestProvider(TEST_PROVIDER);
+        }
     }
 
     @Override

@@ -1,3 +1,7 @@
+### 0.9.12
+
+* location mocking: only stop mocking if we started #95
+
 ### 0.9.11
 
 No changes to the server.  The purpose of this release is to sync with the

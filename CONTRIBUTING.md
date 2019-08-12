@@ -53,6 +53,7 @@ After the release branch is created:
 The release pull request ***must*** be made against the _master_ branch.
 
 ```
+$ git co develop
 $ git co -b release/1.5.0
 
 1. Update the CHANGELOG.

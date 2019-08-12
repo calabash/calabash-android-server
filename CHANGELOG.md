@@ -1,3 +1,23 @@
+### 0.9.12
+
+* location mocking: only stop mocking if we started #95
+
+### 0.9.11
+
+No changes to the server.  The purpose of this release is to sync with the
+calabash-android gem version (to fix a bad release of the TestServer.apk).
+
+The build system has been improved and the TestServer.apk and
+AndroidManifest.xml are not validated as part of the build.
+
+The TestServer.apk and AndroidManifest.xml are now in the git index.
+
+### 0.9.10
+
+* Do not trigger an "build for older version of Android" popup
+* Fix location mocking on Android Q
+* Fix entertext and friends to work on webview on newer version of Android (9+)
+
 ### 0.9.9
 
 Register activity monitor earlier, so that all activies are guaranteed to be tracked. Fixes issue where drag coordinates would never return (stuck waiting for activity)

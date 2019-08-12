@@ -1,20 +1,25 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 set -e
+source log.sh
 
-rm -rf "./tmp"
-mkdir "./tmp"
+banner "Building CalabashIntegrationTests.jar"
 
-rm -rf "./out"
-mkdir "./out"
+rm -rf ./tmp
+mkdir -p ./tmp
 
+rm -rf ./out
+mkdir ./out
+
+info "Compiling from ./src"
 find ./src -name "*.java" | \
-  javac -cp  "$ANDROID_HOME/platforms/android-24/android.jar:libs/build/Calabash.jar:libs/junit-4.12.jar" -d tmp @/dev/stdin
+  javac -cp \
+  "${ANDROID_PLATFORM}/android.jar:libs/build/Calabash.jar:libs/junit-4.12.jar" \
+  -d tmp @/dev/stdin
 
-cd "tmp"
-find . -name "*.class" | \
-  jar cvf CalabashIntegrationTests.jar @/dev/stdin
-cd ..
+pushd tmp > /dev/null
+  find . -name "*.class" | jar cf CalabashIntegrationTests.jar @/dev/stdin
+popd > /dev/null
+
 mv "tmp/CalabashIntegrationTests.jar" "out/CalabashIntegrationTests.jar"
-
-rm -rf "./tmp"
+info "Installed out/CalabashIntegrationTests.jar"

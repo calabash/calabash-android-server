@@ -30,10 +30,6 @@ public class KeyboardEnterText extends TextAction {
 
     @Override
     protected Future<Result> executeOnInputThread(final View servedView, final InputConnection inputConnection) {
-        if (requiresWebViewInput(servedView)) {
-            return evalWebViewInputScript((WebView) servedView, WebViewInputScripts.enterTextScript(textToEnter));
-        }
-
         int start = InfoMethodUtil.getSelectionStart(inputConnection);
         int end = InfoMethodUtil.getSelectionEnd(inputConnection);
 

@@ -20,6 +20,12 @@ public class SoloEnhanced extends Solo {
         clicker.clickOnScreen(x,y);
     }
 
+
+    public void drag_without_hiding_keyboard(float fromX, float toX, float fromY, float toY,
+                     int stepCount) {
+        scroller.drag(fromX, toX, fromY, toY, stepCount);
+    }
+
     public void runOnMainSync(Runnable runner) {
         instrumentation.runOnMainSync(runner);
     }

@@ -2,24 +2,33 @@ apply plugin: 'com.android.application'
 
 def actionsDir = "${projectDir}/src/androidTest/java/sh/calaba/instrumentationbackend/actions"
 def assetsDir = "${buildDir}/assets"
-def versionFilePath = "${projectDir}/../../version"
 def actionsFile = "${assetsDir}/actions"
-def exampleManifestFile = "${projectDir}/../AndroidManifest.xml"
+def exampleManifestFile = "${projectDir}/../AndroidManifest.xml.template"
 def calabashJs = "${projectDir}/../calabash-js/src/calabash.js"
 def outputPath = "${buildDir}/outputs/apk/androidTest/debug/"
 def apkName = "app-debug-androidTest.apk"
 def serverApkName = "TestServer.apk"
+def versionFilePath = "${projectDir}/../../version"
+def version = new File(versionFilePath).text.replaceAll("\\s","")
+def patchVersion = version.split("\\.")[2].toInteger()
 
 android {
-    compileSdkVersion 22
+
+    // setting this > 23, results in build errors:
+    // package android.test does not exist
+    //
+    // Attempted to use androidx.test.espresso:espresso-core:3.1.0 -
+    // this forces the midSdkVersion to be at least 14
+    compileSdkVersion 23
     defaultConfig {
         applicationId "sh.calaba.instrumentationbackend"
         //noinspection MinSdkTooLow
         minSdkVersion 18
-        //noinspection OldTargetApi
-        targetSdkVersion 22
-        versionCode 4
-        versionName "0.4.0"
+        // Keep this sync'd with compileSdkVersion
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 23
+        versionCode patchVersion
+        versionName "${version}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -30,25 +39,19 @@ android {
 
     sourceSets {
         androidTestDebug {
-            assets.srcDirs += (new File(actionsFile)).getParentFile()
+            assets.srcDirs += assetsDir
         }
     }
 }
 
-task notifyBuildStarted {
-    doLast {
-        println("Build started...")
-    }
-}
-
-task generateActionsList {
+task addFilesToAssets {
     doLast {
         FileTree files = fileTree(actionsDir, {
             include '**/*.java'
         })
 
         /*
-         * Transform action path, e.g. change .../java/sh/calaba/instrumentationbackend/actions/Action.java
+         * Transform action path, e.g. change ../java/sh/calaba/instrumentationbackend/actions/Action.java
          * to sh.calaba.instrumentationbackend.actions.Action
          */
         String regex = ".+?(java/sh/calaba/instrumentationbackend/actions/)"
@@ -61,7 +64,7 @@ task generateActionsList {
         outputDirectory.mkdirs()
         outputFile.createNewFile()
 
-        println("Generate action list:")
+        println("=== Generating Action List ===")
         outputFile.withWriter {
             writer ->
                 actions.each {
@@ -69,44 +72,124 @@ task generateActionsList {
                     println(action)
                 }
         }
-    }
-}
 
-task prepareAssets(type: Copy) {
-    from "${exampleManifestFile}", "${calabashJs}", "${versionFilePath}"
-    into "${assetsDir}"
+        println("=== Adding Additional Assets ===")
+
+        println("Adding ${exampleManifestFile}")
+        def manifestContents = new File(exampleManifestFile).text
+        manifestContents = manifestContents.replaceAll("TEST_SERVER_VERSION_CODE", "${patchVersion}")
+        manifestContents = manifestContents.replaceAll("TEST_SERVER_VERSION_NAME", version)
+        outputFile = new File("${assetsDir}/AndroidManifest.xml")
+        outputFile.createNewFile()
+        outputFile.write(manifestContents)
+
+        println("Adding ${calabashJs}")
+        exec {
+            commandLine "cp", "${calabashJs}", "${assetsDir}"
+        }
+        println("Adding ${versionFilePath}")
+        exec {
+            commandLine "cp", "${versionFilePath}", "${assetsDir}"
+        }
+    }
 }
 
 task prepareApk {
     doLast {
+        def apk = "${outputPath}${apkName}"
+        def server = "${outputPath}${serverApkName}"
+
         println("Stripping signature and manifest from server apk...")
 
         exec {
-            commandLine "zip", "-q", "-d", "${outputPath}${apkName}", "META-INF/*"
+            commandLine "zip", "-q", "-d", "${apk}", "META-INF/*"
         }
         exec {
-            commandLine "zip", "-q", "-d", "${outputPath}${apkName}", "AndroidManifest.xml"
-        }
-        exec {
-            commandLine "mv", "${outputPath}${apkName}", "${outputPath}${serverApkName}"
+            commandLine "zip", "-q", "-d", "${apk}", "AndroidManifest.xml"
         }
 
-        println("Build done.")
-        println("Output ready in: ${outputPath}${serverApkName}")
+        exec {
+            commandLine "rm", "-f", "${server}"
+        }
+
+        exec {
+            commandLine "cp", "${apk}", "${server}"
+        }
+
+        println("Done building.")
+        println("Verifying the apk...")
+
+        def tmpDir = new File("../../tmp/verify-apk")
+        tmpDir.delete()
+        tmpDir.mkdirs()
+
+        ant.unzip(src: "${server}", dest: tmpDir.absolutePath)
+        def files = []
+
+        tmpDir.traverse(type: groovy.io.FileType.FILES) { files.add(it.path) }
+
+        def counter = 0
+        println "=== Files in APK =="
+        files.each {
+            println "${it}"
+            counter = counter + 1
+        }
+        println "=== END =="
+
+        if (counter != 10) {
+            def message = "Expected 10 files in ${serverApkName} - found ${files.count}"
+            throw new GradleException(message)
+        }
+
+        ["resources.arsc",
+         "junit/runner/logo.gif",
+         "junit/runner/smalllogo.gif",
+         "classes.dex",
+         "LICENSE-junit.txt",
+         "assets/calabash.js",
+         "assets/AndroidManifest.xml",
+         "assets/version",
+         "assets/actions",
+         "com/jayway/android/robotium/solo/RobotiumWeb.js"].collect {
+            "${tmpDir.path}/${it}".toString()
+        }.each {
+            if (!files.contains(it)) {
+                println("${it.class}")
+                throw new GradleException("Expected to find ${it} in apk")
+            }
+        }
+
+        def manifestContents = new File("${tmpDir.path}/assets/AndroidManifest.xml").text
+        if (!manifestContents.contains("android:versionCode=\"${patchVersion}\"")) {
+            throw new GradleException("Expected to find correct android:versionCode (${patchVersion}) in AndroidManifest.xml")
+        }
+
+        if (!manifestContents.contains("android:versionName=\"${version}\"")) {
+            throw new GradleException("Expected to find correct android:versionName (${version}) in AndroidManifest.xml")
+        }
+
+        println("Done verifying!")
+
+        exec {
+            commandLine "cp", "${server}", "../.."
+        }
+
+        println("Staged a copy of TestServer.apk to the root directory of this repository")
+
+        exec {
+            commandLine "cp", "${assetsDir}/AndroidManifest.xml", "../.."
+        }
+        println("Staged a copy of AndroidManifest.xml to the root directory of this repository")
     }
 }
 
-/*
- * Task order: notifyBuildStarted -> generateActionsList ->
- * -> prepareAssets -> compileDebugAndroidTestJavaWithJavac -> ... -> prepareApk
- */
-assembleAndroidTest.finalizedBy(prepareApk)
-
-afterEvaluate {
-    generateActionsList.dependsOn(notifyBuildStarted)
-    prepareAssets.dependsOn(generateActionsList)
-    compileDebugAndroidTestJavaWithJavac.dependsOn(prepareAssets)
+tasks.matching { task ->
+    task.name.startsWith('compile')
+}.all { task ->
+    task.dependsOn(["addFilesToAssets"])
 }
+
+assembleAndroidTest.finalizedBy(prepareApk)
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])

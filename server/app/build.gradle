@@ -119,7 +119,7 @@ task prepareApk {
         println("Done building.")
         println("Verifying the apk...")
 
-        def tmpDir = new File("../../tmp/verify-apk")
+        def tmpDir = new File("${System.getProperty('user.dir')}/../../tmp/verify-apk")
         tmpDir.delete()
         tmpDir.mkdirs()
 

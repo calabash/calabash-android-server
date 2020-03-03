@@ -83,8 +83,6 @@ public class QueryHelper {
 			script = script.replaceFirst("inElement = '%@'", "inElement = " + sb.toString());
 		}
 
-		System.out.println(script);
-
         return webContainer.evaluateAsyncJavaScript(script);
 	}
 }

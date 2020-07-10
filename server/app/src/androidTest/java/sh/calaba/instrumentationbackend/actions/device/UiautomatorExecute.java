@@ -5,9 +5,12 @@ import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
+import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
@@ -23,7 +26,7 @@ public class UiautomatorExecute implements Action {
         UiDevice mDevice = InstrumentationBackend.getUiDevice();
         String text = null;
         try {
-
+            verifyStrategy(args[0]);
             Method methodName = By.class.getMethod(args[0], String.class);
             BySelector selector = (BySelector) methodName.invoke(By.class, args[1]);
 
@@ -43,6 +46,8 @@ public class UiautomatorExecute implements Action {
             return new Result(false, e.getMessage());
         } catch (InvocationTargetException e) {
             return new Result(false, e.getMessage());
+        }catch (IllegalArgumentException e) {
+            return new Result(true, e.getMessage());
         }
 
         return new Result(true, text);
@@ -51,5 +56,17 @@ public class UiautomatorExecute implements Action {
     @Override
     public String key() {
         return "uiautomator_execute";
+    }
+
+    private void verifyStrategy(String strategy) {
+
+        try {
+            Strategies.valueOf(strategy);
+        } catch (IllegalArgumentException e) {
+            List<Strategies> strategies = Arrays.asList(Strategies.values());
+
+            String errorMessage = String.format("Unsupported strategy: %s. The list of available strategies is %s", strategy, strategies);
+            throw new IllegalArgumentException(errorMessage);
+        }
     }
 }

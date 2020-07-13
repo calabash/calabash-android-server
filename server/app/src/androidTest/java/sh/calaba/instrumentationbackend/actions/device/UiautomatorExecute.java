@@ -25,13 +25,14 @@ public class UiautomatorExecute implements Action {
         String text = null;
         try {
             verifyStrategy(args[0]);
-            verifyAction(args[2]);
+            verifyAction(args[3]);
             Method methodName = By.class.getMethod(args[0], String.class);
             BySelector selector = (BySelector) methodName.invoke(By.class, args[1]);
 
-            Method methodOperation = UiObject2.class.getMethod(args[2]);
+            Method methodOperation = UiObject2.class.getMethod(args[3]);
 
-            UiObject2 object = mDevice.findObject(selector);
+            List<UiObject2> objects = mDevice.findObjects(selector);
+            UiObject2 object = objects.get(Integer.parseInt(args[2]));
 
             Object res = methodOperation.invoke(object);
             if (res != null) {

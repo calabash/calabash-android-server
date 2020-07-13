@@ -72,7 +72,7 @@ public class UiautomatorExecute implements Action {
             Actions.valueOf(action);
         } catch (IllegalArgumentException e) {
             List<Actions> availableActions = Arrays.asList(Actions.values());
-            String errorMessage = String.format("Unsupported action: %s. The list of available strategies is %s", action, availableActions);
+            String errorMessage = String.format("Unsupported action: %s. The list of available actions is %s", action, availableActions);
             throw new IllegalArgumentException(errorMessage);
         }
     }

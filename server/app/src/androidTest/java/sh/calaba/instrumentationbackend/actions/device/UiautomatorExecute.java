@@ -3,9 +3,7 @@ package sh.calaba.instrumentationbackend.actions.device;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
-import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,6 +25,7 @@ public class UiautomatorExecute implements Action {
         String text = null;
         try {
             verifyStrategy(args[0]);
+            verifyAction(args[2]);
             Method methodName = By.class.getMethod(args[0], String.class);
             BySelector selector = (BySelector) methodName.invoke(By.class, args[1]);
 
@@ -47,7 +46,7 @@ public class UiautomatorExecute implements Action {
         } catch (InvocationTargetException e) {
             return new Result(false, e.getMessage());
         }catch (IllegalArgumentException e) {
-            return new Result(true, e.getMessage());
+            return new Result(false, e.getMessage());
         }
 
         return new Result(true, text);
@@ -58,14 +57,22 @@ public class UiautomatorExecute implements Action {
         return "uiautomator_execute";
     }
 
-    private void verifyStrategy(String strategy) {
-
+    private static void verifyStrategy(String strategy) {
         try {
             Strategies.valueOf(strategy);
         } catch (IllegalArgumentException e) {
-            List<Strategies> strategies = Arrays.asList(Strategies.values());
+            List<Strategies> availableStrategies = Arrays.asList(Strategies.values());
+            String errorMessage = String.format("Unsupported strategy: %s. The list of available strategies is %s", strategy, availableStrategies);
+            throw new IllegalArgumentException(errorMessage);
+        }
+    }
 
-            String errorMessage = String.format("Unsupported strategy: %s. The list of available strategies is %s", strategy, strategies);
+    private static void verifyAction(String action) {
+        try {
+            Actions.valueOf(action);
+        } catch (IllegalArgumentException e) {
+            List<Actions> availableActions = Arrays.asList(Actions.values());
+            String errorMessage = String.format("Unsupported action: %s. The list of available strategies is %s", action, availableActions);
             throw new IllegalArgumentException(errorMessage);
         }
     }

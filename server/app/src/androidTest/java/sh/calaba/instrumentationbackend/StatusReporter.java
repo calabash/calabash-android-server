@@ -15,12 +15,8 @@ public class StatusReporter {
         this.hasReportedFailure = false;
     }
 
-    public void reportFailure(String message)  {
-        Intent intent = new Intent(context, StatusReporterActivity.class);
-        intent.putExtra(StatusReporterActivity.EXTRA_METHOD, "report-failure");
-        intent.putExtra(StatusReporterActivity.EXTRA_MESSAGE, message);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+    public void reportFailure(String message) {
+        StatusReporterObject.report(context, "report-failure", message, null, true);
         hasReportedFailure = true;
     }
 
@@ -33,20 +29,15 @@ public class StatusReporter {
     }
 
     public void clear() {
-        Intent intent = new Intent(context, StatusReporterActivity.class);
-        intent.putExtra(StatusReporterActivity.EXTRA_METHOD, "clear");
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+        StatusReporterObject.report(context, "clear", null, null, true);
     }
 
-    public enum FinishedState {SUCCESSFUL, NOT_SUCCESSFUL};
+    public enum FinishedState {SUCCESSFUL, NOT_SUCCESSFUL}
 
-    public void reportFinished(FinishedState state)  {
-        Intent intent = new Intent(context, StatusReporterActivity.class);
-        intent.putExtra(StatusReporterActivity.EXTRA_METHOD, "report-finished");
-        intent.putExtra(StatusReporterActivity.EXTRA_STATE, state);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+    ;
+
+    public void reportFinished(FinishedState state) {
+        StatusReporterObject.report(context, "report-finished", null, state, true);
     }
 
     public boolean hasReportedFailure() {

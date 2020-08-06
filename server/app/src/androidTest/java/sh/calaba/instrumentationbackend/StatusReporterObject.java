@@ -49,7 +49,9 @@ public class StatusReporterObject {
         }
 
         // TODO: Check if it works
-        ((Activity) context).finish();
+        if (context instanceof Activity){
+            ((Activity) context).finish();
+        }
     }
 
     public static final String EXTRA_MESSAGE = "message";

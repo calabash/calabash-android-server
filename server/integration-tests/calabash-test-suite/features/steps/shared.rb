@@ -14,8 +14,9 @@ end
 
 Then(/^I print it to stdout$/) do
   s = query("edittext", :getText).first.gsub("URI: //ready\nparams: {json={}\n}", "").gsub("URI: //ping\nparams: {json={}\n}", "")
-  puts s
-  $stdout.puts s
+  Kernel.puts s
+  # private method `puts' called for #<Cucumber::Formatter::Interceptor::Pipe:0x00007fe6e2ce40c0> (NoMethodError)
+  # $stdout.puts s
   File.open("../result.log", 'w') do |file|
     file.write(s)
   end

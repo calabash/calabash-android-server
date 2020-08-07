@@ -32,6 +32,10 @@ public class UiautomatorExecute implements Action {
             Method methodOperation = UiObject2.class.getMethod(args[3]);
 
             List<UiObject2> objects = mDevice.findObjects(selector);
+            if (objects.isEmpty()) {
+                String error_message = String.format("Found no elements for locator: %s by strategy: %s", args[1], args[0]);
+                throw new IllegalArgumentException(error_message);
+            }
             UiObject2 object = objects.get(Integer.parseInt(args[2]));
 
             Object res = methodOperation.invoke(object);

@@ -16,8 +16,17 @@ public class StatusReporter {
     }
 
     public void reportFailure(String message) {
-        StatusReporterObject.report(context, "report-failure", message, null, true);
-        hasReportedFailure = true;
+        try {
+            Intent intent = new Intent(context, StatusReporterActivity.class);
+            intent.putExtra(StatusReporterActivity.EXTRA_METHOD, "report-failure");
+            intent.putExtra(StatusReporterActivity.EXTRA_MESSAGE, message);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (Throwable e) {
+            StatusReporterObject.report(context, "report-failure", message, null, true);
+        } finally {
+            hasReportedFailure = true;
+        }
     }
 
     public void reportFailure(Throwable e) {
@@ -29,7 +38,14 @@ public class StatusReporter {
     }
 
     public void clear() {
-        StatusReporterObject.report(context, "clear", null, null, true);
+        try {
+            Intent intent = new Intent(context, StatusReporterActivity.class);
+            intent.putExtra(StatusReporterActivity.EXTRA_METHOD, "clear");
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (Throwable e) {
+            StatusReporterObject.report(context, "clear", null, null, true);
+        }
     }
 
     public enum FinishedState {SUCCESSFUL, NOT_SUCCESSFUL}
@@ -37,7 +53,14 @@ public class StatusReporter {
     ;
 
     public void reportFinished(FinishedState state) {
-        StatusReporterObject.report(context, "report-finished", null, state, true);
+        try {
+            Intent intent = new Intent(context, StatusReporterActivity.class);
+            intent.putExtra(StatusReporterActivity.EXTRA_METHOD, "report-finished");
+            intent.putExtra(StatusReporterActivity.EXTRA_STATE, state);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        } catch (Throwable e) {
+            StatusReporterObject.report(context, "report-finished", null, state, true);
+        }
     }
 
     public boolean hasReportedFailure() {

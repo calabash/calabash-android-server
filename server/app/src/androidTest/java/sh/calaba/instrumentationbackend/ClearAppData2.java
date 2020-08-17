@@ -22,7 +22,7 @@ public class ClearAppData2 extends InstrumentationTestRunner {
     public void onCreate(Bundle arguments) {
         MonoUtils.loadMono(getTargetContext());
 
-        StatusReporter statusReporter = new StatusReporter(getContext());
+        StatusReporter statusReporter = new StatusReporter();
 
         try {
             System.out.println("External cache dir: " + externalCacheDir());

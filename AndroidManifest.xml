@@ -24,14 +24,6 @@
         android:noHistory="false"
         android:excludeFromRecents="true"/>
       <activity
-        android:name="sh.calaba.instrumentationbackend.StatusReporterActivity"
-        android:label="StatusReporterActivity"
-        android:exported="true"
-        android:finishOnTaskLaunch="true"
-        android:stateNotNeeded="true"
-        android:noHistory="true"
-        android:excludeFromRecents="true"/>
-      <activity
         android:name="sh.calaba.instrumentationbackend.ResumeTaskActivity"
         android:label="ResumeTaskActivity"
         android:exported="true"

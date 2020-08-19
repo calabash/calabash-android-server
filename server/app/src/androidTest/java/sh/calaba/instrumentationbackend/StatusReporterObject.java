@@ -6,45 +6,40 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import sh.calaba.instrumentationbackend.StatusReporter.Method;
+import static sh.calaba.instrumentationbackend.StatusReporter.REPORT_FAILURE_METHOD;
+import static sh.calaba.instrumentationbackend.StatusReporter.REPORT_FINISHED_METHOD;
 
 public class StatusReporterObject {
 
-    public static void report(String method,
-                              String message,
-                              StatusReporter.FinishedState extraState,
-                              boolean hasData) {
+    private static final String FAILURE_FILE_PATH = "calabash_failure.out";
+    private static final String FINISHED_FILE_PATH = "calabash_finished.out";
 
+    public static void report(@Method String method,
+                              String message,
+                              StatusReporter.FinishedState extraState) {
 
         System.out.println("Failure file: " + getOutputFile(FAILURE_FILE_PATH));
         System.out.println("Finished file: " + getOutputFile(FINISHED_FILE_PATH));
 
-        if (hasData) {
+        System.out.println("method: " + method);
 
-            System.out.println("method: " + method);
-
-            if ("report-failure".equals(method)) {
-                try {
-                    reportFailure(message);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } else if ("report-finished".equals(method)) {
-                try {
-                    reportFinished(extraState);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                throw new RuntimeException("No such method '" + method + "'");
+        if (REPORT_FAILURE_METHOD.equals(method)) {
+            try {
+                reportFailure(message);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-
+        } else if (REPORT_FINISHED_METHOD.equals(method)) {
+            try {
+                reportFinished(extraState);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         } else {
-            throw new RuntimeException("No data sent");
+            throw new RuntimeException("No such method '" + method + "'");
         }
     }
-
-    private static final String FAILURE_FILE_PATH = "calabash_failure.out";
-    private static final String FINISHED_FILE_PATH = "calabash_finished.out";
 
     private static void reportFailure(String message) throws IOException {
         System.out.println("Failure state: " + message);
@@ -71,6 +66,6 @@ public class StatusReporterObject {
     }
 
     private static File getOutputFile(String path) {
-        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), path);
+        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), path);
     }
 }

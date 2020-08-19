@@ -1,9 +1,17 @@
 package sh.calaba.instrumentationbackend;
 
+import android.support.annotation.StringDef;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public class StatusReporter {
+
+    public static final String REPORT_FAILURE_METHOD = "report-failure";
+    public static final String REPORT_FINISHED_METHOD = "report-finished";
+
+    @StringDef({REPORT_FAILURE_METHOD, REPORT_FINISHED_METHOD})
+    public @interface Method {}
 
     private boolean hasReportedFailure;
 
@@ -14,7 +22,7 @@ public class StatusReporter {
     }
 
     public void reportFailure(String message) {
-        StatusReporterObject.report("report-failure", message, null, true);
+        StatusReporterObject.report(REPORT_FAILURE_METHOD, message, null);
         hasReportedFailure = true;
     }
 
@@ -27,7 +35,7 @@ public class StatusReporter {
     }
 
     public void reportFinished(FinishedState state) {
-        StatusReporterObject.report("report-finished", null, state, true);
+        StatusReporterObject.report(REPORT_FINISHED_METHOD, null, state);
     }
 
     public boolean hasReportedFailure() {

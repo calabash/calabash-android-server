@@ -11,7 +11,7 @@ public class StatusReporter {
     public static final String REPORT_FINISHED_METHOD = "report-finished";
 
     @StringDef({REPORT_FAILURE_METHOD, REPORT_FINISHED_METHOD})
-    public @interface Method {}
+    public @interface ReportMethod {}
 
     private boolean hasReportedFailure;
 

@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import sh.calaba.instrumentationbackend.StatusReporter.Method;
+import sh.calaba.instrumentationbackend.StatusReporter.ReportMethod;
 import static sh.calaba.instrumentationbackend.StatusReporter.REPORT_FAILURE_METHOD;
 import static sh.calaba.instrumentationbackend.StatusReporter.REPORT_FINISHED_METHOD;
 
@@ -15,7 +15,7 @@ public class StatusReporterObject {
     private static final String FAILURE_FILE_PATH = "calabash_failure.out";
     private static final String FINISHED_FILE_PATH = "calabash_finished.out";
 
-    public static void report(@Method String method,
+    public static void report(@ReportMethod String method,
                               String message,
                               StatusReporter.FinishedState extraState) {
 

@@ -41,7 +41,7 @@ public class AndroidInstrumentationStartup implements EntryPoint {
 
     @Override
     public void start() {
-        StatusReporter statusReporter = new StatusReporter();
+        StatusReporter statusReporter = new StatusReporter(instrumentation);
 
         try {
             final String mainActivity;

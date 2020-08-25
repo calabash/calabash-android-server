@@ -1,28 +1,29 @@
 package sh.calaba.instrumentationbackend;
 
-import android.support.annotation.StringDef;
+import android.app.Instrumentation;
+import android.os.Bundle;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public class StatusReporter {
 
-    public static final String REPORT_FAILURE_METHOD = "report-failure";
-    public static final String REPORT_FINISHED_METHOD = "report-finished";
+    public static final String REPORT_MESSAGE = "report-message";
+    public static final int RESULT_CODE_OK = 0;
+    public static final int RESULT_CODE_FAILED = 1;
 
-    @StringDef({REPORT_FAILURE_METHOD, REPORT_FINISHED_METHOD})
-    public @interface ReportMethod {}
-
+    private final Instrumentation instrumentation;
     private boolean hasReportedFailure;
 
     public enum FinishedState {SUCCESSFUL, NOT_SUCCESSFUL}
 
-    public StatusReporter() {
+    public StatusReporter(Instrumentation instrumentation) {
+        this.instrumentation = instrumentation;
         this.hasReportedFailure = false;
     }
 
     public void reportFailure(String message) {
-        StatusReporterObject.report(REPORT_FAILURE_METHOD, message, null);
+        report(RESULT_CODE_FAILED, message);
         hasReportedFailure = true;
     }
 
@@ -35,10 +36,17 @@ public class StatusReporter {
     }
 
     public void reportFinished(FinishedState state) {
-        StatusReporterObject.report(REPORT_FINISHED_METHOD, null, state);
+        report(RESULT_CODE_OK, state.name());
     }
 
     public boolean hasReportedFailure() {
         return hasReportedFailure;
+    }
+
+    private void report(int resultCode, String reportMessage) {
+        Bundle results = new Bundle();
+        results.putString(REPORT_MESSAGE, reportMessage);
+
+        instrumentation.sendStatus(resultCode, results);
     }
 }

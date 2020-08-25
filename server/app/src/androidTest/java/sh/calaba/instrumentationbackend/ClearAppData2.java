@@ -16,13 +16,12 @@ import android.test.InstrumentationTestRunner;
 
 import sh.calaba.instrumentationbackend.utils.MonoUtils;
 
-
 public class ClearAppData2 extends InstrumentationTestRunner {
     @Override
     public void onCreate(Bundle arguments) {
         MonoUtils.loadMono(getTargetContext());
 
-        StatusReporter statusReporter = new StatusReporter();
+        StatusReporter statusReporter = new StatusReporter(this);
 
         try {
             System.out.println("External cache dir: " + externalCacheDir());

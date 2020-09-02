@@ -7,7 +7,7 @@
 
 The test-server for Calabash-Android
 
-Automated Functional testing for Android based on cucumber http://calaba.sh
+Automated Functional testing for Android based on cucumber
 
 ### Building
 

@@ -4,6 +4,7 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,7 +35,7 @@ public class UiautomatorExecute implements Action {
             List<UiObject2> objects = mDevice.findObjects(selector);
             if (objects.isEmpty()) {
                 String error_message = String.format("Found no elements for locator: %s by strategy: %s", args[1], args[0]);
-                throw new IllegalArgumentException(error_message);
+                throw new UiObjectNotFoundException(error_message);
             }
             UiObject2 object = objects.get(Integer.parseInt(args[2]));
 
@@ -51,6 +52,8 @@ public class UiautomatorExecute implements Action {
         } catch (InvocationTargetException e) {
             return new Result(false, e.getMessage());
         }catch (IllegalArgumentException e) {
+            return new Result(false, e.getMessage());
+        } catch (UiObjectNotFoundException e) {
             return new Result(false, e.getMessage());
         }
 

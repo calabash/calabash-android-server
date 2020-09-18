@@ -41,7 +41,7 @@ public class AndroidInstrumentationStartup implements EntryPoint {
 
     @Override
     public void start() {
-        StatusReporter statusReporter = new StatusReporter(instrumentation);
+        StatusReporter statusReporter = new StatusReporter();
 
         try {
             final String mainActivity;
@@ -56,7 +56,7 @@ public class AndroidInstrumentationStartup implements EntryPoint {
                 System.out.println("Main activity name automatically set to: " + mainActivity);
 
                 if (mainActivity == null || "".equals(mainActivity)) {
-                    statusReporter.reportFailure("E_COULD_NOT_DETECT_MAIN_ACTIVITY");
+                    statusReporter.reportFailure(instrumentation, "E_COULD_NOT_DETECT_MAIN_ACTIVITY");
                     throw new RuntimeException("Could not detect main activity");
                 }
             }
@@ -99,14 +99,14 @@ public class AndroidInstrumentationStartup implements EntryPoint {
                 startTestServer();
             } catch (RuntimeException e) {
                 if (instrumentation.getContext().checkCallingOrSelfPermission(Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
-                    statusReporter.reportFailure("E_NO_INTERNET_PERMISSION");
+                    statusReporter.reportFailure(instrumentation, "E_NO_INTERNET_PERMISSION");
                 }
 
                 throw e;
             }
         } catch (RuntimeException e) {
             if (!statusReporter.hasReportedFailure()) {
-                statusReporter.reportFailure(e);
+                statusReporter.reportFailure(instrumentation, e);
             }
 
             throw e;
@@ -156,7 +156,7 @@ public class AndroidInstrumentationStartup implements EntryPoint {
                 packageManager.getLaunchIntentForPackage(targetPackage);
 
         if (launchIntent == null) {
-            statusReporter.reportFailure("E_NO_LAUNCH_INTENT_FOR_PACKAGE");
+            statusReporter.reportFailure(instrumentation, "E_NO_LAUNCH_INTENT_FOR_PACKAGE");
             throw new RuntimeException("No launch intent set for package '" + targetPackage + "'");
         }
 

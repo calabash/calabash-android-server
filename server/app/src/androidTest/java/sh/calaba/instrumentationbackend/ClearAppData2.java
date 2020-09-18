@@ -7,12 +7,12 @@ import java.util.List;
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.app.Activity;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.test.InstrumentationTestRunner;
+import static sh.calaba.instrumentationbackend.StatusReporter.FinishedState.SUCCESSFUL;
 
 import sh.calaba.instrumentationbackend.utils.MonoUtils;
 
@@ -21,7 +21,7 @@ public class ClearAppData2 extends InstrumentationTestRunner {
     public void onCreate(Bundle arguments) {
         MonoUtils.loadMono(getTargetContext());
 
-        StatusReporter statusReporter = new StatusReporter(this);
+        StatusReporter statusReporter = new StatusReporter();
 
         try {
             System.out.println("External cache dir: " + externalCacheDir());
@@ -63,12 +63,11 @@ public class ClearAppData2 extends InstrumentationTestRunner {
 
             removeOwnAccountTypes();
         } catch (Exception e) {
-            statusReporter.reportFailure(e);
+            statusReporter.reportFailure(this, e);
             throw new RuntimeException(e);
         }
 
-        statusReporter.reportFinished(StatusReporter.FinishedState.SUCCESSFUL);
-        finish(Activity.RESULT_OK, null);
+        statusReporter.reportFinished(this, SUCCESSFUL);
     }
 
     private void removeOwnAccountTypes() {

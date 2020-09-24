@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.test.InstrumentationRegistry;
 
@@ -15,17 +16,24 @@ import sh.calaba.instrumentationbackend.actions.HttpServer;
 import sh.calaba.instrumentationbackend.automation.CalabashAutomation;
 import sh.calaba.instrumentationbackend.automation.CalabashAutomationEmbedded;
 import sh.calaba.instrumentationbackend.utils.MonoUtils;
+import sh.calaba.instrumentationbackend.utils.StringUtils;
+
+import static sh.calaba.instrumentationbackend.InstrumentationStatus.FAILED;
 
 /**
  * Entry point for calabash started using am instrument / hitting ActivityManagerService with instrumentation
  */
 public class AndroidInstrumentationStartup implements EntryPoint {
+
+    private static final String DISPLAY_NAME = "AndroidInstrumentationStartup";
+
     private Intent activityIntent;
     private String mainActivityName;
     private Bundle extras;
 
     private final CalabashInstrumentation instrumentation;
     private final Bundle arguments;
+    private boolean hasReportedFailure;
 
     public static class Factory {
         public static EntryPoint newInstance(CalabashInstrumentation instrumentation, Bundle arguments) {
@@ -41,7 +49,7 @@ public class AndroidInstrumentationStartup implements EntryPoint {
 
     @Override
     public void start() {
-        StatusReporter statusReporter = new StatusReporter(instrumentation.getContext());
+        hasReportedFailure = false;
 
         try {
             final String mainActivity;
@@ -51,12 +59,12 @@ public class AndroidInstrumentationStartup implements EntryPoint {
                     && !"null".equals(arguments.getString("main_activity"))) {
                 mainActivity = arguments.getString("main_activity");
             } else {
-                mainActivity = detectMainActivity(statusReporter, instrumentation.getTargetContext().getPackageName());
+                mainActivity = detectMainActivity(instrumentation.getTargetContext().getPackageName());
 
                 System.out.println("Main activity name automatically set to: " + mainActivity);
 
                 if (mainActivity == null || "".equals(mainActivity)) {
-                    statusReporter.reportFailure("E_COULD_NOT_DETECT_MAIN_ACTIVITY");
+                    reportFailure("E_COULD_NOT_DETECT_MAIN_ACTIVITY");
                     throw new RuntimeException("Could not detect main activity");
                 }
             }
@@ -99,14 +107,14 @@ public class AndroidInstrumentationStartup implements EntryPoint {
                 startTestServer();
             } catch (RuntimeException e) {
                 if (instrumentation.getContext().checkCallingOrSelfPermission(Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
-                    statusReporter.reportFailure("E_NO_INTERNET_PERMISSION");
+                    reportFailure("E_NO_INTERNET_PERMISSION");
                 }
 
                 throw e;
             }
         } catch (RuntimeException e) {
-            if (!statusReporter.hasReportedFailure()) {
-                statusReporter.reportFailure(e);
+            if (!hasReportedFailure) {
+                reportFailure(StringUtils.toString(e));
             }
 
             throw e;
@@ -150,13 +158,13 @@ public class AndroidInstrumentationStartup implements EntryPoint {
         testServerLifeCycle.startAndWaitForKill();
     }
 
-    private String detectMainActivity(StatusReporter statusReporter, String targetPackage) {
+    private String detectMainActivity(String targetPackage) {
         PackageManager packageManager = instrumentation.getTargetContext().getPackageManager();
         Intent launchIntent =
                 packageManager.getLaunchIntentForPackage(targetPackage);
 
         if (launchIntent == null) {
-            statusReporter.reportFailure("E_NO_LAUNCH_INTENT_FOR_PACKAGE");
+            reportFailure("E_NO_LAUNCH_INTENT_FOR_PACKAGE");
             throw new RuntimeException("No launch intent set for package '" + targetPackage + "'");
         }
 
@@ -179,5 +187,20 @@ public class AndroidInstrumentationStartup implements EntryPoint {
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void reportFailure(String message) {
+        hasReportedFailure = true;
+
+        if (isSdk11()) {
+            InstrumentationReport.send(instrumentation, DISPLAY_NAME, FAILED, message);
+        } else {
+            StatusReporter statusReporter = new StatusReporter(instrumentation.getContext());
+            statusReporter.reportFailure(message);
+        }
+    }
+
+    private boolean isSdk11() {
+        return Build.VERSION.SDK_INT >= 30;
     }
 }

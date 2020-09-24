@@ -3,9 +3,13 @@ package sh.calaba.instrumentationbackend;
 import android.content.Context;
 import android.content.Intent;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import sh.calaba.instrumentationbackend.utils.StringUtils;
 
+/**
+ * Deprecated to use for Android 11 and higher. Will cause a crash
+ * Use {@link InstrumentationReport} instead
+ */
+@Deprecated
 public class StatusReporter {
     private Context context;
     private boolean hasReportedFailure;
@@ -25,11 +29,7 @@ public class StatusReporter {
     }
 
     public void reportFailure(Throwable e) {
-        StringWriter stringWriter = new StringWriter();
-        stringWriter.write("Unknown error:\n");
-        e.printStackTrace(new PrintWriter(stringWriter));
-
-        reportFailure(stringWriter.toString());
+        reportFailure(StringUtils.toString(e));
     }
 
     public void clear() {

@@ -192,7 +192,7 @@ public class AndroidInstrumentationStartup implements EntryPoint {
     private void reportFailure(String message) {
         hasReportedFailure = true;
 
-        if (isSdk11()) {
+        if (isGreaterThanSDK11()) {
             InstrumentationReport.send(instrumentation, DISPLAY_NAME, FAILED, message);
         } else {
             StatusReporter statusReporter = new StatusReporter(instrumentation.getContext());
@@ -200,7 +200,7 @@ public class AndroidInstrumentationStartup implements EntryPoint {
         }
     }
 
-    private boolean isSdk11() {
+    private boolean isGreaterThanSDK11() {
         return Build.VERSION.SDK_INT >= 30;
     }
 }

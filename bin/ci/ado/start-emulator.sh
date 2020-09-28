@@ -6,9 +6,6 @@ $ANDROID_HOME/platform-tools/adb devices | \
   grep emulator | cut -f1 | \
   while read line; do adb -s $line emu kill || true; done
 
-echo "Install Android SDK"
-echo "y" | $ANDROID_HOME/tools/bin/sdkmanager --install 'system-images;android-'$ANDROID_SDK_VERSION';google_apis;x86'
-
 echo "Creating emulator"
 echo "no" | $ANDROID_HOME/tools/bin/avdmanager create avd \
   -n xamarin_android_emulator \

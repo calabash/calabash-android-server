@@ -9,7 +9,7 @@ $ANDROID_HOME/platform-tools/adb devices | \
 echo "Creating emulator"
 echo "no" | $ANDROID_HOME/tools/bin/avdmanager create avd \
   -n xamarin_android_emulator \
-  -k 'system-images;android-28;google_apis;x86' \
+  -k 'system-images;android-29;google_apis;x86' \
   --force
 
 $ANDROID_HOME/emulator/emulator -list-avds

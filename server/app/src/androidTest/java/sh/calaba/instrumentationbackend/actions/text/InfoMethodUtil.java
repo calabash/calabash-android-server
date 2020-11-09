@@ -12,13 +12,15 @@ import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.utils.SystemPropertiesWrapper;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class InfoMethodUtil {
     public static View getServedView() throws UnexpectedInputMethodManagerStructureException {
         Context context = InstrumentationBackend.instrumentation.getTargetContext();
+        InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 
         try {
-            InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
             Field servedViewField = InputMethodManager.class.getDeclaredField("mServedView");
             servedViewField.setAccessible(true);
 
@@ -26,7 +28,18 @@ public class InfoMethodUtil {
         } catch (IllegalAccessException e) {
             throw new UnexpectedInputMethodManagerStructureException(e);
         } catch (NoSuchFieldException e) {
-            throw new UnexpectedInputMethodManagerStructureException(e);
+            try {
+                Method method = InputMethodManager.class.getDeclaredMethod("getServedViewLocked");
+                method.setAccessible(true);
+
+                return (View)method.invoke(inputMethodManager);
+            } catch (NoSuchMethodException noSuchMethodException) {
+                throw new UnexpectedInputMethodManagerStructureException(e);
+            } catch (IllegalAccessException illegalAccessException) {
+                throw new UnexpectedInputMethodManagerStructureException(e);
+            } catch (InvocationTargetException invocationTargetException) {
+                throw new UnexpectedInputMethodManagerStructureException(e);
+            }
         }
     }
 

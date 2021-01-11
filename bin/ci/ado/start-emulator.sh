@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+ANDROID_SDK_VERSION=29
 echo "Ensuring no emulators are running"
 
 $ANDROID_HOME/platform-tools/adb devices | \
@@ -9,7 +9,7 @@ $ANDROID_HOME/platform-tools/adb devices | \
 echo "Creating emulator"
 echo "no" | $ANDROID_HOME/tools/bin/avdmanager create avd \
   -n xamarin_android_emulator \
-  -k 'system-images;android-28;google_apis;x86' \
+  -k 'system-images;android-'$ANDROID_SDK_VERSION';google_apis;x86' \
   --force
 
 $ANDROID_HOME/emulator/emulator -list-avds

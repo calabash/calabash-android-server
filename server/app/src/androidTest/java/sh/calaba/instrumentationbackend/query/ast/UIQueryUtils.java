@@ -330,6 +330,14 @@ public class UIQueryUtils {
 				}
 			});
 		}
+
+//		in case view is turned over, the location start_x is returned incorrectly by getLocationOnScreen()
+//		we need to apply below workaround to fix the start_x
+
+		if (view.getScaleX() == -1) {
+			location[0] = location[0] - view.getWidth();
+		}
+
 		return location;
 	}
 

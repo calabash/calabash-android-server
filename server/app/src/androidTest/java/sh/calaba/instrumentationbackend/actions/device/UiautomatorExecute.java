@@ -15,10 +15,6 @@ import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
 
-/**
- * Created by rajdeepvarma on 04/04/2017.
- */
-
 public class UiautomatorExecute implements Action {
     @Override
     public Result execute(String... args) {
@@ -34,8 +30,8 @@ public class UiautomatorExecute implements Action {
 
             List<UiObject2> objects = mDevice.findObjects(selector);
             if (objects.isEmpty()) {
-                String error_message = String.format("Found no elements for locator: %s by strategy: %s", args[1], args[0]);
-                throw new UiObjectNotFoundException(error_message);
+                String errorMessage = String.format("Found no elements for locator: %s by strategy: %s", args[1], args[0]);
+                throw new UiObjectNotFoundException(errorMessage);
             }
             UiObject2 object = objects.get(Integer.parseInt(args[2]));
 
@@ -47,11 +43,7 @@ public class UiautomatorExecute implements Action {
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
             return new Result(false, e.getMessage());
-        } catch (IllegalAccessException e) {
-            return new Result(false, e.getMessage());
-        } catch (InvocationTargetException e) {
-            return new Result(false, e.getMessage());
-        }catch (IllegalArgumentException e) {
+        } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
             return new Result(false, e.getMessage());
         } catch (UiObjectNotFoundException e) {
             return new Result(false, e.getMessage());

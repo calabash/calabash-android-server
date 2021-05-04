@@ -12,9 +12,6 @@ import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
 
-/**
- * Created by rajdeepvarma on 10/12/16.
- */
 public class UiautomatorTextDump implements Action {
     @Override
     public Result execute(String... args) {
@@ -22,7 +19,7 @@ public class UiautomatorTextDump implements Action {
         BySelector selector = By.clazz("android.widget.TextView");
         List<UiObject2> mList = mDevice.findObjects(selector);
 
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
 
         for (UiObject2 ob : mList) {
             list.add(ob.getText());

@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId "sh.calaba.instrumentationbackend"
         //noinspection MinSdkTooLow
-        minSdkVersion 8
+        minSdkVersion 18
         // Keep this sync'd with compileSdkVersion
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 23

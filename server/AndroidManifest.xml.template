@@ -5,7 +5,7 @@
     android:versionCode="TEST_SERVER_VERSION_CODE"
     android:versionName="TEST_SERVER_VERSION_NAME">
 
-    <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="28" />
+    <uses-sdk android:minSdkVersion="18" android:targetSdkVersion="28" />
 
     <application android:label="instrumentation_backend"
       android:largeHeap="true"

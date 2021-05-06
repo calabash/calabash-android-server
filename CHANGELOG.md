@@ -1,7 +1,7 @@
 ### 0.9.14
 
 * Enable UIautomator2 changes #103
-*
+
 ### 0.9.12
 
 * location mocking: only stop mocking if we started #95

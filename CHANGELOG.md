@@ -1,4 +1,4 @@
-### 0.9.14
+### 0.9.15
 
 * Enable UIautomator2 changes #103
 

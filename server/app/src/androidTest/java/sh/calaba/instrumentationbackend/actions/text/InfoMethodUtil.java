@@ -1,14 +1,16 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
-import android.text.InputType;
+import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
+import sh.calaba.instrumentationbackend.utils.StringUtils;
 import sh.calaba.instrumentationbackend.utils.SystemPropertiesWrapper;
 
 import java.lang.reflect.Field;
@@ -16,31 +18,20 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class InfoMethodUtil {
-    public static View getServedView() throws UnexpectedInputMethodManagerStructureException {
-        Context context = InstrumentationBackend.instrumentation.getTargetContext();
-        InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 
+    @Nullable
+    public static View getInputView() {
         try {
-            Field servedViewField = InputMethodManager.class.getDeclaredField("mServedView");
-            servedViewField.setAccessible(true);
-
-            return (View)servedViewField.get(inputMethodManager);
-        } catch (IllegalAccessException e) {
-            throw new UnexpectedInputMethodManagerStructureException(e);
-        } catch (NoSuchFieldException e) {
-            try {
-                Method method = InputMethodManager.class.getDeclaredMethod("getServedViewLocked");
-                method.setAccessible(true);
-
-                return (View)method.invoke(inputMethodManager);
-            } catch (NoSuchMethodException noSuchMethodException) {
-                throw new UnexpectedInputMethodManagerStructureException(e);
-            } catch (IllegalAccessException illegalAccessException) {
-                throw new UnexpectedInputMethodManagerStructureException(e);
-            } catch (InvocationTargetException invocationTargetException) {
-                throw new UnexpectedInputMethodManagerStructureException(e);
-            }
+            return getInternalServedView();
+        } catch (UnexpectedInputMethodManagerStructureException e) {
+            System.err.println("Internal servedView is unavailable: " + StringUtils.toString(e));
         }
+
+        Activity activity = InstrumentationBackend.getCurrentActivity();
+        if (activity != null) {
+            return activity.getCurrentFocus();
+        }
+        return null;
     }
 
     public static InputConnection getInputConnection() throws UnexpectedInputMethodManagerStructureException {
@@ -49,9 +40,13 @@ public class InfoMethodUtil {
         try {
             if (Build.VERSION.SDK_INT > 27) {
                 EditorInfo info = new EditorInfo();
-                InputConnection inputConnection = getServedView().onCreateInputConnection(info);
+                View inputView = getInputView();
 
-                return inputConnection;
+                if (inputView != null){
+                    return inputView.onCreateInputConnection(info);
+                }
+
+                return null;
             }
 
             InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -104,6 +99,33 @@ public class InfoMethodUtil {
 
     private enum TextPosition {
         BEFORE, SELECTED, AFTER
+    }
+
+    private static View getInternalServedView() throws UnexpectedInputMethodManagerStructureException {
+        Context context = InstrumentationBackend.instrumentation.getTargetContext();
+        InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+
+        try {
+            Field servedViewField = InputMethodManager.class.getDeclaredField("mServedView");
+            servedViewField.setAccessible(true);
+
+            return (View)servedViewField.get(inputMethodManager);
+        } catch (IllegalAccessException e) {
+            throw new UnexpectedInputMethodManagerStructureException(e);
+        } catch (NoSuchFieldException e) {
+            try {
+                Method method = InputMethodManager.class.getDeclaredMethod("getServedViewLocked");
+                method.setAccessible(true);
+
+                return (View)method.invoke(inputMethodManager);
+            } catch (NoSuchMethodException e2) {
+                throw new UnexpectedInputMethodManagerStructureException(e2);
+            } catch (IllegalAccessException e3) {
+                throw new UnexpectedInputMethodManagerStructureException(e3);
+            } catch (InvocationTargetException e4) {
+                throw new UnexpectedInputMethodManagerStructureException(e4);
+            }
+        }
     }
 
     private static int getTextLength(TextPosition textPosition, InputConnection inputConnection) {

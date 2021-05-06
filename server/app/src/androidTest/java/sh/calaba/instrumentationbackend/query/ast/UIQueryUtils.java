@@ -33,6 +33,7 @@ import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import sh.calaba.org.codehaus.jackson.type.TypeReference;
 
 import android.os.Build;
+import android.os.Looper;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
@@ -309,21 +310,42 @@ public class UIQueryUtils {
 		return futureTask;
 	}
 
-	public static int[] getViewLocationOnScreen(View view) {
+	public static int[] getViewLocationOnScreen(final View view) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1
 				&& Build.VERSION.SDK_INT < 28) {
 			ViewWrapper viewWrapper = new ViewWrapper(view);
 
-			return viewWrapper.getLocationOnScreen();
+		return viewWrapper.getLocationOnScreen();
+	}
+
+		final int[] location = new int[2];
+
+		if (isMainThread()) {
+			view.getLocationOnScreen(location);
+		} else {
+			InstrumentationBackend.instrumentation.runOnMainSync(new Runnable() {
+				@Override
+				public void run() {
+					view.getLocationOnScreen(location);
+				}
+			});
 		}
 
-		int[] location = new int[2];
-		view.getLocationOnScreen(location);
+//		in case view is turned over, the location start_x is returned incorrectly by getLocationOnScreen()
+//		we need to apply below workaround to fix the start_x
+
+		if (view.getScaleX() == -1) {
+			location[0] = location[0] - view.getWidth();
+		}
 
 		return location;
 	}
 
-	@SuppressWarnings("rawtypes")
+    private static boolean isMainThread() {
+        return Looper.myLooper() == Looper.getMainLooper();
+    }
+
+    @SuppressWarnings("rawtypes")
 	public static Object evaluateSyncInMainThread(Callable callable) {
 		try {
 			return evaluateAsyncInMainThread(callable)

@@ -10,6 +10,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import com.jayway.android.robotium.solo.SoloEnhanced;
@@ -33,6 +34,18 @@ public class InstrumentationBackend {
 
     public static SoloEnhanced solo;
     public static Actions actions;
+    public static UiDevice uiDevice;
+
+    public static UiDevice getUiDevice() {
+        if (instrumentation.getUiAutomation() == null) {
+            throw new NullPointerException("uiAutomation==null: did you forget to set '-w' flag for 'am instrument'?");
+        }
+        if(uiDevice == null) {
+            Logger.debug("Getting UiDevice Instance");
+            uiDevice = UiDevice.getInstance(instrumentation);
+        }
+        return uiDevice;
+    }
 
 
     public static synchronized void setDefaultCalabashAutomation(CalabashAutomation calabashAutomation) {

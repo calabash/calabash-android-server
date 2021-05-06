@@ -45,6 +45,7 @@ public class HttpTestServerLifeCycle implements TestServerLifeCycle {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
                         System.out.println("Thread is interrupted, breaking.");
+                        Thread.currentThread().interrupt();
                         break;
                     }
                 }

@@ -1,6 +1,5 @@
 package sh.calaba.instrumentationbackend.actions.text;
 
-import android.os.Build;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
 import android.webkit.ValueCallback;
@@ -16,8 +15,10 @@ import sh.calaba.instrumentationbackend.query.ast.UIQueryUtils;
 import sh.calaba.instrumentationbackend.utils.CompletableFuture;
 
 public abstract class TextAction implements Action {
+
     @Override
     public final Result execute(String... args) {
+
         try {
             parseArguments(args);
         } catch (IllegalArgumentException e) {
@@ -25,23 +26,27 @@ public abstract class TextAction implements Action {
         }
 
         try {
-            final View servedView = InfoMethodUtil.getServedView();
+            final View inputView = InfoMethodUtil.getInputView();
+
+            if (inputView == null) {
+                return Result.failedResult(getNoFocusedViewMessage());
+            }
+
             FutureTask<Future<Result>> futureResult = new FutureTask<>(new Callable<Future<Result>>() {
                 @Override
                 public Future<Result> call() throws InfoMethodUtil.UnexpectedInputMethodManagerStructureException {
                     final InputConnection inputConnection = InfoMethodUtil.getInputConnection();
-                    if (inputConnection == null || servedView == null) {
+                    if (inputConnection == null) {
                         return new CompletedFuture<>(Result.failedResult(getNoFocusedViewMessage()));
                     }
-                    return executeOnInputThread(servedView, inputConnection);
+                    return executeOnInputThread(inputView, inputConnection);
                 }
             });
 
-            UIQueryUtils.postOnViewHandlerOrUiThread(servedView, futureResult);
+
+            UIQueryUtils.postOnViewHandlerOrUiThread(inputView, futureResult);
             Future<Result> res = futureResult.get(10, TimeUnit.SECONDS);
             return res.get(10, TimeUnit.SECONDS);
-        } catch (InfoMethodUtil.UnexpectedInputMethodManagerStructureException e) {
-            throw new RuntimeException(e);
         } catch (ExecutionException executionException) {
             throw new RuntimeException(executionException.getCause());
         } catch (InterruptedException e) {

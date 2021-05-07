@@ -10,31 +10,25 @@ import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
 
 public class HideSoftKeyboard implements Action {
+
     @Override
     public Result execute(String... args) {
         Context context = InstrumentationBackend.instrumentation.getTargetContext();
         InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 
         Activity activity = InstrumentationBackend.getCurrentActivity();
-        View view = null;
-
-        try {
-            view = InfoMethodUtil.getServedView();
-        } catch (InfoMethodUtil.UnexpectedInputMethodManagerStructureException e) {
-            // Ignored
-        }
-
-        if (view == null) {
-            view = activity.getCurrentFocus();
-        }
+        View view = InfoMethodUtil.getInputView();
 
         if (view == null) {
             view = new View(activity);
         }
 
-        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        if (inputMethodManager != null) {
+            inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            return Result.successResult();
+        }
 
-        return Result.successResult();
+        return Result.failedResult("Could not connect to input_method");
     }
 
     @Override

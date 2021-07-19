@@ -33,7 +33,6 @@ import sh.calaba.org.codehaus.jackson.map.ObjectMapper;
 import sh.calaba.org.codehaus.jackson.type.TypeReference;
 
 import android.os.Build;
-import android.os.Looper;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
@@ -315,21 +314,11 @@ public class UIQueryUtils {
 				&& Build.VERSION.SDK_INT < 28) {
 			ViewWrapper viewWrapper = new ViewWrapper(view);
 
-		return viewWrapper.getLocationOnScreen();
-	}
-
-		final int[] location = new int[2];
-
-		if (isMainThread()) {
-			view.getLocationOnScreen(location);
-		} else {
-			InstrumentationBackend.instrumentation.runOnMainSync(new Runnable() {
-				@Override
-				public void run() {
-					view.getLocationOnScreen(location);
-				}
-			});
+			return viewWrapper.getLocationOnScreen();
 		}
+
+		int[] location = new int[2];
+		view.getLocationOnScreen(location);
 
 //		in case view is turned over, the location start_x is returned incorrectly by getLocationOnScreen()
 //		we need to apply below workaround to fix the start_x
@@ -340,10 +329,6 @@ public class UIQueryUtils {
 
 		return location;
 	}
-
-    private static boolean isMainThread() {
-        return Looper.myLooper() == Looper.getMainLooper();
-    }
 
     @SuppressWarnings("rawtypes")
 	public static Object evaluateSyncInMainThread(Callable callable) {

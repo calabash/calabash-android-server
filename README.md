@@ -75,5 +75,3 @@ adb logcat -c
 # Add this line to receive device logs
 adb logcat -d
 ```
-test
-test username

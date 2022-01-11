@@ -23,15 +23,15 @@ public class UIQueryASTPredicate implements UIQueryAST {
     public final Object valueToMatch;
 
     public UIQueryASTPredicate(String text,
-                               UIQueryASTPredicateRelation parsedRelation, Object parsedValue) {
+          UIQueryASTPredicateRelation parsedRelation, Object parsedValue) {
         this.propertyName = text;
         this.relation = parsedRelation;
         this.valueToMatch = parsedValue;
     }
 
     public List<UIObject> evaluateWithViews(List<? extends UIObject> inputUIObjects,
-                                            UIQueryDirection direction,
-                                            UIQueryVisibility visibility) {
+          UIQueryDirection direction,
+          UIQueryVisibility visibility) {
         final List<Future<List<? extends UIObject>>> futureResults;
 
         try {
@@ -85,19 +85,19 @@ public class UIQueryASTPredicate implements UIQueryAST {
 
         @Override
         protected List<? extends UIObject> matchForUIObject(UIObjectWebResult uiObjectWebResult) {
-            Map<?, ?> map = evaluateForMap(uiObjectWebResult.getObject());
+            Map<?,?> map = evaluateForMap(uiObjectWebResult.getObject());
 
             if (map != null) {
                 return Collections.singletonList(
-                        new UIObjectWebResult(map,
-                                uiObjectWebResult.getWebContainer()));
+                      new UIObjectWebResult(map,
+                            uiObjectWebResult.getWebContainer()));
             } else {
                 return Collections.emptyList();
             }
         }
     }
 
-    private Map<?, ?> evaluateForMap(Map<?, ?> map) {
+    private Map<?,?> evaluateForMap(Map<?,?> map) {
         if (map.containsKey(this.propertyName)) {
             Object value = map.get(this.propertyName);
             if (this.relation.areRelated(value, this.valueToMatch)) {
@@ -133,7 +133,7 @@ public class UIQueryASTPredicate implements UIQueryAST {
         }
 
         Method propertyAccessor = UIQueryUtils
-                .hasProperty(view, this.propertyName);
+              .hasProperty(view, this.propertyName);
 
         if (propertyAccessor == null) {
             return null;
@@ -143,8 +143,8 @@ public class UIQueryASTPredicate implements UIQueryAST {
         if (this.relation.areRelated(value, this.valueToMatch)) {
             return view;
         } else if (this.valueToMatch instanceof String
-                && value != null
-                && this.relation.areRelated(value.toString(), this.valueToMatch)) {
+              && value != null
+              && this.relation.areRelated(value.toString(), this.valueToMatch)) {
             return view;
         } else {
             return null;
@@ -154,18 +154,19 @@ public class UIQueryASTPredicate implements UIQueryAST {
     public static UIQueryASTPredicate newPredicateFromAST(CommonTree step) {
         // TODO Auto-generated method stub
         if (step.getChildCount() != 3) {
-            throw new IllegalStateException("Bad Predicate query: " + step + ". Expected form {getter RELATION value}.");
+            throw new IllegalStateException("Bad Predicate query: "+step+". Expected form {getter RELATION value}.");
         }
         CommonTree prop = (CommonTree) step.getChild(0);
         CommonTree rel = (CommonTree) step.getChild(1);
         CommonTree val = (CommonTree) step.getChild(2);
 
         UIQueryASTPredicate uiQueryASTPredicate = new UIQueryASTPredicate(prop.getText(),
-                UIQueryASTPredicate.parseRelation(rel),
-                UIQueryUtils.parseValue(val));
+              UIQueryASTPredicate.parseRelation(rel),
+              UIQueryUtils.parseValue(val));
 
         System.out.println("MRT:" + uiQueryASTPredicate.toString());
         return uiQueryASTPredicate;
+
     }
 
     private static UIQueryASTPredicateRelation parseRelation(CommonTree rel) {
@@ -174,7 +175,7 @@ public class UIQueryASTPredicate implements UIQueryAST {
         final String CASE_INSENSITIVE_SPEC = "[C]";
         if (relText.endsWith(CASE_INSENSITIVE_SPEC)) {
             caseSensitive = false;
-            relText = relText.substring(0, relText.length() - CASE_INSENSITIVE_SPEC.length());
+            relText = relText.substring(0,relText.length() - CASE_INSENSITIVE_SPEC.length());
         }
 
         if ("BEGINSWITH".equals(relText)) {
@@ -205,9 +206,9 @@ public class UIQueryASTPredicate implements UIQueryAST {
     @java.lang.Override
     public java.lang.String toString() {
         return "UIQueryASTPredicate{" +
-                "propertyName='" + propertyName + '\'' +
-                ", relation=" + relation +
-                ", valueToMatch=" + valueToMatch +
-                '}';
+              "propertyName='" + propertyName + '\'' +
+              ", relation=" + relation +
+              ", valueToMatch=" + valueToMatch +
+              '}';
     }
 }

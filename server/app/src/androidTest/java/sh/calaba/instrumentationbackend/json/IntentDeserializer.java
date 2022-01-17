@@ -75,14 +75,7 @@ public class IntentDeserializer extends JsonDeserializer<Intent> {
                         listOfArguments.add(key);
                         listOfArguments.add(value);
                         InvocationOperation invocationOperation = new InvocationOperation("putExtra", listOfArguments);
-
-                        InvocationOperation.MethodWithArguments method = null;
-                        try {
-                            method = invocationOperation.findCompatibleMethod(intent);
-                        }catch (Exception exception){
-                            System.out.println("MRT: listOfArguments" + listOfArguments);
-                            System.out.println("MRT: Exception occurred:" + exception.toString());
-                        }
+                        InvocationOperation.MethodWithArguments method = invocationOperation.findCompatibleMethod(intent);
 
                         if (method == null) {
                             throw new IOException("Cannot add '" + value + "' of type '" + value.getClass() + "'");

@@ -11,29 +11,29 @@ import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 
 public class InvocationOperation implements Operation {
-	private final String methodName;
-	private final List<?> arguments;
-	private final Class<?>[] argumentTypes;
+    private final String methodName;
+    private final List<?> arguments;
+    private final Class<?>[] argumentTypes;
 
-	public InvocationOperation(String methodName, List<?> arguments) {
-		this.methodName = methodName;
-		this.arguments = arguments;
-		this.argumentTypes = parseArgumentTypes(arguments);
-	}
+    public InvocationOperation(String methodName, List<?> arguments) {
+        this.methodName = methodName;
+        this.arguments = arguments;
+        this.argumentTypes = parseArgumentTypes(arguments);
+    }
 
-	@Override
-	public Object apply(final Object o) throws Exception {
-		final AtomicReference<Object> ref = new AtomicReference<Object>();
-		final AtomicReference<Exception> refEx = new AtomicReference<Exception>();
-		
-		InstrumentationBackend.instrumentation.runOnMainSync(new Runnable() {
-			@Override
-			public void run() {
-			    if (o == null) {
+    @Override
+    public Object apply(final Object o) throws Exception {
+        final AtomicReference<Object> ref = new AtomicReference<Object>();
+        final AtomicReference<Exception> refEx = new AtomicReference<Exception>();
+
+        InstrumentationBackend.instrumentation.runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                if (o == null) {
                     refEx.set(new IncompatibleArgumentsException("The intent where the backdoor was initially called is already gone"));
-			        return;
+                    return;
                 }
-			    
+
                 MethodWithArguments method = findCompatibleMethod(o);
 
                 if (method == null) {
@@ -84,27 +84,27 @@ public class InvocationOperation implements Operation {
                     refEx.set(e);
                     return;
                 }
-			}
-		 });
-				
-		 if (refEx.get() != null) {
-			 throw refEx.get();
-		 }
+            }
+        });
 
-		 return ref.get();				
-	}
+        if (refEx.get() != null) {
+            throw refEx.get();
+        }
 
-	public MethodWithArguments findCompatibleMethod(Object object) {
+        return ref.get();
+    }
+
+    public MethodWithArguments findCompatibleMethod(Object object) {
         return (findCompatibleMethod(object.getClass()));
     }
 
     public MethodWithArguments findCompatibleMethod(Class<?> forClass) {
-		// Fast path
-		try {
+        // Fast path
+        try {
             return new MethodWithArguments(forClass.getMethod(methodName, argumentTypes),
                     new ArrayList<Object>(arguments));
-		} catch (NoSuchMethodException e) {
-			// No immediate method found
+        } catch (NoSuchMethodException e) {
+            // No immediate method found
 
             for (Method method : forClass.getMethods()) {
                 if (!method.getName().equals(methodName)) {
@@ -119,22 +119,22 @@ public class InvocationOperation implements Operation {
             }
 
             return null;
-		}
-	}
+        }
+    }
 
-	private static Class<?> mapToPrimitiveClass(Class<?> c) {
-		if (c.equals(Integer.class)) {
-			return int.class;
-		}
-		else if (c.equals(Float.class)) {
-			return float.class;
-		}
-		else if (c.equals(Double.class)) {
-			return double.class;
-		}
-		else if (c.equals(Boolean.class)) {
-			return boolean.class;
-		}
+    private static Class<?> mapToPrimitiveClass(Class<?> c) {
+        if (c.equals(Integer.class)) {
+            return int.class;
+        }
+        else if (c.equals(Float.class)) {
+            return float.class;
+        }
+        else if (c.equals(Double.class)) {
+            return double.class;
+        }
+        else if (c.equals(Boolean.class)) {
+            return boolean.class;
+        }
         else if (c.equals(Long.class)) {
             return long.class;
         }
@@ -148,8 +148,8 @@ public class InvocationOperation implements Operation {
             return char.class;
         }
 
-		return c;
-	}
+        return c;
+    }
 
     private static Class<?> mapToBoxingClass(Class<?> c) {
         if (c.equals(int.class)) {
@@ -329,10 +329,10 @@ public class InvocationOperation implements Operation {
         return types;
     }
 
-	@Override
-	public String getName() {
-		return "InvocationOp["+this.methodName+", arguments = " + this.arguments + "]";
-	}
+    @Override
+    public String getName() {
+        return "InvocationOp["+this.methodName+", arguments = " + this.arguments + "]";
+    }
 
     private static class IncompatibleArgumentsException extends Exception {
         public IncompatibleArgumentsException(String detailMessage) {

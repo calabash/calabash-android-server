@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import android.net.Uri;
+
 import sh.calaba.instrumentationbackend.query.InvocationOperation;
 import sh.calaba.org.codehaus.jackson.JsonParser;
 import sh.calaba.org.codehaus.jackson.JsonProcessingException;
@@ -19,7 +20,7 @@ import sh.calaba.org.codehaus.jackson.map.JsonDeserializer;
 public class IntentDeserializer extends JsonDeserializer<Intent> {
     @Override
     public Intent deserialize(JsonParser jp, DeserializationContext ctxt)
-            throws IOException, JsonProcessingException {
+          throws IOException, JsonProcessingException {
         Map map = jp.readValueAs(Map.class);
         Intent intent = new Intent();
 
@@ -36,15 +37,15 @@ public class IntentDeserializer extends JsonDeserializer<Intent> {
         }
 
         if (map.containsKey("flags")) {
-            intent.setFlags((Integer)map.get("flags"));
+            intent.setFlags((Integer) map.get("flags"));
         }
 
         if (map.containsKey("type")) {
-            intent.setType((String)map.get("type"));
+            intent.setType((String) map.get("type"));
         }
 
         if (map.containsKey("package")) {
-            intent.setPackage((String)map.get("package"));
+            intent.setPackage((String) map.get("package"));
         }
 
         if (map.containsKey("extras") && map.get("extras") != null) {
@@ -67,7 +68,7 @@ public class IntentDeserializer extends JsonDeserializer<Intent> {
                     } else {
                         // Prefer arrays over lists
                         if (value instanceof List) {
-                            value = ((List)value).toArray();
+                            value = ((List) value).toArray();
                         }
 
                         List<Object> listOfArguments = new ArrayList<Object>();
@@ -94,10 +95,10 @@ public class IntentDeserializer extends JsonDeserializer<Intent> {
 
         if (map.containsKey("component")) {
             Map componentMap = (Map) map.get("component");
-            intent.setComponent(new ComponentName((String)componentMap.get("packageName"), (String)componentMap.get("className")));
+            intent.setComponent(
+                  new ComponentName((String) componentMap.get("packageName"), (String) componentMap.get("className")));
         }
 
         return intent;
     }
-
 }

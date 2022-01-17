@@ -164,7 +164,6 @@ public class UIQueryASTPredicate implements UIQueryAST {
               UIQueryASTPredicate.parseRelation(rel),
               UIQueryUtils.parseValue(val));
 
-        System.out.println("MRT:" + uiQueryASTPredicate.toString());
         return uiQueryASTPredicate;
 
     }

@@ -29,6 +29,11 @@ public class InvocationOperation implements Operation {
 		InstrumentationBackend.instrumentation.runOnMainSync(new Runnable() {
 			@Override
 			public void run() {
+			    if (o == null) {
+                    refEx.set(new IncompatibleArgumentsException("The intent where the backdoor was initially called is already gone"));
+			        return;
+                }
+			    
                 MethodWithArguments method = findCompatibleMethod(o);
 
                 if (method == null) {
@@ -90,7 +95,7 @@ public class InvocationOperation implements Operation {
 	}
 
 	public MethodWithArguments findCompatibleMethod(Object object) {
-	    return findCompatibleMethod(object.getClass());
+        return (findCompatibleMethod(object.getClass()));
     }
 
     public MethodWithArguments findCompatibleMethod(Class<?> forClass) {

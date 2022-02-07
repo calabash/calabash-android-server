@@ -5,6 +5,10 @@ trigger:
     - master
     - develop
 
+variables:
+- name: EOCompliance-Mac
+  value: true
+
 pr:
 - master
 - develop

@@ -5,6 +5,10 @@ trigger:
     - master
     - develop
 
+variables:
+- name: EOCompliance-Mac
+  value: true
+
 pr:
 - master
 - develop
@@ -14,7 +18,7 @@ jobs:
   strategy:
     matrix:
       Mojave:
-        IMAGE_POOL: 'macOS-10.14'
+        IMAGE_POOL: 'macOS-11'
       # Android Emulator is not available on Ubuntu
       # Ubuntu-16:
       # IMAGE_POOL: 'ubuntu-16.04'

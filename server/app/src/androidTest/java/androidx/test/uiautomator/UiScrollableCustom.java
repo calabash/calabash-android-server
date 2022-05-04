@@ -1,4 +1,9 @@
-package android.support.test.uiautomator;
+package androidx.test.uiautomator;
+
+import androidx.test.uiautomator.Tracer;
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiScrollable;
+import androidx.test.uiautomator.UiSelector;
 
 public class UiScrollableCustom extends UiScrollable {
     public UiScrollableCustom(UiSelector container) {

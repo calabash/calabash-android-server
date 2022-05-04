@@ -1,9 +1,9 @@
 package sh.calaba.instrumentationbackend.actions.device;
 
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiScrollableCustom;
-import android.support.test.uiautomator.UiSelector;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiScrollableCustom;
+import androidx.test.uiautomator.UiSelector;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;

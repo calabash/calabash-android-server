@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package android.support.test.uiautomator;
+package androidx.test.uiautomator;
 
 import android.util.Log;
 import android.util.Xml;
@@ -31,6 +30,9 @@ import java.io.OutputStream;
 public class AccessibilityNodeInfoDumperCustom {
 
     private static final String LOGTAG = AccessibilityNodeInfoDumper.class.getSimpleName();
+
+
+
     private static final String[] NAF_EXCLUDED_CLASSES = new String[] {
             android.widget.GridView.class.getName(), android.widget.GridLayout.class.getName(),
             android.widget.ListView.class.getName(), android.widget.TableLayout.class.getName()

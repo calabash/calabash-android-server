@@ -43,10 +43,10 @@ public class UiautomatorExecute implements Action {
             Object result;
             if (isActionOnParent(action)) {
                 Method getParentMethod = UiObject2.class.getMethod("getParent");
-                UiObject2 targetObjectParent = (UiObject2) getParentMethod.invoke(targetObject);
+                UiObject2 parentObject = (UiObject2) getParentMethod.invoke(targetObject);
 
                 Method actionMethod = UiObject2.class.getMethod(extractAction(action));
-                result = actionMethod.invoke(targetObjectParent);
+                result = actionMethod.invoke(parentObject);
             } else {
                 Method actionMethod = UiObject2.class.getMethod(action);
                 result = actionMethod.invoke(targetObject);
@@ -91,6 +91,7 @@ public class UiautomatorExecute implements Action {
                 availableActions.add(a.toString());
                 availableActions.add("parent:" + a);
             }
+            String errorMessage = String.format("Unsupported action: %s. The list of available actions is %s", action, availableActions);
             throw new IllegalArgumentException(errorMessage);
         }
     }

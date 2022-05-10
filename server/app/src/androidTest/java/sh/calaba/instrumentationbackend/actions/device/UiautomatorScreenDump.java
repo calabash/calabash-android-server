@@ -1,6 +1,6 @@
 package sh.calaba.instrumentationbackend.actions.device;
-import android.support.test.uiautomator.AccessibilityNodeInfoDumperCustom;
-import android.support.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.AccessibilityNodeInfoDumperCustom;
+import androidx.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import java.io.BufferedReader;

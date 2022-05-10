@@ -1,4 +1,4 @@
-package android.support.test.uiautomator;
+package androidx.test.uiautomator;
 
 public class UiScrollableCustom extends UiScrollable {
     public UiScrollableCustom(UiSelector container) {

@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package android.support.test.uiautomator;
+package androidx.test.uiautomator;
 
 import android.util.Log;
 import android.util.Xml;

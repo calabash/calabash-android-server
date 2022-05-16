@@ -9,18 +9,19 @@ import androidx.test.uiautomator.UiObjectNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
 
+import static sh.calaba.instrumentationbackend.actions.device.StrategyVerifier.verifyStrategy;
+
 public class UiautomatorExecute implements Action {
     @Override
     public Result execute(String... args) {
         UiDevice mDevice = InstrumentationBackend.getUiDevice();
-        String text = null;
+        String resultMessage = null;
         try {
             String strategy = args[0];
             String locator = args[1];
@@ -42,18 +43,13 @@ public class UiautomatorExecute implements Action {
 
             Object result;
             if (isActionOnParent(action)) {
-                Method getParentMethod = UiObject2.class.getMethod("getParent");
-                UiObject2 parentObject = (UiObject2) getParentMethod.invoke(targetObject);
-
-                Method actionMethod = UiObject2.class.getMethod(extractAction(action));
-                result = actionMethod.invoke(parentObject);
+                result = executeMethodOnObject(targetObject.getParent(), extractAction(action));
             } else {
-                Method actionMethod = UiObject2.class.getMethod(action);
-                result = actionMethod.invoke(targetObject);
+                result = executeMethodOnObject(targetObject, action);
             }
 
             if (result != null) {
-                text = result.toString();
+                resultMessage = result.toString();
             }
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -64,22 +60,18 @@ public class UiautomatorExecute implements Action {
             return new Result(false, e.getMessage());
         }
 
-        return new Result(true, text);
+        return new Result(true, resultMessage);
+    }
+
+    private Object executeMethodOnObject(UiObject2 targetObject, String methodName)
+          throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        Method actionMethod = UiObject2.class.getMethod(methodName);
+        return actionMethod.invoke(targetObject);
     }
 
     @Override
     public String key() {
         return "uiautomator_execute";
-    }
-
-    private static void verifyStrategy(String strategy) {
-        try {
-            Strategies.valueOf(strategy);
-        } catch (IllegalArgumentException e) {
-            List<Strategies> availableStrategies = Arrays.asList(Strategies.values());
-            String errorMessage = String.format("Unsupported strategy: %s. The list of available strategies is %s", strategy, availableStrategies);
-            throw new IllegalArgumentException(errorMessage);
-        }
     }
 
     private static void verifyAction(String action) {

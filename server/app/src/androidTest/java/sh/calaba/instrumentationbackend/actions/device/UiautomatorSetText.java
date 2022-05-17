@@ -11,7 +11,6 @@ import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.UiObjectNotFoundException;
-import androidx.test.uiautomator.Until;
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
@@ -62,13 +61,7 @@ public class UiautomatorSetText implements Action {
     private Result setTextOnObject(UiObject2 targetObject, @NonNull String text)
           throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         targetObject.setText(text);
-        targetObject.wait(Until.textMatches(text), 1000);
-        if (text.equals(targetObject.getText())) {
-            return new Result(true, "Text was set to the view.");
-        } else {
-            return new Result(false,
-                  "It was not possible to set the text to the view, does it have a settable text field?");
-        }
+        return new Result(true, "");
     }
 
     @Override

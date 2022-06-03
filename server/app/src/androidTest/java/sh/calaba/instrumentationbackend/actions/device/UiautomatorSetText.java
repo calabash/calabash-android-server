@@ -15,7 +15,7 @@ import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
 
-import static sh.calaba.instrumentationbackend.actions.device.StrategyVerifier.verifyStrategy;
+import static sh.calaba.instrumentationbackend.actions.device.StrategyUtils.verifyStrategy;
 
 public class UiautomatorSetText implements Action {
     @Override

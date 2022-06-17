@@ -39,7 +39,7 @@ public class StrategyUtils {
             case textStartWith:
                 return "textStartsWith";
             case pkg:
-                return "Package";
+                return "packageName";
         }
         return bySelectorStrategy;
     }

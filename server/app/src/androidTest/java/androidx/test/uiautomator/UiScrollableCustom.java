@@ -9,6 +9,8 @@ public class UiScrollableCustom extends UiScrollable {
         return scrollIntoView(selector, false);
     }
 
+    private static final Long TIMEOUT = 10L;
+
     /**
      * Method required because scrollForward return type is not reliable. It might return false, meaning that there is no
      * more space to scroll while it is not true. This method allows you to force to scroll even if scrollForward returns
@@ -17,6 +19,7 @@ public class UiScrollableCustom extends UiScrollable {
     public boolean scrollIntoView(UiSelector selector, boolean forceScroll) throws UiObjectNotFoundException {
         Tracer.trace(new Object[]{selector});
         UiSelector childSelector = this.getSelector().childSelector(selector);
+        UiObject element = new UiObject(getDevice(), childSelector);
         boolean found = false;
 
         for (int x = 0; x < getMaxSearchSwipes() && !found; ++x) {
@@ -24,6 +27,7 @@ public class UiScrollableCustom extends UiScrollable {
                 found = true;
             } else {
                 boolean scrolled = this.scrollForward(100);
+                element.waitForExists(TIMEOUT);
                 if (!forceScroll && !scrolled) break;
             }
         }

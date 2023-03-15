@@ -18,6 +18,7 @@ public class UiautomatorSeekBar implements Action{
     @Override
     public Result execute(String... args) {
         UiDevice device = InstrumentationBackend.getUiDevice();
+        String error_message =  "null";
 
         try {
             String strategy = args[0];
@@ -42,6 +43,8 @@ public class UiautomatorSeekBar implements Action{
             }
             else if (Objects.equals(from_direction, "right") && Objects.equals(to_direction, "left")){
                 device.swipe(startX, centerY, endX, centerY, 10);
+            } else {
+                error_message= "Incorrect options check the arguments";
             }
 
         } catch (NumberFormatException e) {
@@ -54,7 +57,13 @@ public class UiautomatorSeekBar implements Action{
             throw new RuntimeException(e);
         }
 
-        return new Result(true);
+        if(String.valueOf(error_message) != "null") {
+            return new Result(true, error_message);
+        } else
+        {
+            return new Result(true);
+        }
+
     }
 
     @Override

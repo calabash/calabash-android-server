@@ -1,13 +1,4 @@
 package androidx.test.uiautomator;
-
-import sh.calaba.instrumentationbackend.InstrumentationBackend;
-import sh.calaba.instrumentationbackend.Result;
-import sh.calaba.instrumentationbackend.actions.device.UiautomatorScreenDump;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
 public class UiScrollableCustom extends UiScrollable {
     public UiScrollableCustom(UiSelector container) {
         super(container);

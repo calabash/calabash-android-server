@@ -28,11 +28,10 @@ public class UiScrollableCustom extends UiScrollable {
                 boolean scrolled=true;
                 if(direction.equals("scrollForward")){
                     scrolled = scrollForward(100);
-                    element.waitForExists(TIMEOUT);
                 } else if (direction.equals("scrollBackward")) {
                     scrolled = scrollBackward(100);
-                    element.waitForExists(TIMEOUT);
                 }
+                element.waitForExists(TIMEOUT);
                 if (!forceScroll && !scrolled) break;
             }
         }

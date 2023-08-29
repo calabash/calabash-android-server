@@ -14,21 +14,22 @@ public class UiautomatorHorizontallyScrollToElement implements Action {
     public Result execute(String... args) {
         InstrumentationBackend.getUiDevice();
         try {
-            String targetBySelectorStrategy = args[0];
-            String targetLocator = args[1];
+            String direction = args[0];
+            String targetBySelectorStrategy = args[1];
+            String targetLocator = args[2];
 
             String containerBySelectorStrategy = null;
             String containerLocator = null;
             if (args.length >= 4) {
-                containerBySelectorStrategy = args[2];
-                containerLocator = args[3];
+                containerBySelectorStrategy = args[3];
+                containerLocator = args[4];
             }
             int maxScrolls = 10;
             if (args.length >= 5) {
-                maxScrolls = Integer.parseInt(args[4]);
+                maxScrolls = Integer.parseInt(args[5]);
             }
 
-            scrollToTargetInContainer(targetBySelectorStrategy, targetLocator, containerBySelectorStrategy,
+            scrollToTargetInContainer(targetBySelectorStrategy, targetLocator, direction, containerBySelectorStrategy,
                   containerLocator, maxScrolls, true);
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);

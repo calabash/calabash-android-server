@@ -21,7 +21,7 @@ public class ClearNotificationPanel implements Action {
             } else {
                 UiSelector notificationStackScroller = new UiSelector().resourceId("com.android.systemui:id/notification_stack_scroller");
                 UiScrollableCustom scrollable = new UiScrollableCustom(notificationStackScroller);
-                scrollable.scrollIntoView(clearButton);
+                scrollable.scrollIntoView(clearButton, "scrollForward");
                 device.findObject(clearButton).click();
             }
 

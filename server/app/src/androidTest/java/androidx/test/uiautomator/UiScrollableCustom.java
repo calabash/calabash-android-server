@@ -4,8 +4,8 @@ public class UiScrollableCustom extends UiScrollable {
         super(container);
     }
 
-    public boolean scrollIntoView(UiSelector selector, String direction) throws UiObjectNotFoundException {
-        return scrollIntoView(selector, direction, false);
+    public boolean scrollIntoView(UiSelector selector) throws UiObjectNotFoundException {
+        return scrollIntoView(selector, "scrollForward", false);
     }
 
     private static final Long TIMEOUT = 10L;

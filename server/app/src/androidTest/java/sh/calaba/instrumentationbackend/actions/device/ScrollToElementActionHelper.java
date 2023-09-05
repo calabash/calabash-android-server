@@ -12,7 +12,7 @@ import static sh.calaba.instrumentationbackend.actions.device.StrategyUtils.veri
 
 public class ScrollToElementActionHelper {
 
-    public static void scrollToTargetInContainer(String targetBySelectorStrategy, String targetLocator, String direction,
+    public static void scrollToTargetInContainer(String targetBySelectorStrategy, String targetLocator,
           String containerBySelectorStrategy, String containerLocator, int maxScrolls, boolean isHorizontal)
           throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, UiObjectNotFoundException {
         UiSelector targetViewSelector = getUiSelector(targetBySelectorStrategy, targetLocator);
@@ -31,9 +31,32 @@ public class ScrollToElementActionHelper {
             scrollable.setAsVerticalList();
         }
 
-        if (!scrollable.scrollIntoView(targetViewSelector, direction, true)) {
+        if (!scrollable.scrollIntoView(targetViewSelector, "scrollForward", true)) {
             String errorMessage = String.format("Found no elements for locator: %s by strategy: %s",
                   targetLocator, targetBySelectorStrategy);
+            throw new UiObjectNotFoundException(errorMessage);
+        }
+    }
+
+    public static void scrollToTarget(String targetBySelectorStrategy, String targetLocator, String direction,
+                                                  int maxScrolls, boolean isHorizontal)
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, UiObjectNotFoundException {
+        UiSelector targetViewSelector = getUiSelector(targetBySelectorStrategy, targetLocator);
+
+        UiSelector scrollViewSelector = new UiSelector().scrollable(true);
+
+        UiScrollableCustom scrollable = new UiScrollableCustom(scrollViewSelector);
+        scrollable.setMaxSearchSwipes(maxScrolls);
+
+        if (isHorizontal) {
+            scrollable.setAsHorizontalList();
+        } else {
+            scrollable.setAsVerticalList();
+        }
+
+        if (!scrollable.scrollIntoView(targetViewSelector, direction, true)) {
+            String errorMessage = String.format("Found no elements for locator: %s by strategy: %s",
+                    targetLocator, targetBySelectorStrategy);
             throw new UiObjectNotFoundException(errorMessage);
         }
     }

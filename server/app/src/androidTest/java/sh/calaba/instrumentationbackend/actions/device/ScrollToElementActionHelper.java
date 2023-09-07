@@ -13,7 +13,7 @@ import static sh.calaba.instrumentationbackend.actions.device.StrategyUtils.veri
 public class ScrollToElementActionHelper {
 
     public static void scrollToTargetInContainer(String targetBySelectorStrategy, String targetLocator,
-          String containerBySelectorStrategy, String containerLocator, int maxScrolls, boolean isHorizontal)
+          String containerBySelectorStrategy, String containerLocator, int maxScrolls, boolean isHorizontal, String... direction)
           throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, UiObjectNotFoundException {
         UiSelector targetViewSelector = getUiSelector(targetBySelectorStrategy, targetLocator);
 
@@ -31,34 +31,19 @@ public class ScrollToElementActionHelper {
             scrollable.setAsVerticalList();
         }
 
-        if (!scrollable.scrollIntoView(targetViewSelector, "scrollForward", true)) {
+        String scrollingDirection = direction[0];
+
+        if (!scrollable.scrollIntoView(targetViewSelector, scrollingDirection, true)) {
             String errorMessage = String.format("Found no elements for locator: %s by strategy: %s",
                   targetLocator, targetBySelectorStrategy);
             throw new UiObjectNotFoundException(errorMessage);
         }
     }
 
-    public static void scrollToTarget(String targetBySelectorStrategy, String targetLocator, String direction,
-                                                  int maxScrolls, boolean isHorizontal)
+    public static void scrollToTarget(String targetBySelectorStrategy, String targetLocator, String direction, int maxScrolls, boolean isHorizontal)
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, UiObjectNotFoundException {
-        UiSelector targetViewSelector = getUiSelector(targetBySelectorStrategy, targetLocator);
-
-        UiSelector scrollViewSelector = new UiSelector().scrollable(true);
-
-        UiScrollableCustom scrollable = new UiScrollableCustom(scrollViewSelector);
-        scrollable.setMaxSearchSwipes(maxScrolls);
-
-        if (isHorizontal) {
-            scrollable.setAsHorizontalList();
-        } else {
-            scrollable.setAsVerticalList();
-        }
-
-        if (!scrollable.scrollIntoView(targetViewSelector, direction, true)) {
-            String errorMessage = String.format("Found no elements for locator: %s by strategy: %s",
-                    targetLocator, targetBySelectorStrategy);
-            throw new UiObjectNotFoundException(errorMessage);
-        }
+        scrollToTargetInContainer(targetBySelectorStrategy, targetLocator,
+                null, null, maxScrolls, isHorizontal, direction);
     }
 
     private static UiSelector getUiSelector(String targetBySelectorStrategy, String targetLocator)

@@ -7,7 +7,7 @@ import sh.calaba.instrumentationbackend.actions.Action;
 
 import java.lang.reflect.InvocationTargetException;
 
-import static sh.calaba.instrumentationbackend.actions.device.ScrollToElementActionHelper.scrollToTarget;
+import static sh.calaba.instrumentationbackend.actions.device.ScrollToElementActionHelper.scrollToTargetByDirection;
 
 public class UiautomatorVerticallyScrollingFowardOrBackward implements Action {
     @Override
@@ -23,7 +23,7 @@ public class UiautomatorVerticallyScrollingFowardOrBackward implements Action {
                 maxScrolls = Integer.parseInt(args[3]);
             }
 
-            scrollToTarget(targetBySelectorStrategy, targetLocator, direction, maxScrolls, false);
+            scrollToTargetByDirection(targetBySelectorStrategy, targetLocator, direction, maxScrolls, false);
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         } catch (UiObjectNotFoundException e) {

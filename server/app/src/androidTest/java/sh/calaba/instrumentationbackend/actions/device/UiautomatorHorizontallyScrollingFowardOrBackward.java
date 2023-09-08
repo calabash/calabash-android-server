@@ -6,15 +6,16 @@ import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
 
 import java.lang.reflect.InvocationTargetException;
+
 import static sh.calaba.instrumentationbackend.actions.device.ScrollToElementActionHelper.scrollToTargetByDirection;
 
 /**
- * The class can be used to vertically scroll to the target element, either scrolling vertically forward or backward.
- * The command to run vertically forward example: perform_action('uiautomator_vertically_scroll_forward_or_backward_to_element', 'FORWARD', 'text', 'Android', '10')
- * The command to run vertically backward example: perform_action('uiautomator_vertically_scroll_forward_or_backward_to_element', 'BACKWARD', 'text', 'Android', '10')
+ * The class can be used to horizontally scroll to the target element, either scrolling horizontally forward or backward.
+ * The command to run horizontally forward example: perform_action('uiautomator_horizontally_scroll_forward_or_backward_to_element', 'FORWARD', 'text', 'Android', '10')
+ * The command to run horizontally backward example: perform_action('uiautomator_horizontally_scroll_forward_or_backward_to_element', 'BACKWARD', 'text', 'Android', '10')
  * Documentation for the above can be found at https://github.com/calabash/calabash-android/wiki/UIAutomator2
  */
-public class UiautomatorVerticallyScrollingFowardOrBackward implements Action {
+public class UiautomatorHorizontallyScrollingFowardOrBackward implements Action {
     @Override
     public Result execute(String... args) {
         InstrumentationBackend.getUiDevice();
@@ -30,7 +31,7 @@ public class UiautomatorVerticallyScrollingFowardOrBackward implements Action {
 
             ScrollDirection scrollDirection = ScrollDirection.valueOf(direction);
 
-            scrollToTargetByDirection(targetBySelectorStrategy, targetLocator, scrollDirection, maxScrolls, false);
+            scrollToTargetByDirection(targetBySelectorStrategy, targetLocator, scrollDirection, maxScrolls, true);
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         } catch (UiObjectNotFoundException e) {
@@ -44,5 +45,5 @@ public class UiautomatorVerticallyScrollingFowardOrBackward implements Action {
     }
 
     @Override
-    public String key() { return "uiautomator_vertically_scroll_forward_or_backward_to_element"; }
+    public String key() { return "uiautomator_horizontally_scroll_forward_or_backward_to_element"; }
 }

@@ -7,6 +7,7 @@ import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiScrollableCustom;
 import androidx.test.uiautomator.UiSelector;
 
+import static sh.calaba.instrumentationbackend.actions.device.ScrollDirection.FORWARD;
 import static sh.calaba.instrumentationbackend.actions.device.StrategyUtils.convertBySelectorStrategyToUiSelectorStrategy;
 import static sh.calaba.instrumentationbackend.actions.device.StrategyUtils.verifyStrategy;
 
@@ -15,18 +16,29 @@ public class ScrollToElementActionHelper {
     public static void scrollToTargetInContainer(String targetBySelectorStrategy, String targetLocator,
           String containerBySelectorStrategy, String containerLocator, int maxScrolls, boolean isHorizontal)
           throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, UiObjectNotFoundException {
-        scrollToTargetLocator(targetBySelectorStrategy, targetLocator, containerBySelectorStrategy, containerLocator, maxScrolls, isHorizontal, "scrollForward");
+        scrollToTargetLocator(targetBySelectorStrategy, targetLocator, containerBySelectorStrategy, containerLocator, maxScrolls, isHorizontal, FORWARD);
     }
 
-    public static void scrollToTargetByDirection(String targetBySelectorStrategy, String targetLocator, String direction, int maxScrolls, boolean isHorizontal)
-            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, UiObjectNotFoundException {
+    public static void scrollToTargetByDirection(
+            String targetBySelectorStrategy,
+            String targetLocator,
+            ScrollDirection direction,
+            int maxScrolls,
+            boolean isHorizontal
+    ) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, UiObjectNotFoundException {
+
         scrollToTargetLocator(targetBySelectorStrategy, targetLocator, null, null, maxScrolls, isHorizontal, direction);
     }
 
-    private static void scrollToTargetLocator(String targetBySelectorStrategy, String targetLocator,
-                                            String containerBySelectorStrategy, String containerLocator, int maxScrolls, boolean isHorizontal, String direction)
-            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, UiObjectNotFoundException {
-
+    private static void scrollToTargetLocator(
+            String targetBySelectorStrategy,
+            String targetLocator,
+            String containerBySelectorStrategy,
+            String containerLocator,
+            int maxScrolls,
+            boolean isHorizontal,
+            ScrollDirection direction
+    ) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, UiObjectNotFoundException{
         UiSelector targetViewSelector = getUiSelector(targetBySelectorStrategy, targetLocator);
         UiSelector scrollViewSelector = new UiSelector().scrollable(true);
         if (containerBySelectorStrategy != null && containerLocator != null) {

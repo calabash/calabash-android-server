@@ -7,7 +7,6 @@ import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiScrollableCustom;
 import androidx.test.uiautomator.UiSelector;
 
-import static sh.calaba.instrumentationbackend.actions.device.ScrollDirection.FORWARD;
 import static sh.calaba.instrumentationbackend.actions.device.StrategyUtils.convertBySelectorStrategyToUiSelectorStrategy;
 import static sh.calaba.instrumentationbackend.actions.device.StrategyUtils.verifyStrategy;
 
@@ -16,7 +15,7 @@ public class ScrollToElementActionHelper {
     public static void scrollToTargetInContainer(String targetBySelectorStrategy, String targetLocator,
           String containerBySelectorStrategy, String containerLocator, int maxScrolls, boolean isHorizontal)
           throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, UiObjectNotFoundException {
-        scrollToTargetLocator(targetBySelectorStrategy, targetLocator, containerBySelectorStrategy, containerLocator, maxScrolls, isHorizontal, FORWARD);
+        scrollToTargetLocator(targetBySelectorStrategy, targetLocator, containerBySelectorStrategy, containerLocator, maxScrolls, isHorizontal, ScrollDirection.FORWARD);
     }
 
     public static void scrollToTargetByDirection(

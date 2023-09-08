@@ -8,6 +8,12 @@ import sh.calaba.instrumentationbackend.actions.Action;
 import java.lang.reflect.InvocationTargetException;
 import static sh.calaba.instrumentationbackend.actions.device.ScrollToElementActionHelper.scrollToTargetByDirection;
 
+/**
+ * The class can be used to vertically scroll to the target element, either scrolling vertically forward or backward.
+ * The command to run vertically forward example: perform_action('uiautomator_vertically_scroll_forward_or_backward_to_element', 'FORWARD', 'text', 'Android', '10')
+ * The command to run vertically backward example: perform_action('uiautomator_vertically_scroll_forward_or_backward_to_element', 'FORWARD', 'text', 'Android', '10')
+ * Documentation for the above can be found at https://github.com/calabash/calabash-android/wiki/UIAutomator2
+ */
 public class UiautomatorVerticallyScrollingFowardOrBackward implements Action {
     @Override
     public Result execute(String... args) {

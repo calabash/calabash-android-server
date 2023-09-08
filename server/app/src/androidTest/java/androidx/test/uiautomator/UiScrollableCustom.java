@@ -2,16 +2,13 @@ package androidx.test.uiautomator;
 
 import sh.calaba.instrumentationbackend.actions.device.ScrollDirection;
 
-import static sh.calaba.instrumentationbackend.actions.device.ScrollDirection.BACKWARD;
-import static sh.calaba.instrumentationbackend.actions.device.ScrollDirection.FORWARD;
-
 public class UiScrollableCustom extends UiScrollable {
     public UiScrollableCustom(UiSelector container) {
         super(container);
     }
 
     public boolean scrollIntoView(UiSelector selector) throws UiObjectNotFoundException {
-        return scrollIntoView(selector, FORWARD, false);
+        return scrollIntoView(selector, ScrollDirection.FORWARD, false);
     }
 
     private static final Long TIMEOUT = 10L;
@@ -32,9 +29,9 @@ public class UiScrollableCustom extends UiScrollable {
                 found = true;
             } else {
                 boolean scrolled=true;
-                if(direction == FORWARD){
+                if(direction == ScrollDirection.FORWARD){
                     scrolled = scrollForward(100);
-                } else if (direction == BACKWARD) {
+                } else if (direction == ScrollDirection.BACKWARD) {
                     scrolled = scrollBackward(100);
                 }
                 element.waitForExists(TIMEOUT);

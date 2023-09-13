@@ -14,7 +14,7 @@ public class UiautomatorHorizontallyScrollingForwardOrBackward implements Action
     public UiautomatorHorizontallyScrollingForwardOrBackward() {
         this.scrollingAction = new UiautomatorScrollingForwardOrBackward(
                 "uiautomator_horizontally_scroll_forward_or_backward_to_element",
-                false
+                true
         );
     }
 

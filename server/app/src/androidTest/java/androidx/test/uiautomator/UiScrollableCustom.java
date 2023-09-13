@@ -1,12 +1,14 @@
 package androidx.test.uiautomator;
 
+import sh.calaba.instrumentationbackend.actions.device.ScrollDirection;
+
 public class UiScrollableCustom extends UiScrollable {
     public UiScrollableCustom(UiSelector container) {
         super(container);
     }
 
     public boolean scrollIntoView(UiSelector selector) throws UiObjectNotFoundException {
-        return scrollIntoView(selector, false);
+        return scrollIntoView(selector, ScrollDirection.FORWARD, false);
     }
 
     private static final Long TIMEOUT = 10L;
@@ -16,7 +18,7 @@ public class UiScrollableCustom extends UiScrollable {
      * more space to scroll while it is not true. This method allows you to force to scroll even if scrollForward returns
      * false. When forcing to scroll, the method will stop scrolling when mMaxSearchSwipes is reached.
      */
-    public boolean scrollIntoView(UiSelector selector, boolean forceScroll) throws UiObjectNotFoundException {
+    public boolean scrollIntoView(UiSelector selector, ScrollDirection direction, boolean forceScroll) throws UiObjectNotFoundException {
         Tracer.trace(new Object[]{selector});
         UiSelector childSelector = this.getSelector().childSelector(selector);
         UiObject element = new UiObject(getDevice(), childSelector);
@@ -26,7 +28,12 @@ public class UiScrollableCustom extends UiScrollable {
             if (this.exists(childSelector)) {
                 found = true;
             } else {
-                boolean scrolled = this.scrollForward(100);
+                boolean scrolled=true;
+                if(direction == ScrollDirection.FORWARD){
+                    scrolled = scrollForward(100);
+                } else if (direction == ScrollDirection.BACKWARD) {
+                    scrolled = scrollBackward(100);
+                }
                 element.waitForExists(TIMEOUT);
                 if (!forceScroll && !scrolled) break;
             }

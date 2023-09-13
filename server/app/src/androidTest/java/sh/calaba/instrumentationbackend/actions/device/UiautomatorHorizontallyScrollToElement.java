@@ -29,7 +29,7 @@ public class UiautomatorHorizontallyScrollToElement implements Action {
             }
 
             scrollToTargetInContainer(targetBySelectorStrategy, targetLocator, containerBySelectorStrategy,
-                  containerLocator, maxScrolls, true);
+                    containerLocator, maxScrolls, true);
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         } catch (UiObjectNotFoundException e) {
@@ -45,4 +45,3 @@ public class UiautomatorHorizontallyScrollToElement implements Action {
     @Override
     public String key() { return "uiautomator_horizontally_scroll_to_element"; }
 }
-

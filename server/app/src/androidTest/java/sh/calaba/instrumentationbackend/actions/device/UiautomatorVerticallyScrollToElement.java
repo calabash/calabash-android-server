@@ -29,7 +29,7 @@ public class UiautomatorVerticallyScrollToElement implements Action {
             }
 
             scrollToTargetInContainer(targetBySelectorStrategy, targetLocator, containerBySelectorStrategy,
-                  containerLocator, maxScrolls, false);
+                    containerLocator, maxScrolls, false);
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         } catch (UiObjectNotFoundException e) {
@@ -45,4 +45,3 @@ public class UiautomatorVerticallyScrollToElement implements Action {
     @Override
     public String key() { return "uiautomator_vertically_scroll_to_element"; }
 }
-

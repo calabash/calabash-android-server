@@ -1,4 +1,5 @@
 package sh.calaba.instrumentationbackend.actions.device;
+
 import static sh.calaba.instrumentationbackend.actions.device.StrategyUtils.verifyStrategy;
 
 import androidx.test.uiautomator.By;
@@ -6,13 +7,15 @@ import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
 
-public class UiautomatorSeekBar implements Action{
+public class UiautomatorSwipeElement implements Action {
     @Override
     public Result execute(String... args) {
         UiDevice device = InstrumentationBackend.getUiDevice();
@@ -26,7 +29,7 @@ public class UiautomatorSeekBar implements Action{
 
             Method strategyMethod = By.class.getMethod(strategy, String.class);
             BySelector selector = (BySelector) strategyMethod.invoke(By.class, locator);
-            UiObject2 seekBar = device.findObject(selector);
+            UiObject2 elementToSwipe = device.findObject(selector);
 
             float percentage = Float.parseFloat(args[2]);
             Direction direction = Direction.valueOf(args[3]);
@@ -35,8 +38,7 @@ public class UiautomatorSeekBar implements Action{
                 speed = Integer.parseInt(args[4]);
             }
 
-            seekBar.swipe(direction, percentage, speed);
-
+            elementToSwipe.swipe(direction, percentage, speed);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         } catch (InvocationTargetException e) {
@@ -50,6 +52,6 @@ public class UiautomatorSeekBar implements Action{
 
     @Override
     public String key() {
-        return "uiautomator_seek_bar";
+        return "uiautomator_swipe_element";
     }
 }

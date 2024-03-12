@@ -1,23 +1,21 @@
 package sh.calaba.instrumentationbackend.actions.device;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import static sh.calaba.instrumentationbackend.actions.device.StrategyUtils.verifyStrategy;
 
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 import sh.calaba.instrumentationbackend.InstrumentationBackend;
 import sh.calaba.instrumentationbackend.Result;
 import sh.calaba.instrumentationbackend.actions.Action;
 
-import static sh.calaba.instrumentationbackend.actions.device.StrategyUtils.verifyStrategy;
-
-/**
- * Kept for compatibility with older versions of calabash-android. Use uiautomator_swipe_element instead.
- */
-public class UiautomatorSeekBar implements Action {
+public class UiautomatorSwipeElement implements Action {
     @Override
     public Result execute(String... args) {
         UiDevice device = InstrumentationBackend.getUiDevice();
@@ -54,6 +52,6 @@ public class UiautomatorSeekBar implements Action {
 
     @Override
     public String key() {
-        return "uiautomator_seek_bar";
+        return "uiautomator_swipe_element";
     }
 }

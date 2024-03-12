@@ -13,6 +13,7 @@ def version = new File(versionFilePath).text.replaceAll("\\s","")
 def patchVersion = version.split("\\.")[2].toInteger()
 
 android {
+    namespace("sh.calaba.instrumentationbackend")
 
     // setting this > 23, results in build errors:
     // package android.test does not exist
@@ -35,10 +36,11 @@ android {
         release {
             minifyEnabled false
         }
-        compileOptions {
-            sourceCompatibility JavaVersion.VERSION_1_8
-            targetCompatibility JavaVersion.VERSION_1_8
-        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     sourceSets {
@@ -199,6 +201,8 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     androidTestImplementation 'net.sourceforge.jadex:jadex-android-antlr:2.2'
     androidTestImplementation 'com.jayway.android.robotium:robotium-solo:4.3.1'
+    // Updating to version 2.3.0 requires compileSDK to be version 34 (and minSDK to be 19) which generates build errors
+    // due to the android.test package not being found. To update UIAutomator first we should migrate to androidx.test.
     androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.2.0'
 
     //noinspection GradleDependency
